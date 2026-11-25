@@ -54,6 +54,12 @@ check_arch() {
     fi
 }
 
+# Omarchy lives in /usr/share/omarchy. The installer never writes there: this
+# only decides whether to mention the coexistence in the review screen.
+omarchy_installed() {
+    [[ -f /usr/share/omarchy/version || -d /usr/share/omarchy ]]
+}
+
 # makepkg refuses to run as root, and the files belong in the user's HOME
 check_not_root() {
     if [[ $EUID -eq 0 ]]; then
@@ -676,6 +682,9 @@ review_rows() {
     else
         rows+=("Reboot|no")
     fi
+    if ((!NO_OMARCHY)) && omarchy_installed; then
+        rows+=("Omarchy|detected: Orvix keeps its own Hyprland config and bar. Settings › System › Omarchy can follow its themes; nothing in /usr/share/omarchy is changed")
+    fi
     local log="${XDG_CACHE_HOME:-$HOME/.cache}/orvix/install-$STAMP.log"
     rows+=("Log|${log/#$HOME/\~}")
     [[ -n "${ORVIX_DRY_RUN:-}" ]] && rows+=("Dry run|HOME is ${ORVIX_DRY_HOME}")
@@ -871,6 +880,9 @@ main() {
     if [[ -n "$ANSWERS_FILE" ]]; then
         ask_load "$ANSWERS_FILE"
         answer_defaults
+    elif ((ASSUME_YES)); then
+        # --yes: the defaults shown in the questions, no terminal needed
+        answer_defaults
     else
         if [[ ! -t 0 || ! -t 1 ]]; then
             log_error "The installer needs a terminal (or answers from a file: --answers FILE)."
@@ -952,6 +964,10 @@ usage() {
     echo "  --dry-run         Change nothing: a throwaway HOME and stand-ins for sudo,"
     echo "                    pacman -S, yay, stow, systemctl... (ORVIX_DRY_HOME=dir"
     echo "                    reuses one)"
+    echo "  --yes, -y         Accept the defaults and skip the questions (sudo is"
+    echo "                    still asked). Useful in a script or with no terminal"
+    echo "  --no-omarchy      Don't detect or mention Omarchy. Orvix never writes to"
+    echo "                    /usr/share/omarchy either way"
     echo ""
     echo "Available categories:"
     echo "  core, terminal, editor, apps, utils, fonts, quickshell, theming, nvidia"
@@ -963,6 +979,8 @@ usage() {
 MODE=install
 ANSWERS_FILE=""
 PACKAGE_CATEGORY=""
+ASSUME_YES=0
+NO_OMARCHY=0
 while (($#)); do
     case "$1" in
     --help | -h)
@@ -971,6 +989,8 @@ while (($#)); do
         ;;
     --stow-only) MODE=stow ;;
     --setup-only) MODE=setup ;;
+    --yes | -y) ASSUME_YES=1 ;;
+    --no-omarchy) NO_OMARCHY=1 ;;
     --packages)
         MODE=packages
         PACKAGE_CATEGORY="${2:-}"
