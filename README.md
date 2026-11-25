@@ -1,34 +1,29 @@
-<!-- Images and videos live on the orphan `media` branch (readme/), so cloning
-     main stays light. Keybindings: regenerate with
-     `lua .data/readme/keybinds.lua README.md`. -->
-
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/caioax/orvix/media/readme/logo-dark.svg">
-  <img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/logo-light.svg" alt="orvix" width="150">
-</picture>
+<img src=".data/assets/logo/hicolor/512x512/apps/orvix.png" alt="Orvix" width="112">
 
-# orvix
+# Orvix
 
 **A Hyprland desktop for Arch Linux, with a Quickshell shell you set up from its own Settings app.**<br>
 One theme follows the bar, terminal, editor, GTK/Qt apps, Hyprland and Zen Browser.
 
-[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/orvix?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/orvix?style=flat-square&color=9ece6a)](https://github.com/caioax/orvix/commits) [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-f7768e?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/caioax)
+<sub>Formerly Lyne-Dots · built to live alongside [Omarchy](#omarchy) without fighting it</sub>
+
+[Install](INSTALL.md) · [Uninstall](UNINSTALL.md) · [Changelog](CHANGELOG.md) · [Omarchy plan](TODO_OMARCHY_INTEGRATION.md) · [License](LICENSE)
 
 </div>
 
-https://github.com/user-attachments/assets/63b3c7d6-250e-4c3f-8eb5-343068b08e5a
+## What is Orvix?
 
-<div align="center">
+Orvix is a complete desktop for Arch Linux: Hyprland for the windows, Quickshell for
+the bar, launcher, dashboard, notifications, lock screen and settings, plus a CLI
+that ties it all together. Almost everything is changed from the Settings app;
+nothing important needs a config file.
 
-```bash
-curl -fsSL https://caioax.github.io/orvix/install | bash
-```
-
-[Highlights](#highlights) · [Gallery](#gallery) · [Themes](#themes) · [Install](#install) · [Update](#update) · [Reference](#reference) · [Credits](#credits)
-
-</div>
+It started as a local rework of **Lyne-Dots** and keeps its design language;
+the rename to Orvix is carried through the whole tree. If you have an older Lyne
+install, the migrations and the `lyne` command shim move it over; see
+[INSTALL.md](INSTALL.md#coming-from-lyne-dots).
 
 ## Highlights
 
@@ -37,23 +32,29 @@ curl -fsSL https://caioax.github.io/orvix/install | bash
 <td width="33%" valign="top">
 
 **A Settings app for everything**<br>
-27 pages: appearance, bar, launcher, dashboard, lock screen, monitors, GPUs, workspaces, keybinds, autostart. Searchable, applied live, no config files to edit.
+More than 30 pages: appearance, bar, launcher, dashboard, lock screen, monitors, GPUs, workspaces, keybinds, autostart, GTK & Qt. Searchable, applied live.
 
 </td>
 <td width="33%" valign="top">
 
 **Themes that reach every app**<br>
-11 presets plus Material You from the wallpaper. Switching fades the shell and Hyprland's borders and recolors kitty, Neovim, GTK/Qt and Zen Browser.
+13 presets, Material You from the wallpaper, or the theme Omarchy is already using. Switching fades the shell and Hyprland's borders and recolors kitty, Neovim, GTK/Qt and Zen Browser.
 
 </td>
 <td width="33%" valign="top">
 
-**Make your own theme**<br>
-Start from a color, a wallpaper or another theme; an OKLCH picker and a live preview do the rest. Wallpapers in the theme's colors are rendered for it.
+**An overview two ways**<br>
+**Classic** keeps the month beside the clock; **Focus** puts the clock across the top and leaves the calendar out. Both fit a small screen, and both switch with one key.
 
 </td>
 </tr>
 <tr>
+<td valign="top">
+
+**GTK & Qt, without guessing**<br>
+Read and set the GTK theme, font and light/dark preference, list the installed themes, and choose how much of the shell theme reaches GTK and Qt apps.
+
+</td>
 <td valign="top">
 
 **A shell with templates**<br>
@@ -62,170 +63,108 @@ Bar, launcher, Quick Settings, OSD, lock screen and power menu each come in seve
 </td>
 <td valign="top">
 
-**Monitors and workspaces**<br>
-Drag monitors on a map with a keep-or-revert timer, give each monitor its own workspaces, choose which GPU renders on hybrid laptops.
-
-</td>
-<td valign="top">
-
 **A guided installer and a CLI**<br>
-Every question first, then an unattended install with a progress bar. `orvix update` pulls, syncs your settings and runs migrations.
+Every question first, then an unattended install with a progress bar. `--dry-run`, `--yes` and `--answers` for scripts. `orvix update` pulls, syncs your settings and runs migrations.
 
 </td>
 </tr>
 </table>
 
-## Gallery
+> [!NOTE]
+> The screenshots that used to live here were hosted on the upstream project's
+> `media` branch, which this repository does not have. Open Settings and the
+> dashboard to see the current look.
 
-<table>
-<tr>
-<td width="50%"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/desktop.webp" alt="Desktop"></td>
-<td width="50%"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/launcher.webp" alt="Launcher"></td>
-</tr>
-<tr>
-<td align="center"><sub>Desktop: kitty, Neovim and fastfetch in Tokyo Night</sub></td>
-<td align="center"><sub>Launcher: apps, actions (<code>&gt;</code>) and a calculator (<code>=</code>)</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard.webp" alt="Dashboard overview"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard-media.webp" alt="Dashboard media"></td>
-</tr>
-<tr>
-<td align="center"><sub>Dashboard: clock, weather, calendar with holidays, resources, player</sub></td>
-<td align="center"><sub>Media tab: cava ring, synced lyrics, a dancing GIF</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard-system.webp" alt="Dashboard system"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard-weather.webp" alt="Dashboard weather"></td>
-</tr>
-<tr>
-<td align="center"><sub>System tab: CPU, GPU, memory, storage and network</sub></td>
-<td align="center"><sub>Weather tab: next 24 hours and 7 days (Open-Meteo)</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/quick-settings.webp" alt="Quick Settings"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/notifications.webp" alt="Notifications"></td>
-</tr>
-<tr>
-<td align="center"><sub>Quick Settings: toggles, audio and notification history</sub></td>
-<td align="center"><sub>Notifications with actions and inline replies</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/clipboard.webp" alt="Clipboard"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/screenshot.webp" alt="Screenshot tool"></td>
-</tr>
-<tr>
-<td align="center"><sub>Clipboard history with image thumbnails and color swatches</sub></td>
-<td align="center"><sub>Screenshots: region, window or screen; edit, copy text (OCR)</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/color-picker.webp" alt="Color picker"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/lock.webp" alt="Lock screen"></td>
-</tr>
-<tr>
-<td align="center"><sub>Color picker with a magnifier and hex / rgb / hsl</sub></td>
-<td align="center"><sub>Lock screen with the player and power buttons</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/power.webp" alt="Power menu"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-osd.webp" alt="OSD settings"></td>
-</tr>
-<tr>
-<td align="center"><sub>Power menu with a key for each action</sub></td>
-<td align="center"><sub>OSD styles, previewed in Settings</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-theme.webp" alt="Theme settings"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-creator.webp" alt="Theme creator"></td>
-</tr>
-<tr>
-<td align="center"><sub>Settings › Theme: presets, Material You, light or dark</sub></td>
-<td align="center"><sub>Theme creator with an OKLCH picker and a live preview</sub></td>
-</tr>
-<tr>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-bar.webp" alt="Bar settings"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-wallpaper.webp" alt="Wallpaper settings"></td>
-</tr>
-<tr>
-<td align="center"><sub>Bar templates: docked, docked corners, floating, islands</sub></td>
-<td align="center"><sub>Wallpaper library with favorites and per-theme wallpapers</sub></td>
-</tr>
-</table>
+## Documentation
 
-## Themes
-
-Switch from Settings › Theme, the Quick Settings palette button or `orvix theme set <name>`. Each theme brings its own generated wallpaper.
-
-<table>
-<tr>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/tokyonight.webp" alt="Tokyo Night"><br><sub>Tokyo Night</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/catppuccin-mocha.webp" alt="Catppuccin Mocha"><br><sub>Catppuccin Mocha</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/dracula.webp" alt="Dracula"><br><sub>Dracula</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/gruvbox.webp" alt="Gruvbox Dark"><br><sub>Gruvbox Dark</sub></td>
-</tr>
-<tr>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/nord.webp" alt="Nord"><br><sub>Nord</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/rose-pine.webp" alt="Rose Pine"><br><sub>Rose Pine</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/tokyonight-light.webp" alt="Tokyo Night Day"><br><sub>Tokyo Night Day</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/catppuccin-latte.webp" alt="Catppuccin Latte"><br><sub>Catppuccin Latte</sub></td>
-</tr>
-<tr>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/gruvbox-light.webp" alt="Gruvbox Light"><br><sub>Gruvbox Light</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/nord-light.webp" alt="Nord Light"><br><sub>Nord Light</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/rose-pine-dawn.webp" alt="Rose Pine Dawn"><br><sub>Rose Pine Dawn</sub></td>
-<td align="center" valign="middle"><b>+ Material You</b><br><sub>colors from your wallpaper<br>(<code>orvix theme auto</code>)</sub></td>
-</tr>
-</table>
-
-A theme sets the colors of:
-
-| Target | What changes |
+| Document | What is in it |
 | --- | --- |
-| Quickshell | Every panel, with a color fade on switches |
-| Hyprland | Active and inactive borders, shadow (faded too) |
-| kitty | Terminal palette, cursor, tabs |
-| Neovim | The `orvix` colorscheme, sent to running instances |
-| GTK / Qt / KDE apps | Colors and light or dark variant |
-| Zen Browser | Toolbars, tabs and menus (`orvix zen enable`) |
-| Wallpaper | The theme's wallpaper (optional) |
-
-Keeping your own kitty or Neovim config (installed without the terminal or editor category)? The shell still writes the colors for them:
-
-- **kitty:** add `include current-theme.conf` to your `~/.config/kitty/kitty.conf`.
-- **Neovim:** copy `nvim/.config/nvim/colors/orvix.lua` and `nvim/.config/nvim/lua/orvix/` into your config and use `colorscheme orvix`; open instances using it follow theme switches.
+| [INSTALL.md](INSTALL.md) | Requirements, the installer and its options, Omarchy coexistence, first login, troubleshooting |
+| [UNINSTALL.md](UNINSTALL.md) | Removing Orvix, restoring your old files, what is left behind |
+| [CHANGELOG.md](CHANGELOG.md) | What changed, release by release |
+| [TODO_OMARCHY_INTEGRATION.md](TODO_OMARCHY_INTEGRATION.md) | The Omarchy plan and what is done, in progress or blocked |
+| [.install/README.md](.install/README.md) | How the installer is put together |
+| [LICENSE](LICENSE) | GPL-3.0, with the Lyne-Dots origin |
 
 ## Install
 
-**Requirements:** Arch Linux (or a close derivative), a user with `sudo`, and an internet connection.
+**Requirements:** Arch Linux (or a close derivative), a user with `sudo`, and an
+internet connection. About 4 GB of packages for the full install.
+
+There is no published remote for this copy of Orvix yet, so install from a clone:
 
 ```bash
-curl -fsSL https://caioax.github.io/orvix/install | bash
+git clone <your-orvix-remote> ~/.orvix
+cd ~/.orvix
+./install.sh
 ```
 
-It clones the repo into `~/.orvix` (installing `git` if needed) at the latest [release](https://github.com/caioax/orvix/releases), the Stable channel's version, and starts the installer. Prefer to read it first? [`bootstrap.sh`](bootstrap.sh) is short.
+`bootstrap.sh` is the one-line installer for a hosted copy. Point it at a
+repository with `ORVIX_BOOTSTRAP_REPO`:
 
-The installer asks everything first:
+```bash
+curl -fsSL https://<your-user>.github.io/orvix/install | ORVIX_BOOTSTRAP_REPO=https://github.com/<your-user>/orvix.git bash
+```
 
-1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts, quickshell, theming). The shell's own files (Hyprland, Quickshell, `~/.local/`) are always linked; **terminal** also links the kitty, Zsh, tmux and fastfetch configs, **editor** the Neovim one and **theming** the GTK, Qt and KDE ones. Leave a category out and your configs for it stay as they are.
-2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx, optionally 32-bit) and its environment. Which GPU renders stays automatic (Settings › Graphics changes it).
-3. **Reboot** when done, then a review screen with the packages to link and every file of yours that will be replaced.
+The installer asks everything first, then installs without further questions
+after the sudo password:
 
-After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files it replaces go to `~/.orvix-backup/<date>/`; the full log is in `~/.cache/orvix/install-<date>.log`. Changed your mind later? `orvix link nvim` links a package (your files to the backup first) and `orvix unlink nvim` brings yours back.
+1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts,
+   quickshell, theming). The shell's own files (Hyprland, Quickshell,
+   `~/.local/`) are always linked; **terminal** also links the kitty, Zsh, tmux
+   and fastfetch configs, **editor** the Neovim one and **theming** the GTK, Qt
+   and KDE ones. Leave a category out and your configs for it stay as they are.
+2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx,
+   optionally 32-bit) and its environment. Which GPU renders stays automatic
+   (Settings › Graphics changes it).
+3. **Reboot** when done, then a review screen with the packages to link and
+   every file of yours that will be replaced.
+
+Files it replaces go to `~/.orvix-backup/<date>/`; the full log is in
+`~/.cache/orvix/install-<date>.log`. Changed your mind later? `orvix link nvim`
+links a package (your files to the backup first) and `orvix unlink nvim` brings
+yours back.
 
 <details>
 <summary><b>Installer options</b></summary>
 
 | Option | What it does |
 | --- | --- |
-| `--dry-run` | Change nothing: a throwaway HOME and stand-ins for sudo, pacman, yay... |
+| `--help`, `-h` | Show every option and the package categories |
+| `--dry-run` | Change nothing: a throwaway HOME and stand-ins for sudo, pacman, yay... (`ORVIX_DRY_HOME=dir` reuses one) |
+| `--yes`, `-y` | Take the defaults and skip the questions (the sudo password is still asked) |
 | `--answers FILE` | Unattended: answers as `id=value` lines (`categories=`, `nvidia=`, `gpu_order=`, `reboot=`) |
 | `--packages NAME` | Install one category (`--packages nvidia` installs or fixes the driver) |
 | `--stow-only` | Only link the dotfiles again: the packages linked before (`orvix link` adds others) |
 | `--setup-only` | Only create the local Hyprland files |
+| `--no-omarchy` | Don't detect or mention Omarchy (nothing is written to it either way) |
 
-More in [.install/README.md](.install/README.md).
+More in [INSTALL.md](INSTALL.md).
 
 </details>
+
+## Omarchy
+
+Orvix is a desktop of its own, not an Omarchy plugin, and it is designed to be a
+good guest on a machine that also has [Omarchy](https://omarchy.org) installed.
+
+- **Shown in Settings, never hidden.** When `/usr/share/omarchy` exists, Settings ›
+  System › Omarchy shows the version, the current theme, whether `omarchy-shell`
+  is running and how many shell plugins are installed.
+- **Themes both ways, one direction at a time.** Orvix can follow Omarchy's
+  current theme (colors, light/dark, borders) through its own palette, or leave
+  it alone. Changing a theme from Orvix does not edit Omarchy's files.
+- **GTK, through Omarchy's own command.** "Use Omarchy's GTK settings" runs
+  `omarchy-theme-set-gnome`; Orvix never writes under `/usr/share/omarchy`.
+- **No quiet takeovers.** Installing Orvix replaces `~/.config/hypr` with its own
+  Hyprland config, so Omarchy's autostart entries and keybinds do not run while
+  Orvix's do. The installer says so, Settings warns when both shells are running,
+  and neither shell is ever stopped automatically.
+- **Plugins are not loaded.** Omarchy's `omarchy-shell` plugins are not Orvix
+  plugins; the count is informational.
+
+The two supported setups, and the remaining work, are in
+[TODO_OMARCHY_INTEGRATION.md](TODO_OMARCHY_INTEGRATION.md#supported-setups).
 
 ## Update
 
@@ -233,24 +172,31 @@ More in [.install/README.md](.install/README.md).
 orvix update
 ```
 
-Updates the dotfiles, adds new settings to your `state.json` without touching the ones you changed, runs pending migrations (new packages, moved files) and reloads Quickshell. Settings › System › About shows when an update is available and runs it for you.
+Updates the dotfiles, adds new settings to your `state.json` without touching the
+ones you changed, runs pending migrations (new packages, moved files) and reloads
+Quickshell. Settings › System › About shows when an update is available and runs
+it for you.
 
 Two channels, picked in Settings › System › About or with `orvix update channel`:
 
-- **Stable** (default): the newest [release](https://github.com/caioax/orvix/releases).
+- **Stable** (default): the newest release tag.
 - **Latest**: every change as soon as it lands on `main`.
 
-Switching back to Stable never goes back in time: you stay where you are until the next release.
+Switching back to Stable never goes back in time: you stay where you are until
+the next release.
 
 > [!NOTE]
-> Changes you made inside `~/.orvix` are listed first, and you choose to stash them (`git stash pop` brings them back), discard them or cancel. Keep personal changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
+> Changes you made inside `~/.orvix` are listed first, and you choose to stash
+> them (`git stash pop` brings them back), discard them or cancel. Keep personal
+> changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
 
 ## Reference
 
 <details>
 <summary><b>orvix CLI</b></summary>
 
-`orvix` is installed to `~/.local/bin`. Run `orvix <command> --help` for subcommands.
+`orvix` is installed to `~/.local/bin`. Run `orvix <command> --help` for
+subcommands.
 
 | Command | Description |
 | --- | --- |
@@ -267,17 +213,22 @@ Switching back to Stable never goes back in time: you stay where you are until t
 | `orvix autostart` | What starts at login |
 | `orvix gpu` | GPUs found; `order`, `links` |
 | `orvix nvidia` | NVIDIA driver status; `install` installs or fixes it |
+| `orvix cursor`, `orvix icons` | Cursor and icon themes |
 | `orvix zen` | Zen Browser profiles that follow the theme |
 | `orvix whatsapp` | Open WhatsApp Web (the app of the WhatsApp special) |
 | `orvix welcome` | Open the welcome screen again |
 | `orvix git` | Run git in the dotfiles repository |
+| `orvix help` | Every command, with a one-line summary |
 
 </details>
 
 <details>
 <summary><b>Keybindings</b></summary>
 
-Every bind below can be changed or turned off in Settings › Hyprland › Keybinds, where you can also add your own. Prefer the arrow keys over H / J / K / L? Pick Arrows (or Both) under Navigation keys there. <kbd>Super</kbd> + left / right drag moves / resizes windows.
+Every bind below can be changed or turned off in Settings › Hyprland › Keybinds,
+where you can also add your own. Prefer the arrow keys over H / J / K / L? Pick
+Arrows (or Both) under Navigation keys there. <kbd>Super</kbd> + left / right
+drag moves / resizes windows.
 
 <!-- keybinds:start -->
 
@@ -374,7 +325,11 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 <details>
 <summary><b>Repository layout</b></summary>
 
-Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package linked into `$HOME`: `quickshell/`, `hyprland/` and `local/` always, the others with their installer category (`orvix link` shows which are linked). The repo doesn't have to stay at `~/.orvix`: the `orvix` command, the session and the shell follow where it really is.
+Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package
+linked into `$HOME`: `quickshell/`, `hyprland/` and `local/` always, the others
+with their installer category (`orvix link` shows which are linked). The repo
+doesn't have to stay at `~/.orvix`: the `orvix` command, the session and the
+shell follow where it really is.
 
 | Folder | Contents |
 | --- | --- |
@@ -392,18 +347,32 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 <details>
 <summary><b>Customization</b></summary>
 
-- **Settings first.** Almost everything is in Settings (<kbd>Super</kbd> + <kbd>I</kbd>). Its values live in `~/.config/quickshell/state.json`; `orvix state` opens it.
-- **Language**: English or Português (Brasil), in Settings › Profile & Region (Automatic follows your system). Dates and numbers follow it.
-- **Machine-specific Hyprland files** live in `~/.config/hypr/local/` (not tracked). Settings writes `settings.lua`, `monitors.lua` and `gpus.lua` there; any other `.lua` file you add is loaded too.
-- **Themes** are JSON files in `~/.local/themes/`. Create one in Settings › Theme › New theme, or copy a file from `.data/themes/`.
-- **Wallpapers** live in `~/.local/wallpapers/`, with each theme's in `themes/<theme>/`. `.data/wallpapers/generator/generate.py --theme-file <json>` renders the contour wallpaper for any palette.
+- **Settings first.** Almost everything is in Settings (<kbd>Super</kbd> +
+  <kbd>I</kbd>). Its values live in `~/.config/quickshell/state.json`;
+  `orvix state` opens it.
+- **Language**: English or Português (Brasil), in Settings › Profile & Region
+  (Automatic follows your system). Dates and numbers follow it.
+- **Machine-specific Hyprland files** live in `~/.config/hypr/local/` (not
+  tracked). Settings writes `settings.lua`, `monitors.lua` and `gpus.lua` there;
+  any other `.lua` file you add is loaded too.
+- **Themes** are JSON files in `~/.local/themes/`. Create one in Settings › Theme ›
+  New theme, or copy a file from `.data/themes/`.
+- **Wallpapers** live in `~/.local/wallpapers/`, with each theme's in
+  `themes/<theme>/`.
+  `.data/wallpapers/generator/generate.py --theme-file <json>` renders the contour
+  wallpaper for any palette.
+- **GTK & Qt**: Settings › Appearance › GTK & Qt. Three switches decide whether
+  the shell theme sets the GTK theme, writes GTK colors and writes the Qt color
+  scheme; the rest of the page is yours to set by hand.
 
 </details>
 
 <details>
 <summary><b>Languages and translations</b></summary>
 
-The shell speaks English and Português (Brasil). Every string goes through an `I18n` singleton with one JSON file per language in `quickshell/.config/quickshell/i18n/`, so a new language needs no code:
+The shell speaks English and Português (Brasil). Every string goes through an
+`I18n` singleton with one JSON file per language in
+`quickshell/.config/quickshell/i18n/`, so a new language needs no code:
 
 ```sh
 node tools/i18n.js add de "Deutsch"   # creates i18n/de.json, every value empty
@@ -411,22 +380,48 @@ node tools/i18n.js extract            # after translating: refresh the language 
 node tools/i18n.js check              # placeholders, plural forms, files up to date
 ```
 
-Partial translations work (untranslated strings show in English). [i18n/README.md](quickshell/.config/quickshell/i18n/README.md) has the rules (placeholders, plurals, contexts, date formats), how to try a language live and the pseudo-language for finding untranslated or cut text.
+Partial translations work (untranslated strings show in English).
+[i18n/README.md](quickshell/.config/quickshell/i18n/README.md) has the rules
+(placeholders, plurals, contexts, date formats), how to try a language live and
+the pseudo-language for finding untranslated or cut text.
 
 </details>
 
+## Tests
+
+```bash
+tests/run.sh js      # the shell's JavaScript libraries (node)
+tests/run.sh qml     # qmllint against tests/qml/lint-baseline.txt
+tests/run.sh bash    # the CLI, migrations and installer (bats)
+tests/run.sh lint    # shellcheck over every script
+tests/run.sh         # everything, including the smoke test in a nested Hyprland
+```
+
+The `bash`, `lint` and `smoke` sections need `bats`, `shellcheck`, `tmux` and a
+running Hyprland session; a missing tool fails the section rather than being
+skipped silently.
+
 ## Credits
 
-- [Caelestia shell](https://github.com/caelestia-dots/shell): inspiration for many of the shell's panels and its Settings
-- [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame): the screenshot tool's starting point
-- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell): inspiration for the installer's TUI layout and its questions before installing
-- [Quickshell](https://quickshell.org), [Hyprland](https://hypr.land), [matugen](https://github.com/InioX/matugen), [awww](https://codeberg.org/LGFae/awww), [cliphist](https://github.com/sentriz/cliphist), [cava](https://github.com/karlstav/cava), [tesseract](https://github.com/tesseract-ocr/tesseract)
-- Weather from [Open-Meteo](https://open-meteo.com); lyrics from [LRCLIB](https://lrclib.net) and NetEase
-
-## Support
-
-If orvix is useful to you, you can support it on [GitHub Sponsors](https://github.com/sponsors/caioax) or [Ko-fi](https://ko-fi.com/caioax).
+- **Lyne-Dots**, by [caioax](https://github.com/caioax), which this project comes
+  from and whose GPL-3.0 license it keeps
+- [Caelestia shell](https://github.com/caelestia-dots/shell): inspiration for many
+  of the shell's panels and its Settings
+- [HyprQuickFrame](https://github.com/Ronin-CK/HyprQuickFrame): the screenshot
+  tool's starting point
+- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell):
+  inspiration for the installer's TUI layout and its questions before installing
+- [Omarchy](https://omarchy.org): the desktop Orvix is built to coexist with
+- [Quickshell](https://quickshell.org), [Hyprland](https://hypr.land),
+  [matugen](https://github.com/InioX/matugen),
+  [awww](https://codeberg.org/LGFae/awww),
+  [cliphist](https://github.com/sentriz/cliphist),
+  [cava](https://github.com/karlstav/cava),
+  [tesseract](https://github.com/tesseract-ocr/tesseract)
+- Weather from [Open-Meteo](https://open-meteo.com); lyrics from
+  [LRCLIB](https://lrclib.net) and NetEase
 
 ## License
 
-[GPL-3.0](LICENSE)
+[GPL-3.0](LICENSE). Orvix is a modified version of Lyne-Dots by caioax and
+contributors; the changes keep the same license.

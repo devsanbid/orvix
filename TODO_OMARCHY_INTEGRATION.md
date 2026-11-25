@@ -27,6 +27,22 @@
 | Plugins | `~/.config/omarchy/plugins` | — | Not plugin-compatible; no marketplace claim |
 | CLI | `omarchy …` | `orvix …` | Orvix wraps selected `omarchy` commands in Settings |
 
+## Supported setups
+
+**A. Orvix as the desktop.** Orvix's Hyprland config and bar run the session.
+Omarchy stays installed; its package files are untouched, its shell is not
+running, and Settings › System › Omarchy can follow its current theme. Omarchy's
+autostart entries and keybinds do not run, because `~/.config/hypr` is Orvix's.
+
+**B. Omarchy as the desktop.** Omarchy's Hyprland config and `omarchy-shell` run
+the session; Orvix is available on demand (`qs`, the CLI, the settings app) and
+its theme bridge still reads Omarchy state. Starting Orvix's bar too is possible
+but gives two bars; Settings warns when both shells are running.
+
+Neither setup is switched automatically. Choosing between them is a session
+change (which Hyprland config and which shell start at login), documented here
+rather than done behind the user's back.
+
 ## Phase 0 — Baseline & safety
 
 - [x] Inspect Orvix tree, entry point, services, installer, tests.
@@ -68,10 +84,8 @@ theme/package and `LYNE_SDDM_REF`, historical migration filenames, and the
       stopped automatically).
 - [ ] Autostart guard: an optional switch to skip Orvix's bar when
       `omarchy-shell` is running (default stays warn only).
-- [ ] Document the two supported setups:
-      1. **Orvix as the desktop** (Orvix Hyprland config + Orvix shell).
-      2. **Omarchy as the desktop** (Omarchy Hyprland config + Omarchy shell;
-         Orvix available on demand).
+- [x] Document the two supported setups in [Supported setups](#supported-setups)
+      above, and in `INSTALL.md` and the README.
 - [x] Never kill `omarchy-shell` automatically.
 
 ## Phase 3 — Theme bridge (P1)
@@ -139,30 +153,48 @@ Shipped in this pass:
 
 ## Phase 7 — Installer & docs
 
-- [ ] Friendlier `install.sh`: shorter first screen, plain-language categories,
-      `--help`, `--dry-run`, `--yes`, `--no-omarchy`, resumable steps.
-- [ ] `INSTALL.md` (beginner walkthrough, screenshots placeholders).
-- [ ] `UNINSTALL.md` (safe unlink, restore Omarchy, keep user data).
-- [ ] `CHANGELOG.md` (Keep a Changelog format).
-- [ ] Rewrite `README.md` (what it is, Orvix vs Omarchy, features, install).
-- [ ] Rewrite `LICENSE` attribution (keep upstream MIT text, add Orvix notice).
-- [ ] Document that Orvix is **not** an Omarchy shell plugin.
+- [x] Friendlier `install.sh`: `--help` lists everything, `--yes` takes the
+      defaults, `--no-omarchy` hides the detection, and the review screen says
+      what happens to Hyprland when Omarchy is installed.
+- [x] `INSTALL.md`: requirements, every question, every flag, Omarchy, coming
+      from Lyne-Dots, first login, troubleshooting.
+- [x] `UNINSTALL.md`: unlink and restore, remaining links, state and cache,
+      packages, what happens when Omarchy is installed.
+- [x] `CHANGELOG.md` in Keep a Changelog format, with an Unreleased section and
+      the compatibility shims listed.
+- [x] Rewrite `README.md`: what it is, features, install, Omarchy, CLI,
+      keybindings, repository layout, tests, credits.
+- [x] `LICENSE`: GPL-3.0 kept, with a notice naming Lyne-Dots and the Orvix
+      changes. The upstream license was already GPL-3.0, not MIT.
+- [x] Say plainly in the README and the plan that Orvix is **not** an Omarchy
+      shell plugin.
 
 ## Phase 8 — Testing & release
 
-- [ ] `bats` suite still passes after rename.
-- [ ] Add tests: rename migration, Omarchy detection, theme mapping, installer
-      flags.
-- [ ] QML syntax check (`qmllint`/`qmlformat` where available).
-- [ ] Manual smoke test on the live session (bar, dashboard, settings).
-- [ ] Commit in logical chunks; no secrets, no generated artifacts.
-- [ ] Final report: commits, branch, remote/push, release, marketplace, blockers.
+- [~] `bats` suite: not run. `bats` and `shellcheck` are not installed here and
+      installing them needs `sudo`; the scripts were checked with `bash -n`, and
+      the installer with two dry runs (`--yes`, then `--yes --no-omarchy`).
+- [x] Tests: `tests/js/omarchyTheme.test.js` covers the Omarchy color mapping;
+      the i18n test covers the new strings; the migration is exercised by its
+      own dry run. Installer flags were checked with the dry runs above.
+- [x] QML check: `tests/qml/lint.sh` → no new warnings (baseline 162).
+- [~] Smoke test: the shell hot-reloaded every changed file with no QML errors
+      in the log; a full nested-Hyprland `tests/run.sh smoke` run was not done.
+- [x] Commits in logical chunks: baseline, rename, migration, Omarchy bridge,
+      overview layouts, GTK & Qt, plugin count, installer, docs.
+- [ ] Final report: commits, branch, remote/push, release, marketplace, blockers
+      (written in the hand-off, not as a commit).
 
 ## Known blockers / decisions
 
-- **Git remote:** repo is not initialized and has no remote. Commits are local
-  until the user provides a remote.
-- **Marketplace:** skipped by user decision; `plugins.omarchy.org` is for
-  `omarchy-shell` plugins only.
-- **Live directory move:** `~/.orvix` → `~/.orvix` is staged behind
-  `orvix migrate`; the old path stays as a symlink.
+- **Git remote:** the repository is initialized on `main` with no remote, so
+  nothing has been pushed. Add a remote and push when one exists.
+- **Marketplace:** skipped by user decision; `plugins.omarchy.org` accepts
+  `omarchy-shell` plugins only and Orvix is a separate shell.
+- **Directory move:** done. The repo lives at `~/.orvix`; `~/.lyne-dots` stays
+  as a symlink to it, and migration 051 repoints the symlinks that followed the
+  old path.
+- **Test tools:** `bats` and `shellcheck` are missing, and `sudo` needs a
+  password here, so the bash/lint sections of `tests/run.sh` were not run.
+- **Two shells:** with Omarchy's autostart, `omarchy-shell` and Orvix's bar can
+  both start. Settings warns; the optional autostart guard is still a todo.
