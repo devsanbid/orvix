@@ -4,6 +4,12 @@ local MIGRATIONS_DIR="$DOTS_DIR/.data/orvix-cli/migrations"
 local DONE_FILE="$HOME/.local/share/orvix/migrations-done"
 local subcmd="${1:-}"
 
+# One release: adopt the list written before the Orvix rename
+if [[ ! -s "$DONE_FILE" && -f "$HOME/.local/share/lyne/migrations-done" ]]; then
+    mkdir -p "$(dirname "$DONE_FILE")"
+    cp "$HOME/.local/share/lyne/migrations-done" "$DONE_FILE"
+fi
+
 mkdir -p "$(dirname "$DONE_FILE")"
 touch "$DONE_FILE"
 
