@@ -62,6 +62,11 @@ Singleton {
         return colorScheme === "dark" ? I18n.tr("%1 has no dark version: pick a dark theme", name) : I18n.tr("%1 has no light version: pick a light theme", name);
     }
     readonly property string gtkThemeName: isDarkMode ? "adw-gtk3-dark" : "adw-gtk3"
+    // Whether Orvix may change the desktop's GTK/Qt look. On by default, as
+    // before; Settings › Appearance › GTK & Qt can turn each part off
+    readonly property bool applyGtkTheme: getState("theme.applyGtkTheme", true)
+    readonly property bool applyGtkColors: getState("theme.applyGtkColors", true)
+    readonly property bool applyQtColors: getState("theme.applyQtColors", true)
     property var availableThemes: []
 
     // Themes filtered by current color scheme (dark shows dark, light shows light)
@@ -200,6 +205,14 @@ Singleton {
         }
     }
 
+    // Applies the current palette to GTK and Qt again (after the user turns
+    // one of the switches on, or changes the GTK theme by hand)
+    function applyAppColors() {
+        _applyGtkFromPalette(palette);
+        _applyGtkThemeSwitch();
+        _applyQtFromPalette(palette);
+    }
+
     // Follow the active Omarchy theme. The palette, Kitty, Neovim, GTK, Qt
     // and Hyprland borders come from Omarchy's colors.toml; the wallpaper and
     // opacity stay the user's (Omarchy has its own wallpaper handling).
@@ -229,6 +242,7 @@ Singleton {
         _applyNeovim(data.palette, data.terminal);
         ZenService.applyPalette(data.palette);
         _applyGtkFromPalette(data.palette);
+        _applyGtkThemeSwitch();
         _applyQtFromPalette(data.palette);
         console.log("[Theme] Omarchy theme applied:", data.name || "Omarchy");
     }
@@ -364,6 +378,7 @@ Singleton {
 
         // 9. Apply GTK/Qt colors from palette
         _applyGtkFromPalette(data.palette);
+        _applyGtkThemeSwitch();
         _applyQtFromPalette(data.palette);
 
         console.log("[Theme] Theme applied:", data.name || themeName);
@@ -514,6 +529,9 @@ Singleton {
     }
 
     function _applyGtkThemeSwitch() {
+        // Settings › GTK & Qt can leave the desktop's GTK theme alone
+        if (!applyGtkTheme)
+            return;
         const theme = gtkThemeName;
         const scheme = isDarkMode ? "prefer-dark" : "prefer-light";
         // The icon theme's variant follows isDarkMode in IconService
@@ -521,7 +539,7 @@ Singleton {
     }
 
     function _applyGtkFromPalette(pal) {
-        if (!pal)
+        if (!pal || !applyGtkColors)
             return;
 
         var lines = [];
@@ -573,13 +591,10 @@ Singleton {
 
         // The folders don't exist without the theming package's stow
         gtkProc.run(["bash", "-c", "mkdir -p \"$(dirname " + shellEscape(gtkColorsPath3) + ")\" \"$(dirname " + shellEscape(gtkColorsPath4) + ")\" && " + "cat > " + shellEscape(gtkColorsPath3) + " << 'GTK_EOF'\n" + content + "GTK_EOF\n" + "cp " + shellEscape(gtkColorsPath3) + " " + shellEscape(gtkColorsPath4)]);
-
-        // Also update GTK base theme to match scheme
-        _applyGtkThemeSwitch();
     }
 
     function _applyQtFromPalette(pal) {
-        if (!pal)
+        if (!pal || !applyQtColors)
             return;
 
         const bg = hexToRgb(pal.background);
@@ -1008,6 +1023,7 @@ Singleton {
                     // GTK and Qt from the palette, like a preset; kitty and
                     // Neovim from the terminal colors loaded next
                     root._applyGtkFromPalette(pal);
+                    root._applyGtkThemeSwitch();
                     root._applyQtFromPalette(pal);
                     loadMatugenTerminalProc.run(["cat", root.matugenCachePath + "/terminal-colors.json"]);
 

@@ -42,6 +42,7 @@ FloatingWindow {
             typography: typographyPage,
             cursor: cursorPage,
             icons: iconsPage,
+            gtk: gtkPage,
             bar: barPage,
             launcher: launcherPage,
             clipboard: clipboardPage,
@@ -280,6 +281,11 @@ FloatingWindow {
     Component {
         id: iconsPage
         IconsPage {}
+    }
+
+    Component {
+        id: gtkPage
+        GtkQtPage {}
     }
 
     Component {

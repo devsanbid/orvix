@@ -73,6 +73,13 @@ Singleton {
             category: "Appearance"
         },
         {
+            id: "gtk",
+            label: I18n.noop("GTK & Qt"),
+            icon: "\u{f108}",
+            description: I18n.noop("GTK theme, font and dark preference, and how much of the shell theme reaches GTK and Qt apps"),
+            category: "Appearance"
+        },
+        {
             id: "bar",
             label: I18n.noop("Bar"),
             icon: "\u{f1513}",
