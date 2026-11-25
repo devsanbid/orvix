@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // What's new: the notes of the releases an update brought, from the release
 // tags (`orvix update notes`). orvix update's notification opens it through
@@ -17,7 +18,8 @@ Singleton {
     // [{version, date, notes}], newest first, only those with notes
     property var releases: []
 
-    readonly property string releasesUrl: "https://github.com/caioax/orvix/releases"
+    // Empty when the repo has no remote: the window hides the link
+    readonly property string releasesUrl: Paths.repoUrl !== "" ? Paths.repoUrl + "/releases" : ""
 
     // since: the commit before the update; "" = the current release alone
     function open(since: string) {

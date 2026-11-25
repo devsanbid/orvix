@@ -161,6 +161,7 @@ FloatingWindow {
             ActionButton {
                 anchors.left: parent.left
                 size: root.buttonSize
+                visible: WhatsNewService.releasesUrl !== ""
                 icon: "\u{f02a4}"
                 text: I18n.tr("All releases")
                 baseColor: Qt.alpha(Config.surface2Color, 0)

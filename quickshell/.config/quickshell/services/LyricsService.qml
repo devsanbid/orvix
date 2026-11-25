@@ -192,7 +192,7 @@ Singleton {
     function _lrclib(r, done) {
         const base = "https://lrclib.net/api/";
         const headers = {
-            "Lrclib-Client": "orvix quickshell (https://github.com/caioax/orvix)"
+            "Lrclib-Client": "orvix quickshell"
         };
         const title = _cleanTitle(r.title);
         const exact = "artist_name=" + encodeURIComponent(r.artist) + "&track_name=" + encodeURIComponent(r.title) + (r.length > 0 ? "&duration=" + Math.round(r.length) : "");

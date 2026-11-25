@@ -5,7 +5,7 @@
 #   █▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█
 #
 #   Installation Script
-#   https://github.com/caioax/orvix
+#   See README.md and INSTALL.md
 #
 # =============================================================================
 # Every question comes first (.install/lib/ask.sh); after the review screen

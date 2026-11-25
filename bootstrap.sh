@@ -5,17 +5,21 @@
 #   █▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█
 #
 #   Bootstrap: installs the latest release
-#   curl -fsSL https://caioax.github.io/orvix/install | bash
+#   curl -fsSL https://<your-user>.github.io/orvix/install | \
+#     ORVIX_BOOTSTRAP_REPO=https://github.com/<your-user>/orvix.git bash
 #
 # =============================================================================
 # Clones the repo into ~/.orvix, moves main back to the newest release tag
 # (vMAJOR.MINOR.PATCH, what the stable channel follows) and runs that
 # release's install.sh. main keeps tracking origin's main, so orvix update
 # works from there on either channel. Arguments go to install.sh
-# (`| bash -s -- --dry-run`). ORVIX_BOOTSTRAP_REPO clones another repo
+# (`| bash -s -- --dry-run`).
+#
+# Orvix has no published remote yet, so ORVIX_BOOTSTRAP_REPO is required: set
+# it to the clone URL of your copy. A hosted copy can bake its URL in here.
 # =============================================================================
 
-REPO_URL="${ORVIX_BOOTSTRAP_REPO:-https://github.com/caioax/orvix.git}"
+REPO_URL="${ORVIX_BOOTSTRAP_REPO:-}"
 DOTS_DIR="$HOME/.orvix"
 TAG_RE='^v[0-9]+\.[0-9]+\.[0-9]+$'
 
@@ -27,6 +31,9 @@ fail() {
 
 # In a function called on the last line: a download cut short runs nothing
 main() {
+    if [[ -z "$REPO_URL" ]]; then
+        fail "no repository to clone. Set ORVIX_BOOTSTRAP_REPO to your copy's clone URL, or clone it yourself and run ./install.sh"
+    fi
     if [[ -e "$DOTS_DIR" || -L "$DOTS_DIR" ]]; then
         fail "$DOTS_DIR already exists. If orvix is installed, \`orvix update\` updates it; otherwise move that folder away and run this again"
     fi

@@ -13,7 +13,8 @@ import "../../../components/"
 ColumnLayout {
     id: root
 
-    readonly property string repoUrl: "https://github.com/caioax/orvix"
+    // Empty when the repo has no remote: the links below are hidden
+    readonly property string repoUrl: Paths.repoUrl
     readonly property string dotsDir: Paths.dots
     readonly property int heroIconSize: Config.fontSizeIconLarge * 2
 
@@ -218,19 +219,12 @@ ColumnLayout {
                 }
             }
 
-            // md-github
+            // md-github; hidden when the repo has no remote to link to
             ActionButton {
+                visible: root.repoUrl !== ""
                 icon: "\u{f02a4}"
                 text: I18n.tr("GitHub")
                 onClicked: Qt.openUrlExternally(root.repoUrl)
-            }
-
-            // md-heart_outline
-            ActionButton {
-                icon: "\u{f02d5}"
-                text: I18n.tr("Support")
-                textColor: Config.errorColor
-                onClicked: Qt.openUrlExternally(root.repoUrl + "#support")
             }
         }
     }
