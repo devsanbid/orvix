@@ -1,0 +1,172 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+
+// Dashboard state: which screen it is open on and the current tab. Each bar
+// has its own DashboardWindow that shows itself while `screen` names it
+Singleton {
+    id: root
+
+    // Every tab, in order. Each id needs a component in DashboardWindow
+    readonly property var allTabs: [
+        {
+            id: "overview",
+            label: I18n.tr("Overview"),
+            icon: "\u{f056e}",
+            description: I18n.tr("Clock, weather, the month, the player and resource usage")
+        },
+        {
+            id: "media",
+            label: I18n.tr("Media"),
+            icon: "\u{f075a}",
+            description: I18n.tr("Full player with the visualizer and the GIF")
+        },
+        {
+            id: "system",
+            label: I18n.tr("System"),
+            icon: "\u{f035b}",
+            description: I18n.tr("CPU, GPU, memory, storage and network")
+        },
+        {
+            id: "weather",
+            label: I18n.tr("Weather"),
+            icon: "\u{f0595}",
+            description: I18n.tr("Now, the next 24 hours and the week")
+        }
+    ]
+    // Hidden in Settings (at least one always stays)
+    readonly property var hiddenTabs: StateService.get("dashboard.hiddenTabs", [])
+    readonly property var tabs: {
+        const shown = allTabs.filter(t => !hiddenTabs.includes(t.id));
+        return shown.length > 0 ? shown : [allTabs[0]];
+    }
+
+    // Tab the dashboard opens on: a tab id, or "last" for the one it was on
+    readonly property string openOn: StateService.get("dashboard.defaultTab", "overview")
+    // Dragging the pages sideways (mouse, two fingers on a touchpad) changes tab
+    readonly property bool swipeTabs: StateService.get("dashboard.swipeTabs", true)
+    readonly property string defaultTab: hasTab(openOn) ? openOn : tabs[0].id
+
+    onTabsChanged: {
+        if (!hasTab(tab))
+            tab = tabs[0].id;
+    }
+
+    function setTabShown(id: string, shown: bool): void {
+        const hidden = hiddenTabs.filter(t => t !== id);
+        if (!shown)
+            hidden.push(id);
+        StateService.set("dashboard.hiddenTabs", hidden);
+    }
+
+    readonly property int panelWidth: 840
+
+    // Blurred cover behind the Media tab (a plain card when off)
+    readonly property bool coverBackdrop: StateService.get("dashboard.coverBackdrop", true)
+
+    // Media tab shows the lyrics of the track in place of its title and album
+    readonly property bool lyrics: StateService.get("dashboard.lyrics", false)
+
+    // GIF in the Media tab and the Overview player (animates while something plays). An empty
+    // path means the bundled duck (assets/duck.gif)
+    readonly property bool showGif: StateService.get("dashboard.showGif", true)
+    readonly property string gifPath: StateService.get("dashboard.gif", "")
+    readonly property url gifSource: gifPath !== "" ? "file://" + gifPath : Qt.resolvedUrl("../assets/duck.gif")
+    readonly property string gifDir: Quickshell.env("HOME") + "/.local/share/quickshell"
+
+    // Screen name the dashboard is open on ("" = closed)
+    property string screen: ""
+    property string tab: defaultTab
+    readonly property bool visible: screen !== ""
+    readonly property int tabIndex: Math.max(0, tabs.findIndex(t => t.id === tab))
+
+    // Asks the window on `screen` to show itself, even while it is closing
+    signal shown
+
+    function hasTab(id: string): bool {
+        return tabs.some(t => t.id === id);
+    }
+
+    // Opens on `tabId` ("" keeps the current tab, or the default one when
+    // closed)
+    function open(tabId: string, screenName: string): void {
+        if (tabId !== "" && hasTab(tabId))
+            tab = tabId;
+        else if (!visible && !(openOn === "last" && hasTab(tab)))
+            tab = defaultTab;
+        screen = screenName;
+        shown();
+    }
+
+    function close(): void {
+        screen = "";
+    }
+
+    // Closes when already open on that screen and tab ("" = any tab),
+    // otherwise opens or switches to it
+    function toggle(tabId: string, screenName: string): void {
+        if (screen === screenName && (tabId === "" || tabId === tab))
+            close();
+        else
+            open(tabId, screenName);
+    }
+
+    function cycleTab(step: int): void {
+        const i = (tabIndex + step + tabs.length) % tabs.length;
+        tab = tabs[i].id;
+    }
+
+    function pickGif(): void {
+        if (!gifPicker.running)
+            gifPicker.running = true;
+    }
+
+    // The GIF is copied (with a unique name, so the image cache doesn't keep
+    // the old one) and survives the original being moved or deleted
+    Process {
+        id: gifPicker
+        command: ["bash", "-c", `
+            file=$(zenity --file-selection --title="Choose a GIF" --file-filter="GIF | *.gif" 2>/dev/null) || exit 0
+            [ -f "$file" ] || exit 0
+            dir="${root.gifDir}"
+            mkdir -p "$dir" && rm -f "$dir"/media-gif-*
+            dest="$dir/media-gif-$(date +%s).gif"
+            cp "$file" "$dest" && echo "$dest"
+        `]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const path = text.trim();
+                if (path !== "")
+                    StateService.set("dashboard.gif", path);
+            }
+        }
+    }
+
+    function focusedScreen(): string {
+        return Hyprland.focusedMonitor?.name ?? "";
+    }
+
+    // ========================================================================
+    // IPC — qs ipc call dashboard <function> [tab]
+    // ========================================================================
+
+    IpcHandler {
+        target: "dashboard"
+
+        function toggle(tab: string): void {
+            root.toggle(tab, root.focusedScreen());
+        }
+
+        function open(tab: string): void {
+            root.open(tab, root.focusedScreen());
+        }
+
+        function close(): void {
+            root.close();
+        }
+    }
+}

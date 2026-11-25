@@ -1,0 +1,41 @@
+# ==============================================================================
+# UWSM HYPRLAND SPECIFIC ENVIRONMENT
+# ==============================================================================
+# hypr/conf/environment.lua sets the same variables for a session started
+# without uwsm: keep both in sync (the cursor ones come from local/settings.lua)
+
+# ------------------------------------------------------------------------------
+# CURSORS / THEMES
+# The theme and size picked in Settings > Cursor (state.json), for XWayland and
+# native Wayland; Hyprland's local/settings.lua keeps them current after login
+# ------------------------------------------------------------------------------
+_lyne_cursor_theme=Bibata-Modern-Classic
+_lyne_cursor_size=24
+if command -v jq >/dev/null 2>&1 && [ -f "$HOME/.config/quickshell/state.json" ]; then
+    _lyne_value="$(jq -r '.cursor.theme // empty' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
+    [ -n "$_lyne_value" ] && _lyne_cursor_theme="$_lyne_value"
+    _lyne_value="$(jq -r '.cursor.size // empty' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
+    case "$_lyne_value" in
+        '' | *[!0-9]*) ;;
+        *) _lyne_cursor_size="$_lyne_value" ;;
+    esac
+fi
+
+export XCURSOR_THEME="$_lyne_cursor_theme"
+export XCURSOR_SIZE="$_lyne_cursor_size"
+
+export HYPRCURSOR_THEME="$_lyne_cursor_theme"
+export HYPRCURSOR_SIZE="$_lyne_cursor_size"
+unset _lyne_cursor_theme _lyne_cursor_size _lyne_value
+
+# ------------------------------------------------------------------------------
+# AQUAMARINE / RENDERING (Hyprland > 0.40)
+# Critical rendering and GPU selection settings
+# ------------------------------------------------------------------------------
+# Fix for some visual artifacts (0 = disabled)
+export AQ_FORCE_LINEAR_BLIT=0
+
+# Load local hyprland hardware exports (Aquamarine, etc)
+if [ -f "$HOME/.config/uwsm/env.d/hyprland_hardware.sh" ]; then
+    . "$HOME/.config/uwsm/env.d/hyprland_hardware.sh"
+fi

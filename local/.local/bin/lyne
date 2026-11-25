@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# lyne - Dotfiles management CLI
+
+# The repo this script is in (~/.local/bin/lyne is a link into it), unless
+# LYNE_DOTS says otherwise (the tests' sandboxes)
+DOTS_DIR="${LYNE_DOTS:-$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../../.." && pwd)}"
+CMD_DIR="$DOTS_DIR/.data/lyne-cli/commands"
+
+# lyne_state_set and lyne_state_replace, for the commands and migrations
+source "$DOTS_DIR/.data/lyne-cli/lib/state.sh"
+# A terminal from before the current Hyprland session: its variables
+source "$DOTS_DIR/.data/lyne-cli/lib/session-env.sh"
+lyne_session_env
+
+cmd="${1:-help}"
+[[ "$cmd" == "--help" || "$cmd" == "-h" ]] && cmd="help"
+shift 2>/dev/null || true
+
+cmd_file="$CMD_DIR/$cmd.sh"
+if [[ -f "$cmd_file" ]]; then
+    # Run inside a function so 'local' and 'return' work in sourced files
+    _lyne_run() {
+        source "$cmd_file" "$@"
+    }
+    _lyne_run "$@"
+else
+    echo "lyne: unknown command '$cmd'"
+    echo "Run 'lyne help' for usage information."
+    exit 1
+fi

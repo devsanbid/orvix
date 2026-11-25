@@ -1,0 +1,503 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+// Settings window state and page registry
+Singleton {
+    id: root
+
+    property bool visible: false
+    property string currentPage: "theme"
+    // Theme whose detail view the Theme page opens next (taken and cleared by it)
+    property string pendingThemeDetail: ""
+
+    function openThemeDetail(themeName: string) {
+        pendingThemeDetail = themeName;
+        if (currentPage === "theme")
+            themeDetailRequested(themeName);
+        currentPage = "theme";
+    }
+
+    signal themeDetailRequested(string themeName)
+
+    // Sidebar entries, grouped by category in this order. Each id needs a
+    // component in SettingsWindow.pageComponents. Labels, descriptions and
+    // categories are kept in English (I18n.noop) and shown with
+    // I18n.translate; `category` matches an entry of `categories`
+    readonly property var categories: [I18n.noop("Appearance"), I18n.noop("Shell"), I18n.noop("Hyprland"), I18n.noop("System")]
+    readonly property var pages: [
+        {
+            id: "theme",
+            label: I18n.noop("Theme"),
+            icon: "\u{f03d8}",
+            description: I18n.noop("Themes, colors, light or dark mode, the wallpaper each theme brings, Zen Browser and the login screen"),
+            category: "Appearance"
+        },
+        {
+            id: "wallpaper",
+            label: I18n.noop("Wallpaper"),
+            icon: "\u{f0e09}",
+            description: I18n.noop("Your wallpaper library: apply, favorite, add and delete, and the picker that opens with a shortcut"),
+            category: "Appearance"
+        },
+        {
+            id: "layout",
+            label: I18n.noop("Layout"),
+            icon: "\u{f0607}",
+            description: I18n.noop("Corners, spacing, transparency and motion"),
+            category: "Appearance"
+        },
+        {
+            id: "typography",
+            label: I18n.noop("Typography"),
+            icon: "\u{f06d6}",
+            description: I18n.noop("Interface font and text and icon sizes"),
+            category: "Appearance"
+        },
+        {
+            id: "cursor",
+            label: I18n.noop("Cursor"),
+            icon: "\u{f01bf}",
+            description: I18n.noop("Mouse cursor theme and size"),
+            category: "Appearance"
+        },
+        {
+            id: "icons",
+            label: I18n.noop("Icons"),
+            icon: "\u{f0832}",
+            description: I18n.noop("Icon theme for apps and the shell"),
+            category: "Appearance"
+        },
+        {
+            id: "bar",
+            label: I18n.noop("Bar"),
+            icon: "\u{f1513}",
+            description: I18n.noop("Template, position, size and behavior of the bar"),
+            category: "Shell"
+        },
+        {
+            id: "launcher",
+            label: I18n.noop("Launcher"),
+            icon: "\u{f003b}",
+            description: I18n.noop("Template, search, favorites, hidden apps and usage ranking"),
+            category: "Shell"
+        },
+        {
+            id: "clipboard",
+            label: I18n.noop("Clipboard"),
+            icon: "\u{f014d}",
+            description: I18n.noop("What the history keeps, and clearing it"),
+            category: "Shell"
+        },
+        {
+            id: "dashboard",
+            label: I18n.noop("Dashboard"),
+            icon: "\u{f056e}",
+            description: I18n.noop("The panel under the bar clock: overview, system and more"),
+            category: "Shell"
+        },
+        {
+            id: "power",
+            label: I18n.noop("Power"),
+            icon: "\u{f0425}",
+            description: I18n.noop("Power menu template, countdown and actions"),
+            category: "Shell"
+        },
+        {
+            id: "notifications",
+            label: I18n.noop("Notifications"),
+            icon: "\u{f009a}",
+            description: I18n.noop("Popups, timeout and do not disturb"),
+            category: "Shell"
+        },
+        {
+            id: "osd",
+            label: I18n.noop("OSD"),
+            icon: "\u{f10a9}",
+            description: I18n.noop("Volume and brightness indicator: style, position and when it shows"),
+            category: "Shell"
+        },
+        {
+            id: "screenshot",
+            label: I18n.noop("Screenshot"),
+            icon: "\u{f0e51}",
+            description: I18n.noop("Capture overlay: opening mode, dimming and guides. Opens with Print"),
+            category: "Shell"
+        },
+        {
+            id: "windows",
+            label: I18n.noop("Windows"),
+            icon: "\u{f05b2}",
+            description: I18n.noop("Gaps, borders, tiling and effects. Saved to hypr/local/settings.lua"),
+            category: "Hyprland"
+        },
+        {
+            id: "input",
+            label: I18n.noop("Input"),
+            icon: "\u{f037d}",
+            description: I18n.noop("Mouse and touchpad. Saved to hypr/local/settings.lua"),
+            category: "Hyprland"
+        },
+        {
+            id: "keyboard",
+            label: I18n.noop("Keyboard"),
+            icon: "\u{f0313}",
+            description: I18n.noop("Layouts, Caps Lock, Compose and key repeat"),
+            category: "Hyprland"
+        },
+        {
+            id: "specials",
+            label: I18n.noop("Specials"),
+            icon: "\u{f0018}",
+            description: I18n.noop("Hidden app workspaces toggled with a shortcut, like WhatsApp and music"),
+            category: "Hyprland"
+        },
+        {
+            id: "monitors",
+            label: I18n.noop("Monitors"),
+            icon: "\u{f0379}",
+            description: I18n.noop("Resolution, refresh rate, scale, rotation and layout of each monitor, tried before they're kept"),
+            category: "Hyprland"
+        },
+        {
+            id: "graphics",
+            label: I18n.noop("Graphics"),
+            icon: "\u{f08ae}",
+            description: I18n.noop("Your GPUs, which one renders Hyprland, their links and the NVIDIA driver"),
+            category: "Hyprland"
+        },
+        {
+            id: "workspaces",
+            label: I18n.noop("Workspaces"),
+            icon: "\u{f0570}",
+            description: I18n.noop("Each monitor's own workspaces, their order, next/previous and the laptop lid"),
+            category: "Hyprland"
+        },
+        {
+            id: "keybinds",
+            label: I18n.noop("Keybinds"),
+            icon: "\u{f030c}",
+            description: I18n.noop("Change, disable or add shortcuts. Saved to hypr/local/settings.lua"),
+            category: "Hyprland"
+        },
+        {
+            id: "lock",
+            label: I18n.noop("Lock screen"),
+            icon: "\u{f033e}",
+            description: I18n.noop("Lock screen template, what it shows and locking before sleep"),
+            category: "System"
+        },
+        {
+            id: "idle",
+            label: I18n.noop("Idle"),
+            icon: "\u{f04b2}",
+            description: I18n.noop("Screen lock, screen off and what keeps the system awake"),
+            category: "System"
+        },
+        {
+            id: "brightness",
+            label: I18n.noop("Brightness"),
+            icon: "\u{f00df}",
+            description: I18n.noop("Brightness keys and external monitors over DDC/CI"),
+            category: "System"
+        },
+        {
+            id: "powerProfiles",
+            label: I18n.noop("Power profiles"),
+            icon: "\u{f04c5}",
+            description: I18n.noop("Power saver, balanced or performance, and the daemon that switches them"),
+            category: "System"
+        },
+        {
+            id: "apps",
+            label: I18n.noop("Apps"),
+            icon: "\u{f003b}",
+            description: I18n.noop("Default terminal, file manager, browser and editor, and their shortcuts"),
+            category: "System"
+        },
+        {
+            id: "autostart",
+            label: I18n.noop("Autostart"),
+            icon: "\u{f14de}",
+            description: I18n.noop("Apps and scripts started when you log in"),
+            category: "System"
+        },
+        {
+            id: "profile",
+            label: I18n.noop("Profile & Region"),
+            icon: "\u{f0009}",
+            description: I18n.noop("Profile picture, language, weather location and AUR helper"),
+            category: "System"
+        },
+        {
+            id: "about",
+            label: I18n.noop("About"),
+            icon: "\u{f02fd}",
+            description: I18n.noop("Dotfiles version, updates and system information"),
+            category: "System"
+        }
+    ]
+
+    readonly property var currentEntry: pages.find(p => p.id === currentPage) ?? pages[0]
+    // Page ids in sidebar order (grouped by category)
+    readonly property var pageOrder: categories.reduce((ids, c) => ids.concat(pages.filter(p => p.category === c).map(p => p.id)), [])
+
+    function stepPage(delta: int) {
+        const i = pageOrder.indexOf(currentEntry.id);
+        currentPage = pageOrder[(i + delta + pageOrder.length) % pageOrder.length];
+    }
+
+    // ================= SEARCH =================
+    // Every page, group and row, read from the pages' QML source instead of
+    // instantiating them: label/title/description given as plain strings or
+    // I18n.tr/trc literals. The index keeps the English; search() translates
+    // it and matches both. Rows built from models (keybinds, specials)
+    // aren't in it
+    property var searchIndex: []
+    property bool indexing: false
+    // Row (or group) the Settings window scrolls to and flashes once the
+    // page shows: { page, group, label }
+    property var pendingReveal: null
+
+    signal revealRequested
+    // A page asks the window to scroll until `item` (inside the page) shows
+    signal scrollToItemRequested(var item)
+
+    function scrollToItem(item: var) {
+        scrollToItemRequested(item);
+    }
+
+    readonly property var rowTypes: ["SettingRow", "ToggleRow", "SliderRow", "StepperRow", "SelectRow", "TextFieldRow", "InfoRow", "TemplatePicker", "ColorEditRow", "NavKeysPicker", "BarTemplatePicker", "TilingPicker", "LanguageRow"]
+    // Groups: SettingsGroup and the shared ones built on it
+    readonly property var groupTypes: ["SettingsGroup", "AppDefaultsGroup"]
+    readonly property string pagesDir: Qt.resolvedUrl("../modules/settings/pages/").toString().replace("file://", "")
+
+    function pageFile(id: string): string {
+        return id.charAt(0).toUpperCase() + id.slice(1) + "Page.qml"; // i18n-ignore
+    }
+
+    function buildIndex() {
+        if (indexing || searchIndex.length > 0)
+            return;
+        indexing = true;
+        indexProc.command = ["sh", "-c", 'for f in "$@"; do printf "\\n@@FILE %s\\n" "$f"; cat "$f"; done', "sh"].concat(pages.map(p => pagesDir + pageFile(p.id)));
+        indexProc.running = true;
+    }
+
+    // Walks the QML line by line with a stack of the objects opened by
+    // braces; a property belongs to the innermost one, so the `label` of a
+    // JS option object ({ label, value }) never counts as a row
+    function parsePage(page: var, text: string): var {
+        const out = [];
+        const stack = [];
+        const unescape = t => t.replace(/\\(.)/g, "$1");
+        const groupOf = () => {
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (root.groupTypes.includes(stack[i].type))
+                    return stack[i].props.title ?? {
+                        text: "",
+                        context: ""
+                    };
+            }
+            return {
+                text: "",
+                context: ""
+            };
+        };
+        const finish = e => {
+            const labelProp = e.props.label ?? e.props.title;
+            const label = labelProp?.text ?? "";
+            if (label === "")
+                return;
+            const isRow = rowTypes.includes(e.type);
+            if (!isRow && !root.groupTypes.includes(e.type))
+                return;
+            out.push({
+                kind: isRow ? "row" : "group",
+                page: page.id,
+                pageLabel: page.label,
+                icon: page.icon,
+                group: isRow ? groupOf().text : "",
+                groupContext: isRow ? groupOf().context : "",
+                label: label,
+                labelContext: labelProp.context,
+                description: e.props.description?.text ?? "",
+                descriptionContext: e.props.description?.context ?? "",
+                words: e.props.description?.words ?? []
+            });
+        };
+
+        for (const raw of text.split("\n")) {
+            const literals = [];
+            const code = raw.replace(/"((?:[^"\\]|\\.)*)"/g, (m, g) => {
+                literals.push(unescape(g));
+                return '""';
+            }).replace(/\/\/.*$/, "");
+            const prop = code.match(/^\s*(label|title|description)\s*:\s*(.*)$/);
+            if (prop && stack.length > 0 && stack[stack.length - 1].type !== "") {
+                // "text", I18n.tr("text") or I18n.trc("context", "text")
+                const value = prop[2].trim();
+                const pure = (value === '""' || /^I18n\.tr\(\s*""\s*\)$/.test(value)) && literals.length === 1;
+                const withContext = /^I18n\.trc\(\s*""\s*,\s*""\s*\)$/.test(value) && literals.length === 2;
+                stack[stack.length - 1].props[prop[1]] = {
+                    text: pure ? literals[0] : withContext ? literals[1] : "",
+                    context: withContext ? literals[0] : "",
+                    words: withContext ? [literals[1]] : literals
+                };
+            }
+            const type = code.match(/^\s*([A-Z]\w*)\s*\{/);
+            let opened = false;
+            for (const ch of code) {
+                if (ch === "{") {
+                    stack.push({
+                        type: type && !opened ? type[1] : "",
+                        props: {}
+                    });
+                    opened = true;
+                } else if (ch === "}") {
+                    const e = stack.pop();
+                    if (e)
+                        finish(e);
+                }
+            }
+        }
+        return out;
+    }
+
+    function parseIndex(text: string) {
+        const byFile = {};
+        for (const chunk of text.split("\n@@FILE ").slice(1)) {
+            const nl = chunk.indexOf("\n");
+            byFile[chunk.slice(0, nl)] = chunk.slice(nl + 1);
+        }
+        let index = [];
+        for (const page of pages) {
+            index.push({
+                kind: "page",
+                page: page.id,
+                pageLabel: page.label,
+                icon: page.icon,
+                group: "",
+                groupContext: "",
+                label: page.label,
+                labelContext: "",
+                description: page.description,
+                descriptionContext: "",
+                words: [page.description, page.category]
+            });
+            index = index.concat(parsePage(page, byFile[pagesDir + pageFile(page.id)] ?? ""));
+        }
+        searchIndex = index;
+    }
+
+    // An index entry in the shell's language; `english` keeps the words of
+    // the source so both languages match
+    function translated(e: var): var {
+        const t = (text, context) => text === "" ? "" : context !== "" ? I18n.translateIn(context, text) : I18n.translate(text);
+        const out = Object.assign({}, e, {
+            label: t(e.label, e.labelContext),
+            group: t(e.group, e.groupContext),
+            pageLabel: I18n.translate(e.pageLabel),
+            description: t(e.description, e.descriptionContext),
+            words: e.words.map(w => t(w, e.descriptionContext)).join(" ")
+        });
+        out.english = I18n.language === "en" ? "" : [e.label, e.group, e.pageLabel].concat(e.words).join(" ");
+        return out;
+    }
+
+    // Entries matching every word of the query, best first: label matches
+    // before description ones, pages and groups before rows on a tie. The
+    // results are in the shell's language (what reveal() looks for on the
+    // page), the English matches too
+    function search(query: string): var {
+        const q = query.trim().toLowerCase();
+        if (q === "")
+            return [];
+        const words = q.split(/\s+/);
+        const scored = [];
+        searchIndex.forEach((entry, i) => {
+            const e = translated(entry);
+            const label = e.label.toLowerCase();
+            const hay = (e.label + " " + e.group + " " + e.pageLabel + " " + e.words + " " + e.english).toLowerCase();
+            if (!words.every(w => hay.includes(w)))
+                return;
+            let score = e.kind === "page" ? 3 : e.kind === "group" ? 2 : 0;
+            if (label === q)
+                score += 100;
+            else if (label.startsWith(q))
+                score += 80;
+            else if (label.includes(q))
+                score += 60;
+            else if (words.every(w => label.includes(w)))
+                score += 40;
+            else if (words.every(w => (e.group + " " + e.pageLabel).toLowerCase().includes(w)))
+                score += 20;
+            scored.push({
+                e: e,
+                score: score,
+                i: i
+            });
+        });
+        scored.sort((a, b) => b.score - a.score || a.i - b.i);
+        return scored.slice(0, 50).map(r => r.e);
+    }
+
+    // Opens the entry's page; the window scrolls to the row and flashes it
+    function reveal(entry: var) {
+        pendingReveal = entry.kind === "page" ? null : {
+            page: entry.page,
+            group: entry.group !== "" ? entry.group : (entry.kind === "group" ? entry.label : ""),
+            label: entry.kind === "row" ? entry.label : ""
+        };
+        if (currentPage === entry.page) {
+            if (pendingReveal)
+                revealRequested();
+        } else {
+            currentPage = entry.page;
+        }
+    }
+
+    Process {
+        id: indexProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.parseIndex(text);
+                root.indexing = false;
+            }
+        }
+    }
+
+    function open(page: string) {
+        if (page && pages.some(p => p.id === page))
+            currentPage = page;
+        visible = true;
+    }
+
+    function close() {
+        visible = false;
+    }
+
+    function toggle() {
+        visible = !visible;
+    }
+
+    IpcHandler {
+        target: "settings"
+
+        function open(page: string): void {
+            root.open(page);
+        }
+
+        function toggle(): void {
+            root.toggle();
+        }
+
+        function close(): void {
+            root.close();
+        }
+    }
+}

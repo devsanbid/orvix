@@ -1,0 +1,41 @@
+-- -----------------------------------------------------
+-- ENVIRONMENT VARIABLES
+-- -----------------------------------------------------
+-- The same as ~/.config/uwsm/env and env-hyprland (keep them in sync): uwsm
+-- sessions get them from there, also for apps systemd starts; these cover a
+-- session started without uwsm
+
+-- --- Hardware ---
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+hl.env("AQ_FORCE_LINEAR_BLIT", "0")
+
+-- --- XDG / Session ---
+hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
+hl.env("XDG_SESSION_TYPE", "wayland")
+hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+hl.env("XDG_MENU_PREFIX", "arch-")
+
+-- --- Toolkits (Qt, GTK) ---
+-- No GTK_THEME: it would override the light/dark gtk-theme the shell sets
+-- through gsettings for each theme
+hl.env("GDK_BACKEND", "wayland,x11,*")
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
+-- KDE apps (Dolphin, Kate) ignore qt6ct's palette and read this file.
+-- ThemeService rewrites it in place, so the path stays valid.
+hl.env("KDE_COLOR_SCHEME_PATH", os.getenv("HOME") .. "/.local/share/color-schemes/Lyne.colors")
+
+-- --- Cursors ---
+-- XCURSOR_* and HYPRCURSOR_* come from local/settings.lua (Settings › Cursor,
+-- written by the shell); setting them here too would flip them back on every
+-- reload
+
+-- --- PATH ---
+-- Once: every config reload runs this again with the PATH it set
+local localBin = os.getenv("HOME") .. "/.local/bin"
+local path = os.getenv("PATH") or ""
+if not (":" .. path .. ":"):find(":" .. localBin .. ":", 1, true) then
+    hl.env("PATH", localBin .. ":" .. path)
+end

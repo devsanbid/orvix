@@ -1,0 +1,63 @@
+# sync-state.sh - Merge state.json with defaults.json
+#
+# Preserves user values for keys that still exist in defaults.
+# New keys from defaults get their default values.
+# Old keys not present in defaults are discarded.
+#
+# Usage: source this file (expects $DOTS_DIR to be set)
+
+local STATE_FILE="$DOTS_DIR/quickshell/.config/quickshell/state.json"
+local DEFAULTS_FILE="$DOTS_DIR/.data/quickshell/defaults.json"
+
+if [[ ! -f "$DEFAULTS_FILE" ]]; then
+    echo "lyne sync: defaults.json not found at $DEFAULTS_FILE"
+    return 1
+fi
+
+# If state.json doesn't exist, just copy defaults
+if [[ ! -f "$STATE_FILE" ]]; then
+    cp "$DEFAULTS_FILE" "$STATE_FILE"
+    echo "lyne sync: created state.json from defaults"
+    return 0
+fi
+
+# Deep merge: defaults defines structure, old state provides values.
+# Every non-object value in defaults is a leaf, including false, null and
+# whole arrays (paths(scalars) skipped false/null leaves, so user values like
+# `true` over a `false` default and lists such as favorites were lost).
+# Paths inside arrays are skipped: the user's array replaces the default one.
+# A user value is only kept when its type matches the default (or the default
+# is null), so keys whose type changed between versions get the new default;
+# getpath is wrapped in try for the same reason.
+#
+# Keys that moved are carried to their new place first (`renames`): the
+# merge would drop the old key, and migrations run after this sync, too late
+# to read it.
+#   launcher.terminal -> apps.terminal (Settings > System > Apps)
+local MERGED
+if ! MERGED=$(jq -s '
+    def renames:
+        if (.launcher.terminal? | type) == "string" and .launcher.terminal != "" and .apps.terminal? == null
+        then .apps.terminal = {
+            command: .launcher.terminal,
+            desktop: (if .launcher.terminal == "kitty" then "kitty" else "" end)
+        }
+        else . end;
+    .[0] as $defaults | (.[1] | renames) as $old |
+    $defaults | reduce (
+        paths(type != "object") | select(all(.[]; type == "string"))
+    ) as $p (
+        .; ($old | try getpath($p) catch null) as $value
+           | ($defaults | getpath($p)) as $default
+           | if $value != null and ($default == null or ($value | type) == ($default | type))
+             then setpath($p; $value)
+             else .
+             end
+    )
+' "$DEFAULTS_FILE" "$STATE_FILE"); then
+    echo "lyne sync: failed to merge state.json (jq error)"
+    return 1
+fi
+
+printf '%s\n' "$MERGED" | lyne_state_replace
+echo "lyne sync: state.json synced with defaults"

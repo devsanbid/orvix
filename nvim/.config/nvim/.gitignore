@@ -1,0 +1,16 @@
+# Cache e arquivos temporários do sistema
+*.swp
+*.swo
+*~
+.netrwhist
+.DS_Store
+
+# Para plugins que geram pastas locais (ex: auto-session)
+sessions/
+tmp/
+
+lua/config/secrets.lua
+
+# Written by the shell theme service (old theme loader; the "lyne" colorscheme
+# reads ~/.cache/lyne/nvim.json instead)
+current-theme.txt

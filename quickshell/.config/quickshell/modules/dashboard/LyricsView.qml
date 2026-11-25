@@ -1,0 +1,238 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Effects
+import qs.config
+import qs.services
+import "../../components/"
+
+// Lyrics of the active track. Synced ones follow the song: the current line
+// is highlighted and kept in the middle, the others fade with distance, and
+// clicking a line seeks there. Scrolling by hand pauses the follow for a bit
+Item {
+    id: root
+
+    // Shown to the user: LyricsService only looks lyrics up while true
+    property bool active: false
+
+    Watcher {
+        service: LyricsService
+        active: root.active
+    }
+
+    readonly property bool hasLines: LyricsService.status === "synced" || LyricsService.status === "plain"
+    // Follows the current line unless the user scrolled recently
+    property bool following: true
+    // Size of the line being sung next to the others
+    readonly property real currentScale: Config.fontSizeLarge / Config.fontSizeSmall
+
+    function recenter() {
+        const item = repeater.itemAt(LyricsService.currentIndex);
+        const target = item ? item.y + item.height / 2 - flick.height / 2 : 0;
+        flick.contentY = Math.max(0, Math.min(target, flick.contentHeight - flick.height));
+    }
+
+    Connections {
+        target: LyricsService
+
+        function onCurrentIndexChanged() {
+            if (root.following)
+                root.recenter();
+        }
+
+        function onLinesChanged() {
+            root.following = true;
+        }
+    }
+
+    Timer {
+        id: resumeFollow
+        interval: 3000
+        onTriggered: {
+            root.following = true;
+            root.recenter();
+        }
+    }
+
+    // ==================== STATES ====================
+    ColumnLayout {
+        anchors.centerIn: parent
+        width: parent.width
+        visible: !root.hasLines
+        spacing: Config.padding
+
+        Spinner {
+            Layout.alignment: Qt.AlignHCenter
+            visible: LyricsService.status === "loading"
+            running: visible
+            color: Config.subtextColor
+        }
+
+        Text {
+            Layout.fillWidth: true
+            visible: LyricsService.status !== "loading"
+            text: {
+                switch (LyricsService.status) {
+                case "instrumental":
+                    return "\u{f075a}  " + I18n.tr("Instrumental");
+                case "none":
+                    return I18n.tr("No lyrics found");
+                case "error":
+                    return I18n.tr("Couldn't reach LRCLIB or NetEase");
+                default:
+                    return "";
+                }
+            }
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            color: Config.subtextColor
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+        }
+    }
+
+    // ==================== LINES ====================
+    // Mask of the lines below: opaque in the middle, fading at the edges
+    Rectangle {
+        id: lyricsFade
+
+        anchors.fill: flick
+        visible: false
+        layer.enabled: true
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Qt.alpha("black", 0)
+            }
+            GradientStop {
+                position: flick.fade
+                color: "black"
+            }
+            GradientStop {
+                position: 1 - flick.fade
+                color: "black"
+            }
+            GradientStop {
+                position: 1
+                color: Qt.alpha("black", 0)
+            }
+        }
+    }
+
+    Flickable {
+        id: flick
+
+        // Share of the height that fades out at the top and the bottom, so
+        // the lines cut by the edges melt away
+        readonly property real fade: 0.3
+
+        anchors.fill: parent
+        visible: root.hasLines
+        clip: true
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: lyricsFade
+            // The mask's alpha as is, eased (smoothstep) instead of linear
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1
+        }
+        contentWidth: width
+        contentHeight: column.implicitHeight
+        boundsBehavior: Flickable.StopAtBounds
+
+        Behavior on contentY {
+            enabled: root.following
+
+            NumberAnimation {
+                duration: Config.animDurationLong
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        onMovementStarted: {
+            root.following = false;
+            resumeFollow.stop();
+        }
+        onMovementEnded: resumeFollow.restart()
+
+        // Column, not ListView: wrapped lines change height after creation
+        Column {
+            id: column
+
+            // The lines only get their place after a layout pass
+            onPositioningComplete: {
+                if (root.following)
+                    root.recenter();
+            }
+
+            width: flick.width
+            spacing: Config.padding
+            // Room so the first and last lines can reach the middle
+            topPadding: LyricsService.synced ? flick.height / 2 : 0
+            bottomPadding: LyricsService.synced ? flick.height / 2 : 0
+
+            Repeater {
+                id: repeater
+                model: LyricsService.lines
+
+                // Grows the current line with `scale` (no reflow while it
+                // animates); the wrapper follows the scaled height so the
+                // lines never overlap
+                Item {
+                    id: line
+
+                    required property var modelData
+                    required property int index
+                    readonly property bool current: index === LyricsService.currentIndex
+                    readonly property int distance: Math.abs(index - LyricsService.currentIndex)
+
+                    width: column.width
+                    height: label.implicitHeight * label.scale
+
+                    Text {
+                        id: label
+
+                        anchors.centerIn: parent
+                        // Wraps at the width the scaled-up line may use
+                        width: parent.width / root.currentScale
+                        scale: line.current && LyricsService.synced ? root.currentScale : 1
+                        text: line.modelData.text !== "" ? line.modelData.text : "\u{f075a}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        font.bold: line.current
+                        color: line.current ? Config.accentColor : lineMouse.containsMouse && LyricsService.synced ? Config.textColor : Config.subtextColor
+                        opacity: !LyricsService.synced || line.current ? 1 : Math.max(0.35, 1 - line.distance * 0.18)
+                        wrapMode: Text.Wrap
+                        horizontalAlignment: Text.AlignHCenter
+
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Config.animDuration
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: lineMouse
+                        anchors.fill: parent
+                        enabled: LyricsService.synced
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.following = true;
+                            LyricsService.seekTo(line.index);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

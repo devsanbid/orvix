@@ -1,0 +1,220 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Hyprland
+import qs.config
+import qs.services
+
+// Workspace state for one monitor, shared by every workspace style: the
+// active id, which workspaces hold windows (and which apps), urgency, the
+// "guest" workspaces of other monitors shown here and the special workspace.
+// Styles only read this and call focus()/toggleSpecial().
+QtObject {
+    id: root
+
+    // The screen the widget lives on; falls back to the focused monitor
+    property var screen: null
+    property int totalWorkspaces: 99
+    // false for previews: no Hyprland events, and activeId/workspaces are
+    // set by hand
+    property bool live: true
+
+    // --- Monitor Logic ---
+    readonly property var monitor: {
+        if (!Hyprland)
+            return null;
+        return (screen ? Hyprland.monitorFor(screen) : null) ?? Hyprland.focusedMonitor ?? null;
+    }
+    readonly property string monitorName: monitor?.name ?? ""
+    readonly property var activeWorkspace: monitor?.activeWorkspace ?? null
+
+    // --- Normal Workspace Math ---
+    // Each monitor owns a block of 100 ids (1-99, 101-199, ...), given by
+    // hypr/conf/workspaces.lua; previews and monitors it doesn't know yet
+    // fall back to the active workspace's block
+    property int activeId: (activeWorkspace && activeWorkspace.id > 0) ? activeWorkspace.id : 1
+    readonly property int knownBase: live ? WorkspacesService.baseFor(monitorName) : -1
+    readonly property int monitorOffset: knownBase >= 0 ? knownBase : Math.floor((activeId - 1) / 100) * 100
+    // False while the monitor shows a guest (another block's workspace)
+    readonly property bool activeInBlock: activeId > monitorOffset && activeId <= monitorOffset + 99
+    // 0 while a guest is shown (no slot of the strip is active)
+    readonly property int relativeActiveId: activeInBlock ? Math.min(activeId - monitorOffset, totalWorkspaces) : 0
+
+    // Workspaces of other blocks on this monitor (those of a disconnected
+    // monitor, until it comes back): [{ id, position, owner }] by id, where
+    // owner is the WorkspacesService entry (null if unknown)
+    property var guests: []
+
+    // --- Per-workspace info ---
+    // { <id>: { windows: [appId, ...], urgent: bool } } for every workspace
+    // that exists; a missing id means an empty workspace
+    property var workspaces: ({})
+
+    function isOccupied(id) {
+        return (workspaces[id]?.windows.length ?? 0) > 0;
+    }
+    function isUrgent(id) {
+        return workspaces[id]?.urgent === true;
+    }
+    function windowsOf(id) {
+        return workspaces[id]?.windows ?? [];
+    }
+    // Distinct apps of a workspace, in window order
+    function appsOf(id) {
+        return [...new Set(windowsOf(id))];
+    }
+
+    // Icon of an app id: its desktop entry's icon when there is one (the
+    // class often differs from the icon name), else the id itself
+    function iconFor(appId) {
+        const entry = appId ? DesktopEntries.heuristicLookup(appId) : null;
+        return IconService.url(entry?.icon || appId || "application-x-executable", "application-x-executable");
+    }
+
+    function update() {
+        if (!live || !Hyprland || !Hyprland.workspaces)
+            return;
+        let info = {};
+        for (const ws of Hyprland.workspaces.values) {
+            if (ws && ws.id > 0)
+                info[ws.id] = {
+                    windows: [],
+                    urgent: urgentIds[ws.id] === true
+                };
+        }
+        for (const tl of Hyprland.toplevels.values) {
+            const id = tl?.workspace?.id ?? 0;
+            if (info[id])
+                info[id].windows.push(tl.wayland?.appId || tl.lastIpcObject?.class || "");
+        }
+        workspaces = info;
+
+        let list = [];
+        for (const ws of Hyprland.workspaces.values) {
+            if (!ws || ws.id <= 0 || ws.monitor?.name !== monitorName)
+                continue;
+            if (ws.id > monitorOffset && ws.id <= monitorOffset + 99)
+                continue;
+            list.push({
+                id: ws.id,
+                position: (ws.id - 1) % 100 + 1,
+                owner: WorkspacesService.ownerOf(ws.id)
+            });
+        }
+        guests = list.sort((a, b) => a.id - b.id);
+    }
+
+    // Workspaces holding a window that asked for attention, kept until the
+    // workspace is visited (Quickshell's own urgent flags clear on the next
+    // focus change anywhere)
+    property var urgentIds: ({})
+
+    function markUrgent(address) {
+        const bare = a => String(a).replace(/^0x/, "");
+        const tl = Hyprland.toplevels.values.find(t => bare(t.address) === bare(address));
+        const id = tl?.workspace?.id ?? 0;
+        if (id <= 0 || tl.workspace.active)
+            return;
+        urgentIds = Object.assign({}, urgentIds, {
+            [id]: true
+        });
+    }
+
+    onActiveIdChanged: {
+        if (urgentIds[activeId]) {
+            let ids = Object.assign({}, urgentIds);
+            delete ids[activeId];
+            urgentIds = ids;
+        }
+    }
+    onUrgentIdsChanged: updateTimer.restart()
+    onMonitorOffsetChanged: updateTimer.restart()
+    onMonitorNameChanged: updateTimer.restart()
+
+    // --- Special Workspace ---
+    // Name as reported by activespecial ("special:magic"), "" when closed
+    property string specialRaw: ""
+    readonly property bool specialActive: specialRaw !== ""
+    readonly property string specialName: specialRaw.startsWith("special:") ? specialRaw.substring(8) : specialRaw
+
+    // Icon, name and color from Settings › Hyprland › Special workspaces;
+    // specials made elsewhere (hypr/local) get a generic badge
+    readonly property var currentSpecialConfig: {
+        if (!specialActive)
+            return null;
+        const item = SpecialsService.find(specialName);
+        if (item)
+            return {
+                icon: item.icon,
+                color: SpecialsService.colorFor(item.color),
+                name: item.name
+            };
+        return {
+            icon: "\u{f0018}",
+            color: Config.accentColor,
+            name: specialName.charAt(0).toUpperCase() + specialName.slice(1)
+        };
+    }
+
+    // Last special shown, kept while the badge animates out so it doesn't
+    // flash back to the defaults
+    property string specialIcon: "\u{f0018}"
+    property string specialLabel: ""
+    property color specialColor: Config.accentColor
+
+    onCurrentSpecialConfigChanged: {
+        if (currentSpecialConfig) {
+            specialIcon = currentSpecialConfig.icon;
+            specialLabel = currentSpecialConfig.name;
+            specialColor = currentSpecialConfig.color;
+        }
+    }
+
+    // --- Actions ---
+    function focus(id) {
+        if (id !== activeId)
+            Hyprland.dispatch("hl.dsp.focus({ workspace = " + id + " })");
+    }
+    // Next (1) or previous (-1) workspace of this monitor, the same way as
+    // the keyboard (skip empty / go around from Settings › Hyprland ›
+    // Workspaces); hypr/conf/workspaces.lua picks it
+    function step(direction) {
+        if (live && monitorName !== "")
+            Hyprland.dispatch("lyne_workspace_step(" + direction + ", \"" + monitorName + "\")");
+    }
+    function toggleSpecial() {
+        if (specialName)
+            Hyprland.dispatch("hl.dsp.workspace.toggle_special(\"" + specialName + "\")");
+    }
+
+    // --- Event Handling ---
+    Component.onCompleted: update()
+
+    property Timer updateTimer: Timer {
+        interval: 10
+        onTriggered: root.update()
+    }
+
+    property Connections events: Connections {
+        target: Hyprland
+        enabled: root.live
+        function onRawEvent(event) {
+            if (!event)
+                return;
+            if (event.name === "activespecial") {
+                const parts = event.data.split(',');
+                const target = parts[1] || "";
+                if (target === "" || target === root.monitorName)
+                    root.specialRaw = parts[0] || "";
+            }
+            if (event.name === "workspace")
+                root.specialRaw = "";
+            if (event.name === "urgent")
+                root.markUrgent(event.data);
+            const refreshEvents = ["workspace", "createworkspace", "destroyworkspace", "movewindow", "openwindow", "closewindow", "moveworkspace", "moveworkspacev2", "renameworkspace", "monitoradded", "monitoraddedv2", "monitorremoved", "monitorremovedv2"];
+            if (refreshEvents.includes(event.name))
+                root.updateTimer.restart();
+        }
+    }
+}

@@ -1,0 +1,866 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Effects
+import Quickshell
+import qs.config
+import qs.services
+import "./pages/"
+import "../../components/"
+
+// Settings app: sidebar with the pages of SettingsService on the left, the
+// current page on the right. A regular window (floated by a Hyprland rule)
+// so it can stay open while the changes are tried out
+FloatingWindow {
+    id: root
+
+    // Room for the longest page name (translations), between 16 and 20 em
+    readonly property int sidebarWidth: Math.min(Config.fontSizeNormal * 20, Math.max(Config.fontSizeNormal * 16, Math.ceil(Math.max(...SettingsService.pages.map(p => navMetrics.advanceWidth(I18n.translate(p.label))))) + boxSize + Config.spacing + Config.padding * 7))
+
+    FontMetrics {
+        id: navMetrics
+
+        font.family: Config.font
+        font.pixelSize: Config.fontSizeNormal
+        font.bold: true
+    }
+    readonly property int maxContentWidth: Config.fontSizeNormal * 48
+    readonly property int boxSize: Config.fontSizeIconSmall * 2
+    // Room on both sides of the page column, so the scrollbar never covers it
+    readonly property int pageGutter: Config.padding * 2
+    // The size it opens at: the window rule in hypr/conf/rules.lua only
+    // floats and centers it
+    readonly property size defaultSize: Qt.size(960, 680)
+
+    // Page id (SettingsService.pages) -> component. Pages are imported
+    // statically: Quickshell only resolves directories it can reach that way
+    readonly property var pageComponents: ({
+            theme: themePage,
+            wallpaper: wallpaperPage,
+            layout: layoutPage,
+            typography: typographyPage,
+            cursor: cursorPage,
+            icons: iconsPage,
+            bar: barPage,
+            launcher: launcherPage,
+            clipboard: clipboardPage,
+            dashboard: dashboardPage,
+            power: powerPage,
+            notifications: notificationsPage,
+            osd: osdPage,
+            screenshot: screenshotPage,
+            windows: windowsPage,
+            input: inputPage,
+            keyboard: keyboardPage,
+            specials: specialsPage,
+            monitors: monitorsPage,
+            graphics: graphicsPage,
+            workspaces: workspacesPage,
+            keybinds: keybindsPage,
+            lock: lockPage,
+            idle: idlePage,
+            brightness: brightnessPage,
+            powerProfiles: powerProfilesPage,
+            apps: appsPage,
+            autostart: autostartPage,
+            profile: profilePage,
+            about: aboutPage
+        })
+
+    // Scrolls the sidebar so the given nav item is fully visible
+    function showNavItem(item: Item) {
+        const y = item.mapToItem(navColumn, 0, 0).y;
+        // Room above for a category title, so the first page shows its heading
+        const headroom = Config.fontSizeSmall * 2 + Config.padding;
+        if (y - headroom < navFlick.contentY)
+            navFlick.contentY = Math.max(0, y - headroom);
+        else if (y + item.height > navFlick.contentY + navFlick.height)
+            navFlick.contentY = y + item.height - navFlick.height;
+    }
+
+    // Page slot showing the current page (the other one is fading out)
+    property bool _onB: false
+    readonly property Loader pageLoader: _onB ? slotB : slotA
+    // 1 when the new page sits below the old one in the sidebar, -1 above
+    property int _direction: 1
+    property int _pageIndex: -1
+
+    function showPage() {
+        const id = SettingsService.currentEntry.id;
+        const index = SettingsService.pageOrder.indexOf(id);
+        _direction = index >= _pageIndex ? 1 : -1;
+        const first = _pageIndex < 0;
+        _pageIndex = index;
+        const old = pageLoader;
+        if (!first) {
+            // The old page leaves from where it's seen, the new one starts at the top
+            exitAnim.stop();
+            old.y -= flick.contentY;
+            exitAnim.slot = old;
+            exitAnim.toY = old.y - _direction * Config.spacing * 3;
+            _onB = !_onB;
+        }
+        scrollAnim.stop();
+        flick.contentY = 0;
+        pageLoader.sourceComponent = null;
+        pageLoader.y = 0;
+        pageLoader.opacity = 0;
+        pageLoader.sourceComponent = pageComponents[id];
+        if (!first)
+            exitAnim.start();
+    }
+
+    function pageLoaded(slot: Loader) {
+        if (slot !== pageLoader)
+            return;
+        enterAnim.restart();
+        if (SettingsService.pendingReveal)
+            revealTimer.restart();
+    }
+
+    function clearSlot(slot: Loader) {
+        if (slot === pageLoader)
+            return;
+        slot.sourceComponent = null;
+        slot.y = 0;
+        slot.opacity = 1;
+    }
+
+    Component.onCompleted: showPage()
+
+    // Rows the search result asked for, flashed once the scroll ends
+    property var _flashRows: []
+
+    // Scrolls to the row (or group) of SettingsService.pendingReveal on the
+    // current page and flashes it; hidden rows fall back to their group
+    function revealPending() {
+        const r = SettingsService.pendingReveal;
+        SettingsService.pendingReveal = null;
+        if (!r || !root.pageLoader.item || r.page !== SettingsService.currentPage)
+            return;
+        const rows = [];
+        const groups = [];
+        const walk = item => {
+            for (const c of item.children) {
+                if (!c.visible)
+                    continue;
+                if (c.isSettingRow === true)
+                    rows.push(c);
+                else if (c._visibleRows !== undefined)
+                    groups.push(c);
+                walk(c);
+            }
+        };
+        walk(root.pageLoader.item);
+        const groupTitle = item => {
+            for (let p = item.parent; p; p = p.parent) {
+                if (p._visibleRows !== undefined)
+                    return p.title;
+            }
+            return "";
+        };
+        let anchor = null;
+        let flash = [];
+        if (r.label !== "") {
+            const matches = rows.filter(x => x.label === r.label);
+            const row = matches.find(x => groupTitle(x) === r.group) ?? matches[0];
+            if (row) {
+                anchor = row;
+                flash = [row];
+            }
+        }
+        if (!anchor && r.group !== "") {
+            const group = groups.find(x => x.title === r.group);
+            if (group) {
+                anchor = group;
+                flash = group._visibleRows;
+            }
+        }
+        if (!anchor)
+            return;
+        const y = anchor.mapToItem(root.pageLoader, 0, 0).y;
+        const target = Math.max(0, Math.min(flick.contentHeight - flick.height, y - Config.spacing * 4));
+        _flashRows = flash;
+        if (Math.abs(target - flick.contentY) < 1) {
+            flashPending();
+        } else {
+            scrollAnim.to = target;
+            scrollAnim.restart();
+        }
+    }
+
+    function flashPending() {
+        _flashRows.forEach(row => row.flash());
+        _flashRows = [];
+    }
+
+    Timer {
+        id: revealTimer
+
+        // Lets the page settle (layouts, lazy content) before measuring
+        interval: Config.animDuration
+        onTriggered: root.revealPending()
+    }
+
+    Connections {
+        target: SettingsService
+
+        function onRevealRequested() {
+            revealTimer.restart();
+        }
+
+        // Centers it in the view when it is (partly) out of it
+        function onScrollToItemRequested(item) {
+            if (!item || !root.pageLoader.item)
+                return;
+            const y = item.mapToItem(root.pageLoader, 0, 0).y;
+            if (y >= flick.contentY && y + item.height <= flick.contentY + flick.height)
+                return;
+            scrollAnim.to = Math.max(0, Math.min(flick.contentHeight - flick.height, y - (flick.height - item.height) / 2));
+            scrollAnim.restart();
+        }
+
+        function onCurrentPageChanged() {
+            root.showPage();
+        }
+    }
+
+    Component {
+        id: themePage
+        ThemePage {}
+    }
+
+    Component {
+        id: launcherPage
+        LauncherPage {}
+    }
+
+    Component {
+        id: powerPage
+        PowerPage {}
+    }
+
+    Component {
+        id: lockPage
+        LockPage {}
+    }
+
+    Component {
+        id: clipboardPage
+        ClipboardPage {}
+    }
+
+    Component {
+        id: dashboardPage
+        DashboardPage {}
+    }
+
+    Component {
+        id: wallpaperPage
+        WallpaperPage {}
+    }
+
+    Component {
+        id: layoutPage
+        LayoutPage {}
+    }
+
+    Component {
+        id: typographyPage
+        TypographyPage {}
+    }
+
+    Component {
+        id: cursorPage
+        CursorPage {}
+    }
+
+    Component {
+        id: iconsPage
+        IconsPage {}
+    }
+
+    Component {
+        id: barPage
+        BarPage {}
+    }
+
+    Component {
+        id: notificationsPage
+        NotificationsPage {}
+    }
+
+    Component {
+        id: osdPage
+        OsdPage {}
+    }
+
+    Component {
+        id: screenshotPage
+        ScreenshotPage {}
+    }
+
+    Component {
+        id: windowsPage
+        WindowsPage {}
+    }
+
+    Component {
+        id: inputPage
+        InputPage {}
+    }
+
+    Component {
+        id: keyboardPage
+        KeyboardPage {}
+    }
+
+    Component {
+        id: keybindsPage
+        KeybindsPage {}
+    }
+
+    Component {
+        id: specialsPage
+        SpecialsPage {}
+    }
+
+    Component {
+        id: monitorsPage
+        MonitorsPage {}
+    }
+
+    Component {
+        id: graphicsPage
+        GraphicsPage {}
+    }
+
+    Component {
+        id: workspacesPage
+        WorkspacesPage {}
+    }
+
+    Component {
+        id: idlePage
+        IdlePage {}
+    }
+
+    Component {
+        id: brightnessPage
+        BrightnessPage {}
+    }
+
+    Component {
+        id: powerProfilesPage
+        PowerProfilesPage {}
+    }
+
+    Component {
+        id: appsPage
+        AppsPage {}
+    }
+
+    Component {
+        id: autostartPage
+        AutostartPage {}
+    }
+
+    Component {
+        id: profilePage
+        ProfilePage {}
+    }
+
+    Component {
+        id: aboutPage
+        AboutPage {}
+    }
+
+    // Stays English: Hyprland window rules match the title
+    title: "Settings" // i18n-ignore
+    implicitWidth: defaultSize.width
+    implicitHeight: defaultSize.height
+    minimumSize: Qt.size(720, 480)
+    color: Config.backgroundTransparentColor
+    visible: true
+
+    onVisibleChanged: {
+        if (!visible)
+            SettingsService.close();
+    }
+
+    // Pages may use Escape first (close a popup, clear a selection) through
+    // an optional handleEscape(): bool; then it clears the search
+    Shortcut {
+        sequence: "Escape"
+        onActivated: {
+            if (root.pageLoader.item?.handleEscape?.())
+                return;
+            if (search.text !== "") {
+                search.text = "";
+                return;
+            }
+            if (search.focused) {
+                search.input.focus = false;
+                return;
+            }
+            SettingsService.close();
+        }
+    }
+
+    // Next / previous page in sidebar order
+    Shortcut {
+        sequences: ["Ctrl+Tab", "Ctrl+PgDown"]
+        onActivated: SettingsService.stepPage(1)
+    }
+
+    Shortcut {
+        sequences: ["Ctrl+Shift+Tab", "Ctrl+Backtab", "Ctrl+PgUp"]
+        onActivated: SettingsService.stepPage(-1)
+    }
+
+    // A text field keeps "/" for itself (typed, not a shortcut). Pages must
+    // not bind these keys again: two Shortcuts with one sequence in a window
+    // are ambiguous and neither fires (tests/js/settings-shortcuts.test.js)
+    Shortcut {
+        sequences: ["Ctrl+F", "/"]
+        onActivated: {
+            search.focusInput();
+            search.selectAll();
+        }
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        anchors.margins: Config.padding * 2
+        spacing: Config.padding * 2
+
+        // ================= SIDEBAR =================
+        Rectangle {
+            Layout.fillHeight: true
+            Layout.preferredWidth: root.sidebarWidth
+            radius: Config.radiusLarge
+            color: Config.cardColor
+
+            HoverHandler {
+                id: sidebarHover
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: Config.padding * 2
+                // The nav list reaches the edge: its scrollbar sits in the margin
+                anchors.rightMargin: 0
+                spacing: Config.spacing
+
+                // Title
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.rightMargin: Config.padding * 2
+                    Layout.bottomMargin: Config.spacing
+                    spacing: Config.spacing + Config.padding
+
+                    Rectangle {
+                        implicitWidth: root.boxSize
+                        implicitHeight: root.boxSize
+                        radius: Config.radiusLarge
+                        color: Qt.alpha(Config.accentColor, 0.15)
+
+                        LyneLogo {
+                            anchors.centerIn: parent
+                            height: Config.fontSizeNormal
+                        }
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: I18n.tr("Settings")
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeLarge
+                        font.bold: true
+                        color: Config.textColor
+                    }
+                }
+
+                // Search: pages and the options inside them
+                QsSearchField {
+                    id: search
+
+                    Layout.fillWidth: true
+                    Layout.rightMargin: Config.padding * 2
+                    Layout.bottomMargin: Config.spacing
+                    implicitHeight: root.boxSize + Config.padding
+                    placeholder: I18n.tr("Search")
+                    hint: "Ctrl F" // i18n-ignore
+                    onFocusedChanged: {
+                        if (focused)
+                            SettingsService.buildIndex();
+                    }
+                    onAccepted: results.activateCurrent()
+                    // Arrows always move the selection; Tab / Shift+Tab only
+                    // while results show, so an empty field still moves focus
+                    onKeyPressed: event => {
+                        if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                            results.move(event.key === Qt.Key_Up ? -1 : 1);
+                            event.accepted = true;
+                        } else if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && results.visible && !(event.modifiers & Qt.ControlModifier)) {
+                            results.move(event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) ? -1 : 1);
+                            event.accepted = true;
+                        }
+                    }
+                }
+
+                SearchResults {
+                    id: results
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: search.text !== ""
+                    query: search.text
+                }
+
+                ScrollFadeMask {
+                    id: navFade
+
+                    flickable: navFlick
+                }
+
+                // Scrolls when the pages don't fit the window height; the
+                // items cut by an edge with more to scroll fade out
+                Flickable {
+                    id: navFlick
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: search.text === ""
+                    clip: true
+                    contentHeight: navColumn.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    layer.enabled: navFade.active
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: navFade
+                        // The mask's alpha as is, eased (smoothstep) instead
+                        // of linear
+                        maskThresholdMin: 0.5
+                        maskSpreadAtMin: 1
+                    }
+
+                    ScrollBar.vertical: QsScrollBar {
+                        autoHide: true
+                        peek: sidebarHover.hovered
+                    }
+
+                    SmoothWheel {
+                        flickable: navFlick
+                    }
+
+                    ColumnLayout {
+                        id: navColumn
+
+                        width: navFlick.width - Config.padding * 2
+                        spacing: Config.spacing
+
+                        Repeater {
+                            model: SettingsService.categories
+
+                            ColumnLayout {
+                                id: category
+
+                                required property string modelData
+
+                                Layout.fillWidth: true
+                                spacing: Math.round(Config.padding / 3)
+
+                                Text {
+                                    Layout.leftMargin: Config.padding
+                                    Layout.bottomMargin: Config.padding
+                                    text: I18n.translate(category.modelData).toUpperCase()
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeSmall
+                                    font.bold: true
+                                    font.letterSpacing: 1
+                                    color: Config.subtextColor
+                                }
+
+                                Repeater {
+                                    model: SettingsService.pages.filter(p => p.category === category.modelData)
+
+                                    Rectangle {
+                                        id: navItem
+
+                                        required property var modelData
+                                        readonly property bool active: SettingsService.currentPage === modelData.id
+
+                                onActiveChanged: {
+                                    if (active)
+                                        Qt.callLater(root.showNavItem, navItem);
+                                }
+                                Component.onCompleted: {
+                                    if (active)
+                                        Qt.callLater(root.showNavItem, navItem);
+                                }
+
+                                        Layout.fillWidth: true
+                                        implicitHeight: navRow.implicitHeight + Config.padding * 2
+                                        radius: Config.radiusLarge
+                                        color: active ? Qt.alpha(Config.accentColor, 0.15) : navMouse.containsMouse ? Config.surface1Color : Qt.alpha(Config.surface1Color, 0)
+
+                                        Behavior on color {
+                                            enabled: !Config.themeTransitioning
+                                            ColorAnimation {
+                                                duration: Config.animDurationShort
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            id: navRow
+
+                                            anchors.fill: parent
+                                            anchors.margins: Config.padding
+                                            spacing: Config.spacing + Config.padding
+
+                                            Rectangle {
+                                                implicitWidth: root.boxSize
+                                                implicitHeight: root.boxSize
+                                                radius: Config.radiusLarge
+                                                color: navItem.active ? Config.accentColor : Config.surface1Color
+
+                                                Behavior on color {
+                                                    enabled: !Config.themeTransitioning
+                                                    ColorAnimation {
+                                                        duration: Config.animDurationShort
+                                                    }
+                                                }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: navItem.modelData.icon
+                                                    font.family: Config.font
+                                                    font.pixelSize: Config.fontSizeLarge
+                                                    color: navItem.active ? Config.textReverseColor : Config.textColor
+                                                }
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: I18n.translate(navItem.modelData.label)
+                                                elide: Text.ElideRight
+                                                font.family: Config.font
+                                                font.pixelSize: Config.fontSizeNormal
+                                                font.bold: navItem.active
+                                                color: navItem.active ? Config.accentColor : Config.textColor
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: navMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: SettingsService.currentPage = navItem.modelData.id
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ================= PAGE =================
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: Config.spacing * 2
+
+            // Header: page icon, title and description, lined up with the
+            // page column below; the window size buttons in the corner
+            Item {
+                id: headerArea
+
+                // Page column (as the page loaders below)
+                readonly property int columnWidth: Math.min(width - root.pageGutter * 2, root.maxContentWidth)
+                readonly property int columnX: Math.round((width - columnWidth) / 2)
+
+                Layout.fillWidth: true
+                Layout.topMargin: Config.padding * 2
+                implicitHeight: Math.max(header.implicitHeight, sizeControls.implicitHeight)
+
+                RowLayout {
+                    id: header
+
+                    x: headerArea.columnX
+                    // Stops short of the size buttons when they reach the column
+                    width: Math.min(headerArea.columnWidth, sizeControls.x - Config.spacing * 2 - x)
+                    spacing: Config.spacing + Config.padding
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignTop
+                        implicitWidth: Config.fontSizeIconLarge * 2
+                        implicitHeight: implicitWidth
+                        radius: Config.radiusLarge
+                        color: Qt.alpha(Config.accentColor, 0.15)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: SettingsService.currentEntry.icon
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeIconLarge
+                            color: Config.accentColor
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Math.round(Config.padding / 3)
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: I18n.translate(SettingsService.currentEntry.label)
+                            elide: Text.ElideRight
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeIconLarge
+                            font.bold: true
+                            color: Config.textColor
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: I18n.translate(SettingsService.currentEntry.description)
+                            wrapMode: Text.WordWrap
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeNormal
+                            color: Config.subtextColor
+                        }
+                    }
+                }
+
+                WindowSizeControls {
+                    id: sizeControls
+
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    window: root
+                    defaultSize: root.defaultSize
+                    buttonSize: root.boxSize
+                }
+            }
+
+            ScrollFadeMask {
+                id: pageFade
+
+                flickable: flick
+            }
+
+            // The page; the rows cut by an edge with more to scroll fade out
+            Flickable {
+                id: flick
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: width
+                contentHeight: root.pageLoader.implicitHeight + Config.padding * 4
+                boundsBehavior: Flickable.StopAtBounds
+
+                layer.enabled: pageFade.active
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: pageFade
+                    // The mask's alpha as is, eased (smoothstep) instead of
+                    // linear
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1
+                }
+
+                ScrollBar.vertical: QsScrollBar {}
+
+                SmoothWheel {
+                    flickable: flick
+                    onWheelStarted: scrollAnim.stop()
+                }
+
+                NumberAnimation {
+                    id: scrollAnim
+
+                    target: flick
+                    property: "contentY"
+                    duration: Config.animDurationLong
+                    easing.type: Easing.OutCubic
+                    onFinished: root.flashPending()
+                }
+
+                // Two slots take turns: the new page slides in from the side
+                // of its place in the sidebar while the old one fades out
+                Loader {
+                    id: slotA
+
+                    x: Math.round((flick.width - width) / 2)
+                    width: Math.min(flick.width - root.pageGutter * 2, root.maxContentWidth)
+                    enabled: root.pageLoader === slotA
+                    z: enabled ? 1 : 0
+                    onLoaded: root.pageLoaded(slotA)
+                }
+
+                Loader {
+                    id: slotB
+
+                    x: Math.round((flick.width - width) / 2)
+                    width: Math.min(flick.width - root.pageGutter * 2, root.maxContentWidth)
+                    enabled: root.pageLoader === slotB
+                    z: enabled ? 1 : 0
+                    onLoaded: root.pageLoaded(slotB)
+                }
+
+                ParallelAnimation {
+                    id: enterAnim
+
+                    NumberAnimation {
+                        target: root.pageLoader
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: Config.animDuration
+                    }
+
+                    NumberAnimation {
+                        target: root.pageLoader
+                        property: "y"
+                        from: root._direction * Config.spacing * 3
+                        to: 0
+                        duration: Config.animDurationLong
+                        easing.type: Easing.OutExpo
+                    }
+                }
+
+                ParallelAnimation {
+                    id: exitAnim
+
+                    property Loader slot
+                    property real toY
+
+                    NumberAnimation {
+                        target: exitAnim.slot
+                        property: "opacity"
+                        to: 0
+                        duration: Config.animDurationShort
+                    }
+
+                    NumberAnimation {
+                        target: exitAnim.slot
+                        property: "y"
+                        to: exitAnim.toY
+                        duration: Config.animDurationShort
+                        easing.type: Easing.InCubic
+                    }
+
+                    onFinished: root.clearSlot(slot)
+                }
+            }
+        }
+    }
+}

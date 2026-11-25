@@ -1,0 +1,228 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import qs.config
+
+Item {
+    id: root
+
+    // --- Properties ---
+    property real value: 0
+    property real from: 0
+    property real to: 1
+    // Wheel step
+    property real stepSize: (to - from) * 0.05
+    property string icon: ""
+    property bool showPercentage: true
+    property color fillColor: Config.accentColor
+    // Off where the slider sits in a scrolling page (Settings): the wheel
+    // scrolls the page instead of changing the value
+    property bool wheelEnabled: true
+
+    // SIGNALS
+    signal moved(real newValue)
+    signal iconClicked
+
+    readonly property int size: Config.fontSizeIconSmall * 2
+    readonly property int trackHeight: size - Config.spacing
+    readonly property int innerRadius: Math.round(Config.padding / 3)
+
+    // Component size
+    implicitHeight: size
+    Layout.fillWidth: true
+
+    Behavior on fillColor {
+        enabled: !Config.themeTransitioning
+        ColorAnimation {
+            duration: Config.animDurationShort
+        }
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: Config.spacing
+
+        // --- THE ICON BUTTON ---
+        Rectangle {
+            id: iconBtn
+
+            visible: root.icon !== ""
+
+            // Set the size: full component height and width equal to height (square)
+            Layout.fillHeight: true
+            Layout.preferredWidth: height
+
+            radius: Config.radiusLarge
+
+            // Color changes on hover (button feedback)
+            color: iconMouse.containsMouse ? Config.surface2Color : Config.surface1Color
+
+            Behavior on color {
+                enabled: !Config.themeTransitioning
+                ColorAnimation {
+                    duration: Config.animDurationShort
+                }
+            }
+
+            // Icon
+            Text {
+                anchors.centerIn: parent
+                text: root.icon
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeLarge
+                font.bold: true
+                color: Config.textColor
+
+                scale: iconMouse.pressed ? 0.8 : 1.0
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Config.animDurationShort
+                    }
+                }
+            }
+
+            MouseArea {
+                id: iconMouse
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: root.iconClicked()
+            }
+        }
+
+        // THE SLIDER BAR
+        Item {
+            id: sliderContainer
+
+            // Layout magic: Takes up all remaining width
+            Layout.fillWidth: true
+            Layout.preferredHeight: parent.height - Config.padding
+
+            readonly property real handleGap: Math.round(Config.padding * 2 / 3)
+            // Clamped: the value can sit outside the range (volume set elsewhere)
+            readonly property real visualPos: Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
+            // Only value changes animate: sizes follow the layout at once, or
+            // a resize (the Quick Settings monitor chip growing) restarts the
+            // animations every frame and the bars lag behind
+            property real shownPos: visualPos
+
+            Behavior on shownPos {
+                NumberAnimation {
+                    duration: Config.animDurationShort
+                    easing.type: Easing.OutQuad
+                }
+            }
+
+            // Inner container for the scale animation
+            Item {
+                anchors.fill: parent
+                scale: sliderMouse.pressed ? 0.98 : 1.0
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Config.animDurationShort
+                        easing.type: Easing.OutQuad
+                    }
+                }
+
+                // Fill
+                Rectangle {
+                    id: fill
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+
+                    width: Math.max(0, (sliderContainer.shownPos * parent.width) - sliderContainer.handleGap)
+                    height: root.trackHeight
+                    color: root.fillColor
+
+                    topLeftRadius: Config.radius
+                    bottomLeftRadius: Config.radius
+                    topRightRadius: root.innerRadius
+                    bottomRightRadius: root.innerRadius
+                }
+
+                // Remaining
+                Rectangle {
+                    id: remainingBar
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+
+                    width: Math.max(0, ((1 - sliderContainer.shownPos) * parent.width) - sliderContainer.handleGap)
+                    height: root.trackHeight
+                    color: Config.surface2Color
+
+                    topLeftRadius: root.innerRadius
+                    bottomLeftRadius: root.innerRadius
+                    topRightRadius: Config.radius
+                    bottomRightRadius: Config.radius
+                }
+
+                // Handle
+                Rectangle {
+                    id: handle
+                    width: 3.5
+                    height: parent.height
+                    radius: root.innerRadius
+                    color: root.fillColor
+
+                    x: (sliderContainer.shownPos * parent.width) - (width / 2)
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    opacity: sliderMouse.containsMouse || sliderMouse.pressed ? 1.0 : 0.8
+                }
+            }
+
+            // MouseArea
+            MouseArea {
+                id: sliderMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+
+                function updateFromMouse(mouseX) {
+                    let percent = mouseX / width;
+                    percent = Math.max(0, Math.min(1, percent));
+                    let val = root.from + (root.to - root.from) * percent;
+                    root.moved(val);
+                }
+
+                onPressed: mouse => updateFromMouse(mouse.x)
+                onPositionChanged: mouse => {
+                    if (pressed)
+                        updateFromMouse(mouse.x);
+                }
+
+                onWheel: wheel => {
+                    if (!root.wheelEnabled) {
+                        wheel.accepted = false;
+                        return;
+                    }
+                    let step = root.stepSize;
+                    if (wheel.angleDelta.y > 0)
+                        root.moved(Math.min(root.to, root.value + step));
+                    else
+                        root.moved(Math.max(root.from, root.value - step));
+                }
+            }
+        }
+
+        // Value, fixed width so the track doesn't move while it changes
+        Text {
+            visible: root.showPercentage
+            Layout.preferredWidth: valueMetrics.width
+            horizontalAlignment: Text.AlignRight
+            text: Math.round(sliderContainer.visualPos * 100) + "%"
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            font.bold: true
+            color: Config.subtextColor
+
+            TextMetrics {
+                id: valueMetrics
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                font.bold: true
+                text: "100%"
+            }
+        }
+    }
+}

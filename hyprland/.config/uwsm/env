@@ -1,0 +1,60 @@
+# ==============================================================================
+# UWSM GLOBAL ENVIRONMENT VARIABLES
+# ==============================================================================
+# hypr/conf/environment.lua sets the same variables for a session started
+# without uwsm: keep both in sync
+
+# Forces Electron apps (VSCode, Discord, Obsidian) to use native Wayland
+export ELECTRON_OZONE_PLATFORM_HINT=auto
+
+# ------------------------------------------------------------------------------
+# XDG / SESSION IDENTIFICATION
+# Identifies the session for portals and managers
+# ------------------------------------------------------------------------------
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_TYPE=wayland
+export XDG_SESSION_DESKTOP=Hyprland
+
+# Ensures app menus follow the Arch standard
+export XDG_MENU_PREFIX=arch-
+
+# ------------------------------------------------------------------------------
+# TOOLKITS (GTK & QT)
+# Visual and backend settings for graphical interfaces
+# ------------------------------------------------------------------------------
+# GTK: Prioritizes Wayland, then X11
+export GDK_BACKEND="wayland,x11,*"
+
+# QT: Settings for Qt6/Qt5
+export QT_QPA_PLATFORM="wayland;xcb"
+export QT_QPA_PLATFORMTHEME=qt6ct
+export QT_AUTO_SCREEN_SCALE_FACTOR=1
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+# KDE apps ignore qt6ct's palette and read this file. The shell rewrites it
+# in place when the theme changes, so the path does not.
+export KDE_COLOR_SCHEME_PATH="$HOME/.local/share/color-schemes/Lyne.colors"
+
+# ------------------------------------------------------------------------------
+# PATH
+# Makes ~/.local/bin available to the entire session (keybinds, scripts, etc)
+# ------------------------------------------------------------------------------
+export PATH="$HOME/.local/bin:$PATH"
+
+# ------------------------------------------------------------------------------
+# lyne-dots
+# Where the repo really is (this file is a link into it), for the shell and
+# the scripts; ~/.lyne-dots when this file isn't linked
+# ------------------------------------------------------------------------------
+_lyne_env="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/uwsm/env" 2>/dev/null)"
+case "$_lyne_env" in
+*/hyprland/.config/uwsm/env) LYNE_DOTS="${_lyne_env%/hyprland/.config/uwsm/env}" ;;
+*) LYNE_DOTS="$HOME/.lyne-dots" ;;
+esac
+export LYNE_DOTS
+unset _lyne_env
+
+# Load local global hardware exports
+if [ -f "$HOME/.config/uwsm/env.d/global_hardware.sh" ]; then
+    . "$HOME/.config/uwsm/env.d/global_hardware.sh"
+fi
+

@@ -1,0 +1,479 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Quickshell.Widgets
+import qs.config
+import qs.services
+import "../rows/"
+import "../../../components/"
+
+// Detail view of one theme inside the Theme page: its colors and the
+// wallpapers in its folder (~/.local/wallpapers/themes/<theme>/), one of them
+// being the wallpaper the theme brings when switched to
+ColumnLayout {
+    id: root
+
+    required property string theme
+
+    readonly property int columns: 3
+    readonly property int thumbHeight: Config.fontSizeIconLarge * 2
+    readonly property var preview: ThemeService.themePreviews[theme] ?? {}
+    readonly property var themePalette: preview.palette ?? {}
+    readonly property var terminal: preview.terminal ?? {}
+    readonly property string displayName: preview.name ?? theme
+    readonly property bool inUse: !ThemeService.isAutoMode && theme === ThemeService.currentThemeName
+    readonly property string activePath: WallpaperService.themeWallpaperPath(theme)
+    readonly property bool linked: WallpaperService.dynamicWallpaper && !ThemeService.isAutoMode
+    property bool pickingFromLibrary: false
+    property bool confirmingDelete: false
+    readonly property bool generating: WallpaperService.generatingFor === theme
+    readonly property bool hasLyneWallpapers: WallpaperService.themeWallpapers.some(p => WallpaperService.fileName(p).startsWith("lyne-" + theme + "-"))
+    readonly property string generateError: I18n.translate(WallpaperService.generateErrors[theme] ?? "")
+    readonly property bool custom: preview.custom === true
+
+    // Library wallpapers that aren't in the theme's folder yet
+    readonly property var libraryChoices: {
+        const names = WallpaperService.themeWallpapers.map(p => WallpaperService.fileName(p));
+        return WallpaperService.wallpapers.filter(p => !names.includes(WallpaperService.fileName(p)));
+    }
+
+    signal back
+    signal editRequested
+    signal duplicateRequested
+
+    function displayFileName(path: string): string {
+        const name = WallpaperService.fileName(path);
+        const dot = name.lastIndexOf(".");
+        return dot > 0 ? name.substring(0, dot) : name;
+    }
+
+    function pick(path: string) {
+        WallpaperService.setThemeWallpaper(path, theme);
+        pickingFromLibrary = false;
+    }
+
+    onThemeChanged: {
+        pickingFromLibrary = false;
+        confirmingDelete = false;
+        WallpaperService.refreshThemeWallpapers(theme);
+    }
+    Component.onCompleted: {
+        WallpaperService.refreshThemeWallpapers(theme);
+        WallpaperService.refreshWallpapers();
+    }
+
+    spacing: Config.spacing * 3
+
+    ContextMenu {
+        id: menu
+
+        items: [
+            {
+                label: I18n.tr("Use for %1", root.displayName),
+                icon: "\u{f012c}",
+                action: "use"
+            },
+            {
+                label: I18n.tr("Show now"),
+                icon: "\u{f02e9}",
+                action: "apply"
+            },
+            {
+                label: I18n.tr("Delete"),
+                icon: "\u{f09e7}",
+                action: "delete",
+                danger: true,
+                // The one in use can't go: apply another first
+                disabled: target === WallpaperService.currentWallpaper,
+                detail: target === WallpaperService.currentWallpaper ? I18n.tr("In use") : ""
+            }
+        ]
+
+        onTriggered: (action, path) => {
+            switch (action) {
+            case "use":
+                root.pick(path);
+                break;
+            case "apply":
+                WallpaperService.setWallpaper(path);
+                break;
+            case "delete":
+                WallpaperService.deleteWallpapers([path]);
+                break;
+            }
+        }
+    }
+
+    ContextMenu {
+        id: themeMenu
+
+        items: [
+            {
+                label: I18n.tr("Edit colors"),
+                icon: "\u{f03eb}",
+                action: "edit",
+                hidden: !root.custom
+            },
+            {
+                label: I18n.tr("Duplicate"),
+                icon: "\u{f0191}",
+                action: "duplicate"
+            },
+            {
+                label: I18n.tr("Delete"),
+                icon: "\u{f09e7}",
+                action: "delete",
+                danger: true,
+                hidden: !root.custom
+            }
+        ].filter(item => !item.hidden)
+
+        onTriggered: action => {
+            if (action === "edit")
+                root.editRequested();
+            else if (action === "duplicate")
+                root.duplicateRequested();
+            else if (action === "delete")
+                root.confirmingDelete = true;
+        }
+    }
+
+    PageHeader {
+        title: root.displayName
+        subtitle: {
+            const light = root.preview.variant === "light";
+            const kind = root.custom ? (light ? I18n.tr("Light · made by you") : I18n.tr("Dark · made by you")) : (light ? I18n.tr("Light theme") : I18n.tr("Dark theme"));
+            return root.inUse ? I18n.tr("%1 · in use", kind) : kind;
+        }
+        icon: "\u{f03d8}"
+        onBackClicked: root.back()
+
+        ActionButton {
+            visible: !root.inUse
+            icon: "\u{f012c}"
+            text: I18n.tr("Apply")
+            baseColor: Config.accentColor
+            hoverColor: Qt.lighter(Config.accentColor, 1.1)
+            textColor: Config.textReverseColor
+            onClicked: ThemeService.setPresetMode(root.theme)
+        }
+
+        // md-pencil: custom themes open straight in the editor
+        ActionButton {
+            visible: root.custom
+            icon: "\u{f03eb}"
+            text: I18n.tr("Edit")
+            onClicked: root.editRequested()
+        }
+
+        ActionButton {
+            id: themeMenuButton
+            icon: "\u{f01d9}"
+            onClicked: themeMenu.openAt(themeMenuButton, root.theme)
+        }
+    }
+
+    // Delete confirmation (custom themes)
+    SettingsGroup {
+        visible: root.confirmingDelete
+
+        SettingRow {
+            id: deleteRow
+
+            label: I18n.tr("Delete %1?", root.displayName)
+            description: root.inUse ? I18n.tr("It's the theme in use: switch to another one first") : I18n.tr("Its file and its wallpaper folder are removed")
+            descriptionColor: root.inUse ? Config.warningColor : Config.subtextColor
+
+            ActionButton {
+                text: I18n.tr("Cancel")
+                baseColor: deleteRow.controlColor
+                onClicked: root.confirmingDelete = false
+            }
+
+            ActionButton {
+                visible: !root.inUse
+                icon: "\u{f09e7}"
+                text: I18n.tr("Delete")
+                baseColor: Config.errorColor
+                hoverColor: Qt.lighter(Config.errorColor, 1.1)
+                textColor: Config.textReverseColor
+                onClicked: {
+                    ThemeService.deleteTheme(root.theme);
+                    root.confirmingDelete = false;
+                    root.back();
+                }
+            }
+        }
+    }
+
+    // ================= COLORS =================
+    SettingsGroup {
+        title: I18n.tr("Colors")
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: colors.implicitHeight + Config.padding * 4
+            radius: Config.radiusLarge
+            color: Config.cardColor
+
+            ColumnLayout {
+                id: colors
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Config.padding * 2
+                spacing: Config.spacing
+
+                ThemeMock {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(width * 9 / 16, Config.fontSizeNormal * 22)
+                    theme: root.preview
+                    wallpaper: root.activePath
+                }
+
+                // Interface palette
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: Config.padding
+
+                    Repeater {
+                        model: [
+                            {
+                                key: "background",
+                                label: I18n.tr("Background")
+                            },
+                            {
+                                key: "surface1",
+                                label: I18n.tr("Surface")
+                            },
+                            {
+                                key: "text",
+                                label: I18n.tr("Text")
+                            },
+                            {
+                                key: "subtext",
+                                label: I18n.tr("Subtext")
+                            },
+                            {
+                                key: "accent",
+                                label: I18n.tr("Accent")
+                            },
+                            {
+                                key: "success",
+                                label: I18n.tr("Success")
+                            },
+                            {
+                                key: "warning",
+                                label: I18n.tr("Warning")
+                            },
+                            {
+                                key: "error",
+                                label: I18n.tr("Error")
+                            }
+                        ]
+
+                        Rectangle {
+                            id: chip
+
+                            required property var modelData
+                            readonly property color swatch: root.themePalette[modelData.key] ?? "transparent"
+
+                            width: chipRow.implicitWidth + Config.padding * 2
+                            height: chipRow.implicitHeight + Config.padding
+                            radius: height / 2
+                            color: Config.surface1Color
+
+                            RowLayout {
+                                id: chipRow
+
+                                anchors.centerIn: parent
+                                spacing: Config.padding
+
+                                Rectangle {
+                                    implicitWidth: Config.fontSizeNormal
+                                    implicitHeight: implicitWidth
+                                    radius: width / 2
+                                    color: chip.swatch
+                                    border.width: 1
+                                    border.color: Qt.alpha(Config.textColor, 0.2)
+                                }
+
+                                Text {
+                                    text: chip.modelData.label
+                                    font.family: Config.font
+                                    font.pixelSize: Config.fontSizeSmall
+                                    color: Config.textColor
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ================= WALLPAPER =================
+    SettingsGroup {
+        title: I18n.tr("Wallpaper")
+
+        SettingRow {
+            id: activeRow
+
+            label: root.activePath !== "" ? root.displayFileName(root.activePath) : I18n.tr("No wallpaper")
+            description: {
+                if (ThemeService.isAutoMode)
+                    return I18n.tr("Not used while the colors follow your wallpaper (Material You)");
+                if (!WallpaperService.dynamicWallpaper)
+                    return I18n.tr("Not used: switching theme keeps your wallpaper (Theme › When switching theme)");
+                return I18n.tr("Shown when you switch to %1", root.displayName);
+            }
+
+            leading: ClippingRectangle {
+                implicitWidth: Math.round(root.thumbHeight * 16 / 9)
+                implicitHeight: root.thumbHeight
+                radius: Config.radius
+                color: Config.surface1Color
+
+                Image {
+                    anchors.fill: parent
+                    source: WallpaperService.stillSource(root.activePath)
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize: Config.wallpaperThumbSize
+                    asynchronous: true
+                }
+            }
+
+            // md-image_plus
+            ActionButton {
+                icon: root.pickingFromLibrary ? "\u{f0156}" : "\u{f087c}"
+                text: root.pickingFromLibrary ? I18n.tr("Cancel") : I18n.tr("From library")
+                baseColor: activeRow.controlColor
+                onClicked: root.pickingFromLibrary = !root.pickingFromLibrary
+            }
+        }
+
+        // The lyne-dots contour scene rendered in the theme's colors
+        SettingRow {
+            id: generateRow
+
+            label: I18n.tr("lyne-dots wallpaper")
+            description: {
+                if (root.generating)
+                    return I18n.tr("Rendering the contour scene…");
+                if (root.generateError !== "")
+                    return root.generateError;
+                if (WallpaperService.generatingFor !== "")
+                    return I18n.tr("Another theme's wallpaper is rendering");
+                if (root.hasLyneWallpapers)
+                    return I18n.tr("The contour scene in the colors of %1. Render it again after changing its colors", root.displayName);
+                return I18n.tr("Render the contour scene in the colors of %1", root.displayName);
+            }
+            descriptionColor: root.generateError !== "" && !root.generating ? Config.errorColor : Config.subtextColor
+
+            leading: LyneLogo {
+                height: Config.fontSizeIconSmall
+                dotColor: root.themePalette.accent ?? Config.accentColor
+            }
+
+            Spinner {
+                visible: root.generating
+                running: visible
+                size: Config.fontSizeIconSmall
+            }
+
+            ActionButton {
+                visible: !root.generating
+                opacity: WallpaperService.generatingFor === "" ? 1 : 0.4
+                icon: "\u{f1a00}"
+                text: root.hasLyneWallpapers ? I18n.tr("Render again") : I18n.tr("Generate")
+                baseColor: generateRow.controlColor
+                onClicked: {
+                    if (WallpaperService.generatingFor === "")
+                        WallpaperService.generateThemeWallpapers(root.theme);
+                }
+            }
+        }
+
+        // Theme folder, or the library while picking from it
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: wallpapers.implicitHeight + Config.padding * 4
+            radius: Config.radiusLarge
+            color: Config.cardColor
+
+            ColumnLayout {
+                id: wallpapers
+
+                readonly property var shown: root.pickingFromLibrary ? root.libraryChoices : WallpaperService.themeWallpapers
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Config.padding * 2
+                spacing: Config.spacing + Config.padding
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.pickingFromLibrary ? I18n.tr("Pick a wallpaper from your library: it's copied to the wallpapers of %1 and used for it", root.displayName) : I18n.tr("Click one to use it for %1", root.displayName)
+                    wrapMode: Text.WordWrap
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                }
+
+                GridLayout {
+                    id: grid
+
+                    readonly property real cellWidth: (width - columnSpacing * (root.columns - 1)) / root.columns
+
+                    visible: wallpapers.shown.length > 0
+                    Layout.fillWidth: true
+                    columns: root.columns
+                    columnSpacing: Config.spacing
+                    rowSpacing: Config.spacing
+
+                    Repeater {
+                        model: wallpapers.shown
+
+                        WallpaperTile {
+                            required property string modelData
+
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: grid.cellWidth
+                            path: modelData
+                            badge: !root.pickingFromLibrary && modelData === root.activePath ? "\u{f012c} " + I18n.tr("Active") : ""
+                            current: !root.pickingFromLibrary && modelData === WallpaperService.currentWallpaper
+                            onActivated: root.pick(modelData)
+                            onSelectToggled: root.pick(modelData)
+                            showMenu: !root.pickingFromLibrary
+                            onMenuRequested: anchor => menu.openAt(anchor, modelData)
+                        }
+                    }
+
+                    // Keeps a lone tile at column size
+                    Repeater {
+                        model: Math.max(0, root.columns - wallpapers.shown.length)
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: grid.cellWidth
+                        }
+                    }
+                }
+
+                Text {
+                    visible: wallpapers.shown.length === 0
+                    Layout.fillWidth: true
+                    Layout.topMargin: Config.spacing
+                    Layout.bottomMargin: Config.spacing
+                    horizontalAlignment: Text.AlignHCenter
+                    text: root.pickingFromLibrary ? I18n.tr("Every library wallpaper is already in this theme") : I18n.tr("No wallpapers yet: add one with From library")
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    color: Config.subtextColor
+                }
+            }
+        }
+    }
+}

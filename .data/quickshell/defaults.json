@@ -1,0 +1,350 @@
+{
+    "general": {
+        "language": "auto"
+    },
+    "system": {
+        "editor": "nvim",
+        "aurHelper": "yay",
+        "stow": null
+    },
+    "apps": {
+        "terminal": {
+            "command": "kitty",
+            "desktop": "kitty"
+        },
+        "fileManager": {
+            "command": "dolphin",
+            "desktop": "org.kde.dolphin"
+        },
+        "browser": {
+            "command": "zen-browser",
+            "desktop": "zen"
+        }
+    },
+    "autostart": {
+        "apps": []
+    },
+    "keyboard": {
+        "devices": []
+    },
+    "touchpad": {
+        "enabled": true,
+        "names": []
+    },
+    "theme": {
+        "name": "tokyonight",
+        "mode": "preset",
+        "scheme": "dark"
+    },
+    "wallpaper": {
+        "current": "~/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg",
+        "dynamic": true,
+        "favorites": [],
+        "pickerPosition": "bottom",
+        "pickerFilter": "all",
+        "transition": "fade",
+        "transitionSpeed": "normal",
+        "pauseCovered": true,
+        "pauseLocked": true,
+        "pauseOnBattery": null,
+        "videoFps": 30
+    },
+    "nightLight": {
+        "enabled": false,
+        "intensity": 0.5
+    },
+    "bar": {
+        "keyboardLayout": "auto",
+        "autoHide": false,
+        "height": 33,
+        "style": "docked-corners",
+        "position": "top",
+        "margin": 8,
+        "attachPopups": true,
+        "centerStyle": "clock",
+        "showMedia": true,
+        "showSystem": false,
+        "showWeather": false,
+        "showNotifications": true,
+        "launcher": {
+            "style": "logo",
+            "icon": "lyne",
+            "animate": true,
+            "rightClick": "actions",
+            "middleClick": "clipboard"
+        },
+        "workspaces": {
+            "style": "pills",
+            "count": 10,
+            "hideEmpty": false,
+            "scroll": true
+        },
+        "tray": {
+            "style": "drawer",
+            "open": false,
+            "pinned": [],
+            "hidden": [],
+            "order": [],
+            "attention": true,
+            "monochrome": false,
+            "tooltips": true
+        },
+        "quickSettings": {
+            "style": "icons",
+            "batteryPercent": true,
+            "indicators": {
+                "network": true,
+                "bluetooth": true,
+                "volume": true,
+                "mic": true,
+                "battery": true
+            }
+        }
+    },
+    "clipboard": {
+        "storeImages": true,
+        "maxItems": 750
+    },
+    "launcher": {
+        "favorites": [],
+        "hidden": [],
+        "usage": [],
+        "showDescriptions": true,
+        "rankByUsage": true,
+        "rows": 7,
+        "style": "spotlight",
+        "position": "bottom",
+        "order": "top"
+    },
+    "cursor": {
+        "theme": "Bibata-Modern-Classic",
+        "size": 24
+    },
+    "icons": {
+        "theme": "Tela-blue"
+    },
+    "dashboard": {
+        "visualizer": true,
+        "coverBackdrop": true,
+        "lyrics": false,
+        "showGif": true,
+        "gif": "",
+        "hiddenTabs": [],
+        "defaultTab": "overview",
+    "swipeTabs": true,
+        "holidays": "auto"
+    },
+    "opacity": {
+        "background": 0.9
+    },
+    "shadow": {
+        "enabled": true,
+        "strength": 1
+    },
+    "geometry": {
+        "radiusSmall": 5,
+        "radius": 10,
+        "radiusLarge": 15,
+        "spacing": 8,
+        "padding": 6
+    },
+    "typography": {
+        "font": "CaskaydiaCove Nerd Font",
+        "sizeSmall": 12,
+        "sizeNormal": 14,
+        "sizeLarge": 16,
+        "iconSmall": 18,
+        "icon": 22,
+        "iconLarge": 28
+    },
+    "animations": {
+        "short": 100,
+        "normal": 200,
+        "long": 400,
+        "themeTransition": true,
+        "themeTransitionLength": "medium"
+    },
+    "lock": {
+        "style": "center",
+        "showStatus": true,
+        "showPower": true,
+        "showMedia": true,
+        "beforeSleep": true
+    },
+    "power": {
+        "style": "farewell",
+        "side": "right",
+        "countdown": 5,
+        "hiddenActions": []
+    },
+    "profile": {
+        "avatar": ""
+    },
+    "notifications": {
+        "width": 350,
+        "imageSize": 40,
+        "timeout": 5000,
+        "spacing": 10,
+        "maxPopups": 4,
+        "dnd": false
+    },
+    "idle": {
+        "caffeine": false,
+        "dpmsEnabled": true,
+        "mediaInhibit": true,
+        "lockTimeout": 600,
+        "dpmsTimeout": 300
+    },
+    "weather": {
+        "city": ""
+    },
+    "hyprland": {
+        "general": {
+            "gaps_in": 5,
+            "gaps_out": 5,
+            "border_size": 2,
+            "layout": "dwindle"
+        },
+        "scrolling": {
+            "column_width": 0.5,
+            "focus_fit_method": 1,
+            "fullscreen_on_one_column": true,
+            "direction": "right"
+        },
+        "decoration": {
+            "rounding": 7,
+            "inactive_opacity": 1.0,
+            "blur": {
+                "enabled": true,
+                "size": 8,
+                "passes": 2
+            },
+            "shadow": {
+                "enabled": true
+            }
+        },
+        "animations": {
+            "enabled": true
+        },
+        "render": {
+            "cm_auto_hdr": 0
+        },
+        "input": {
+            "sensitivity": 0,
+            "force_no_accel": true,
+            "repeat_delay": 250,
+            "repeat_rate": 25,
+            "kb_layout": "us",
+            "kb_variant": "alt-intl",
+            "kb_options": "",
+            "kb_model": "",
+            "numlock_by_default": false,
+            "touchpad": {
+                "natural_scroll": false,
+                "tap_to_click": true,
+                "disable_while_typing": true
+            }
+        }
+    },
+    "keybinds": {
+        "preset": "vim",
+        "overrides": [],
+        "custom": []
+    },
+    "specials": {
+        "list": [
+            {
+                "id": "whatsapp",
+                "name": "WhatsApp",
+                "icon": "󰖣",
+                "color": "success",
+                "command": "lyne whatsapp",
+                "class": "^(chrome-web\\.whatsapp\\.com__-Default)$",
+                "keys": "SUPER + W",
+                "moveKeys": "SUPER + SHIFT + W",
+                "autostart": false
+            },
+            {
+                "id": "music",
+                "name": "Music",
+                "icon": "󰓇",
+                "color": "accent",
+                "command": "spotify",
+                "class": "^([Ss]potify)$",
+                "keys": "SUPER + M",
+                "moveKeys": "SUPER + SHIFT + M",
+                "autostart": false
+            }
+        ]
+    },
+    "workspaces": {
+        "skipEmpty": false,
+        "wrap": false,
+        "lidOff": true
+    },
+    "monitors": {
+        "rules": []
+    },
+    "gpus": {
+        "order": []
+    },
+    "zen": {
+        "themeBackground": true,
+        "transparent": false
+    },
+    "sddm": {
+        "sync": true,
+        "layout": "center"
+    },
+    "osd": {
+        "style": "attached",
+        "position": "bottom",
+        "monitor": "focused",
+        "timeout": 1500,
+        "trigger": "shortcuts",
+        "interactive": true,
+        "mic": true,
+        "device": true,
+        "layout": true,
+        "tiling": true
+    },
+    "audio": {
+        "maxVolume": 100
+    },
+    "brightness": {
+        "target": "focused",
+        "step": 5,
+        "ddc": true,
+        "pollInterval": 0,
+        "quickSettings": "focused"
+    },
+    "powerProfiles": {
+        "quickSettings": true,
+        "lowBattery": true,
+        "lowBatteryLevel": 20,
+        "onUnplug": false
+    },
+    "screenshot": {
+        "mode": "region",
+        "action": "save",
+        "folder": "",
+        "filename": "Screenshot_%Y-%m-%d_%H-%M-%S",
+        "colorFormat": "hex",
+        "ocrLanguages": ["eng"],
+        "guides": true,
+        "hints": true,
+        "animations": true,
+        "dim": 60
+    },
+    "settings": {
+        "windowSize": "default"
+    },
+    "welcome": {
+        "pending": false
+    },
+    "update": {
+        "channel": "stable",
+        "notify": true,
+        "notified": ""
+    }
+}

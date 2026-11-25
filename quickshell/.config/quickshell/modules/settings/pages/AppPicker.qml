@@ -1,0 +1,280 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import qs.config
+import qs.services
+import "../../../components/"
+
+// Picks an installed app (.desktop entry), optionally narrowed to a category
+// (the default apps of Settings › System › Apps), or a custom command
+Popup {
+    id: root
+
+    property string title: I18n.tr("Pick an app")
+    // .desktop category listed first ("" = every app)
+    property string category: ""
+    property string categoryLabel: I18n.tr("apps")
+    // Entry id marked as the current choice
+    property string currentId: ""
+    property bool allowCustom: false
+    property string customPlaceholder: ""
+
+    property bool showAll: category === ""
+    property string query: ""
+
+    signal picked(var entry)
+    signal customPicked(string command)
+
+    readonly property var apps: {
+        const all = DesktopEntries.applications.values;
+        const base = showAll ? all : all.filter(e => e.categories.includes(category));
+        const q = query.trim().toLowerCase();
+        const seen = new Set();
+        return base.filter(e => {
+            if (seen.has(e.id))
+                return false;
+            seen.add(e.id);
+            return q === "" || e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q) || (e.genericName ?? "").toLowerCase().includes(q);
+        }).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function openWith(command: string) {
+        query = "";
+        showAll = category === "";
+        search.text = "";
+        customField.text = command;
+        open();
+        search.focusInput();
+    }
+
+    function pick(entry) {
+        picked(entry);
+        close();
+    }
+
+    function useCustom() {
+        const command = customField.text.trim();
+        if (command === "")
+            return;
+        customPicked(command);
+        close();
+    }
+
+    parent: Overlay.overlay
+    anchors.centerIn: parent
+    width: Math.min(parent.width - Config.spacing * 8, Config.fontSizeNormal * 34)
+    modal: true
+    // Escape is handled by the page
+    closePolicy: Popup.CloseOnPressOutside
+    padding: Config.padding * 3
+
+    Overlay.modal: Rectangle {
+        color: Qt.alpha(Config.backgroundColor, 0.6)
+    }
+
+    background: Rectangle {
+        radius: Config.radiusLarge
+        color: Config.surface0Color
+        border.width: 1
+        border.color: Config.surface1Color
+    }
+
+    contentItem: ColumnLayout {
+        spacing: Config.spacing + Config.padding
+
+        Text {
+            text: root.title
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeLarge
+            font.bold: true
+            color: Config.textColor
+        }
+
+        // ================= SEARCH =================
+        QsSearchField {
+            id: search
+
+            Layout.fillWidth: true
+            placeholder: root.showAll ? I18n.tr("Search apps") : I18n.tr("Search %1", root.categoryLabel)
+            onTextChanged: root.query = text
+            // Enter takes the first result
+            onAccepted: {
+                if (root.apps.length > 0)
+                    root.pick(root.apps[0]);
+            }
+        }
+
+        // ================= LIST =================
+        ListView {
+            id: list
+
+            readonly property real rowHeight: Config.fontSizeIconSmall * 2 + Config.padding * 2
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.max(1, Math.min(count, 6)) * rowHeight
+            clip: true
+            spacing: 0
+            boundsBehavior: Flickable.StopAtBounds
+            model: root.apps
+
+            ScrollBar.vertical: QsScrollBar {}
+
+            delegate: Rectangle {
+                id: appRow
+
+                required property var modelData
+                readonly property bool current: modelData.id === root.currentId
+                readonly property color hoverTint: Config.surface2Color
+
+                width: list.width
+                height: list.rowHeight
+                radius: Config.radius
+                color: current ? Qt.alpha(Config.accentColor, 0.15) : rowMouse.containsMouse ? hoverTint : Qt.alpha(hoverTint, 0)
+
+                Behavior on color {
+                    enabled: !Config.themeTransitioning
+                    ColorAnimation {
+                        duration: Config.animDurationShort
+                    }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: Config.padding * 2
+                    anchors.rightMargin: Config.padding * 2
+                    spacing: Config.spacing + Config.padding
+
+                    Image {
+                        Layout.preferredWidth: Config.fontSizeIconSmall * 1.5
+                        Layout.preferredHeight: Config.fontSizeIconSmall * 1.5
+                        sourceSize.width: width
+                        sourceSize.height: height
+                        source: IconService.url(appRow.modelData.icon || "application-x-executable", "")
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: appRow.modelData.name
+                            elide: Text.ElideRight
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeNormal
+                            color: Config.textColor
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: appRow.modelData.runInTerminal ? I18n.tr("%1  ·  in the terminal", AppsService.commandOf(appRow.modelData)) : AppsService.commandOf(appRow.modelData)
+                            elide: Text.ElideRight
+                            font.family: Config.font
+                            font.pixelSize: Config.fontSizeSmall
+                            color: Config.subtextColor
+                        }
+                    }
+
+                    // md-check
+                    Text {
+                        visible: appRow.current
+                        text: "\u{f012c}"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconSmall
+                        color: Config.accentColor
+                    }
+                }
+
+                MouseArea {
+                    id: rowMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.pick(appRow.modelData)
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: list.count === 0
+                text: root.query !== "" ? I18n.tr("No apps match “%1”", root.query) : I18n.tr("No %1 installed", root.categoryLabel)
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                color: Config.subtextColor
+            }
+        }
+
+        // Category apps only / every app
+        Text {
+            visible: root.category !== ""
+            text: root.showAll ? I18n.tr("Show only %1", root.categoryLabel) : I18n.tr("Show all apps")
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            font.underline: toggleMouse.containsMouse
+            color: Config.accentColor
+
+            MouseArea {
+                id: toggleMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.showAll = !root.showAll
+            }
+        }
+
+        // ================= CUSTOM =================
+        ColumnLayout {
+            visible: root.allowCustom
+            Layout.fillWidth: true
+            spacing: Config.padding
+
+            Text {
+                text: I18n.tr("Custom command")
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                font.bold: true
+                color: Config.subtextColor
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Config.spacing
+
+                QsTextField {
+                    id: customField
+
+                    Layout.fillWidth: true
+                    placeholder: root.customPlaceholder
+                    onAccepted: root.useCustom()
+                }
+
+                ActionButton {
+                    size: Config.fontSizeIconSmall + Config.padding * 3
+                    icon: "\u{f012c}"
+                    text: I18n.tr("Use")
+                    opacity: customField.text.trim() !== "" ? 1 : 0.4
+                    baseColor: Config.accentColor
+                    hoverColor: Qt.lighter(Config.accentColor, 1.1)
+                    textColor: Config.textReverseColor
+                    onClicked: root.useCustom()
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Config.spacing
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            ActionButton {
+                text: I18n.tr("Cancel")
+                onClicked: root.close()
+            }
+        }
+    }
+}

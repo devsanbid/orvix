@@ -1,0 +1,250 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import qs.services
+
+// Current weather, the next 24 hours and a 7-day forecast from Open-Meteo
+// (free, no API key).
+// Location comes from state "weather.city"; when empty it is guessed from the IP.
+// There is no background polling: data is fetched at startup and refreshed
+// on demand (refresh()) when older than maxAge.
+Singleton {
+    id: root
+
+    readonly property string city: StateService.get("weather.city", "")
+    readonly property int maxAge: 15 * 60 * 1000
+    readonly property int forecastDays: 7
+
+    property string location: ""
+    property bool loading: false
+    property string error: ""
+    property real lastUpdate: 0
+
+    // { temp, feelsLike, humidity, wind, code, isDay, uv }
+    property var current: null
+    // Next 24 hours, from the current one: [{ date, temp, code, isDay, rain }]
+    property var hourly: []
+    // [{ date, code, max, min, rain, wind, uv }]
+    property var daily: []
+    property string sunrise: ""
+    property string sunset: ""
+
+    readonly property bool available: current !== null
+
+    // Resolved coordinates, cached per configured city
+    property var _coords: null
+
+    function refresh(force) {
+        if (loading || StateService.isLoading)
+            return;
+        if (!force && Date.now() - lastUpdate < maxAge)
+            return;
+
+        loading = true;
+        error = "";
+
+        if (_coords && _coords.city === city)
+            _fetchForecast();
+        else if (city !== "")
+            _geocode();
+        else
+            _locateByIp();
+    }
+
+    onCityChanged: {
+        _coords = null;
+        refresh(true);
+    }
+
+    Component.onCompleted: refresh(false)
+
+    // Keeps the bar's temperature fresh (one request per maxAge)
+    Timer {
+        interval: root.maxAge
+        running: true
+        repeat: true
+        onTriggered: root.refresh(false)
+    }
+
+    Connections {
+        target: StateService
+        function onStateLoaded(keys) {
+            if (keys.includes("weather"))
+                root.refresh(false);
+        }
+    }
+
+    // ========================================================================
+    // CONDITIONS (WMO weather codes)
+    // ========================================================================
+
+    function icon(code, isDay) {
+        if (code === 0)
+            return isDay ? "󰖙" : "󰖔";
+        if (code <= 2)
+            return isDay ? "󰖕" : "󰼱";
+        if (code === 3)
+            return "󰖐";
+        if (code === 45 || code === 48)
+            return "󰖑";
+        if (code === 65 || code === 82)
+            return "󰖖";
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
+            return "󰖗";
+        if ((code >= 71 && code <= 77) || code === 85 || code === 86)
+            return "󰖘";
+        if (code >= 95)
+            return "󰖓";
+        return "󰖐";
+    }
+
+    function description(code) {
+        const map = {
+            0: I18n.tr("Clear sky"),
+            1: I18n.tr("Mainly clear"),
+            2: I18n.tr("Partly cloudy"),
+            3: I18n.tr("Overcast"),
+            45: I18n.tr("Fog"),
+            48: I18n.tr("Rime fog"),
+            51: I18n.tr("Light drizzle"),
+            53: I18n.tr("Drizzle"),
+            55: I18n.tr("Heavy drizzle"),
+            56: I18n.tr("Freezing drizzle"),
+            57: I18n.tr("Freezing drizzle"),
+            61: I18n.tr("Light rain"),
+            63: I18n.tr("Rain"),
+            65: I18n.tr("Heavy rain"),
+            66: I18n.tr("Freezing rain"),
+            67: I18n.tr("Freezing rain"),
+            71: I18n.tr("Light snow"),
+            73: I18n.tr("Snow"),
+            75: I18n.tr("Heavy snow"),
+            77: I18n.tr("Snow grains"),
+            80: I18n.tr("Light showers"),
+            81: I18n.tr("Showers"),
+            82: I18n.tr("Violent showers"),
+            85: I18n.tr("Snow showers"),
+            86: I18n.tr("Snow showers"),
+            95: I18n.tr("Thunderstorm"),
+            96: I18n.tr("Thunderstorm, hail"),
+            99: I18n.tr("Thunderstorm, hail")
+        };
+        return map[code] ?? I18n.tr("Unknown");
+    }
+
+    // ========================================================================
+    // REQUESTS
+    // ========================================================================
+
+    HttpGet {
+        id: http
+    }
+
+    function _get(url, onSuccess) {
+        http.get(url, {}, (status, body) => {
+            if (status !== 200) {
+                root._fail(status === 0 ? I18n.tr("No connection") : I18n.tr("Request failed (%1)", status));
+                return;
+            }
+            try {
+                onSuccess(JSON.parse(body));
+            } catch (e) {
+                root._fail(I18n.tr("Invalid response"));
+            }
+        });
+    }
+
+    function _fail(message) {
+        console.warn("[Weather]", message);
+        error = message;
+        loading = false;
+    }
+
+    function _geocode() {
+        const configured = city;
+        _get("https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=" + encodeURIComponent(configured), data => {
+            const r = data.results?.[0];
+            if (!r) {
+                root._fail(I18n.tr("City not found: %1", configured));
+                return;
+            }
+            root._coords = {
+                city: configured,
+                lat: r.latitude,
+                lon: r.longitude,
+                name: r.name
+            };
+            root._fetchForecast();
+        });
+    }
+
+    function _locateByIp() {
+        _get("https://ipwho.is/?fields=success,city,latitude,longitude", data => {
+            if (!data.success) {
+                root._fail(I18n.tr("Could not detect location"));
+                return;
+            }
+            root._coords = {
+                city: "",
+                lat: data.latitude,
+                lon: data.longitude,
+                name: data.city
+            };
+            root._fetchForecast();
+        });
+    }
+
+    function _fetchForecast() {
+        const c = _coords;
+        const url = "https://api.open-meteo.com/v1/forecast?timezone=auto" + "&latitude=" + c.lat + "&longitude=" + c.lon + "&forecast_days=" + forecastDays + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day,uv_index" + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,uv_index_max,sunrise,sunset";
+
+        _get(url, data => {
+            const cur = data.current;
+            const d = data.daily;
+
+            root.current = {
+                temp: Math.round(cur.temperature_2m),
+                feelsLike: Math.round(cur.apparent_temperature),
+                humidity: cur.relative_humidity_2m,
+                wind: Math.round(cur.wind_speed_10m),
+                code: cur.weather_code,
+                isDay: cur.is_day === 1,
+                uv: Math.round(cur.uv_index ?? 0)
+            };
+
+            // Hours are local times like "2026-09-25T14:00"; start at the
+            // current one
+            const h = data.hourly;
+            const nowHour = cur.time.slice(0, 13);
+            const first = Math.max(0, h.time.findIndex(t => t.slice(0, 13) === nowHour));
+            root.hourly = h.time.slice(first, first + 24).map((t, j) => {
+                const i = first + j;
+                return {
+                    date: new Date(t),
+                    temp: Math.round(h.temperature_2m[i]),
+                    code: h.weather_code[i],
+                    isDay: h.is_day[i] === 1,
+                    rain: h.precipitation_probability[i] ?? 0
+                };
+            });
+
+            root.daily = d.time.map((t, i) => ({
+                        date: new Date(t + "T12:00:00"),
+                        code: d.weather_code[i],
+                        max: Math.round(d.temperature_2m_max[i]),
+                        min: Math.round(d.temperature_2m_min[i]),
+                        rain: d.precipitation_probability_max[i] ?? 0,
+                        wind: Math.round(d.wind_speed_10m_max[i] ?? 0),
+                        uv: Math.round(d.uv_index_max[i] ?? 0)
+                    }));
+
+            root.sunrise = d.sunrise[0].slice(11);
+            root.sunset = d.sunset[0].slice(11);
+            root.location = c.name;
+            root.lastUpdate = Date.now();
+            root.loading = false;
+        });
+    }
+}

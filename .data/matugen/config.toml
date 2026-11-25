@@ -1,0 +1,34 @@
+# Matugen configuration for Lyne Dots
+# Generates Material You color schemes from wallpapers
+
+[config]
+# Dark mode by default (matches the dotfiles dark theme)
+type = "scheme-tonal-spot"
+
+# Terminal (ANSI) and Neovim syntax hues. Material You has no red/green/...
+# roles, and its own ones are all close to the wallpaper hue; blend = true
+# pulls each hue towards the wallpaper (harmonize) and matugen picks a tone
+# that reads in the current mode (colors.<name>). The bright ANSI variants use
+# the same tone: the other roles are near black in light mode
+[config.custom_colors]
+red = { color = "#e05561", blend = true }
+green = { color = "#8cc265", blend = true }
+yellow = { color = "#e5c07b", blend = true }
+blue = { color = "#4aa5f0", blend = true }
+magenta = { color = "#c162de", blend = true }
+cyan = { color = "#42b3c2", blend = true }
+orange = { color = "#f08d49", blend = true }
+
+# Templates: input paths are relative to this file's real folder (matugen
+# follows the ~/.config/matugen/config.toml link), so the repo can be anywhere
+[templates.quickshell-palette]
+input_path = "./templates/quickshell-palette.json"
+output_path = "~/.cache/matugen/quickshell-palette.json"
+
+[templates.hyprland-colors]
+input_path = "./templates/hyprland-colors.json"
+output_path = "~/.cache/matugen/hyprland-colors.json"
+
+[templates.terminal-colors]
+input_path = "./templates/terminal-colors.json"
+output_path = "~/.cache/matugen/terminal-colors.json"

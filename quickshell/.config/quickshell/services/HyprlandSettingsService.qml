@@ -1,0 +1,340 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+import qs.config
+
+// Hyprland options edited from Settings. The "hyprland" block of state.json
+// mirrors the hl.config() table; every change is applied live with
+// `hyprctl eval` and written to hypr/local/settings.lua, which hyprland.lua
+// loads after conf/*.lua, so the values survive reloads and reboots.
+// Writing the file makes Hyprland reload its config, so it waits until the
+// values stop changing (ThemeService re-sends its colors after a reload)
+Singleton {
+    id: root
+
+    readonly property string settingsPath: Quickshell.env("HOME") + "/.config/hypr/local/settings.lua"
+
+    // defaults.json with the user's values on top (keys missing in state
+    // still get written)
+    readonly property var settings: _merge(StateService.getDefault("hyprland", {}), StateService.get("hyprland", {}))
+    readonly property string lua: "hl.config(" + _toLua(settings, 0) + ")\n"
+
+    // Window layouts in the order Super + Ctrl + Tab cycles them (also
+    // Settings › Windows › Tiling)
+    readonly property var tilingLayouts: [
+        {
+            value: "dwindle",
+            label: "Dwindle", // i18n-ignore
+            icon: "\u{f0574}" // md-view_quilt
+        },
+        {
+            value: "master",
+            label: "Master", // i18n-ignore
+            icon: "\u{f0bcc}" // md-view_split_vertical
+        },
+        {
+            value: "scrolling",
+            label: "Scrolling", // i18n-ignore
+            icon: "\u{f056c}" // md-view_carousel
+        }
+    ]
+
+    // Next (steps > 0) or previous layout, saved like the Settings choice and
+    // shown in the OSD
+    function cycleTiling(steps: int) {
+        const path = "hyprland.general.layout";
+        const current = StateService.get(path, StateService.getDefault(path, "dwindle"));
+        const count = tilingLayouts.length;
+        const index = Math.max(0, tilingLayouts.findIndex(l => l.value === current));
+        const next = (index + steps % count + count) % count;
+        const layout = tilingLayouts[next];
+        StateService.set(path, layout.value);
+        OsdService.showTiling(layout.label, layout.icon, (next + 1) + "/" + count);
+    }
+
+    // Keybinds changed in Settings ([{ id, keys }], keys "" = disabled) and
+    // custom shortcuts ([{ description, command, keys }]). Only written to
+    // the file: binds added by `hyprctl eval` would stack up until a reload
+    readonly property var bindOverrides: StateService.get("keybinds.overrides", [])
+    readonly property var customBinds: StateService.get("keybinds.custom", [])
+    // Navigation keys preset (conf/bind_presets.lua); "vim" is the keys of
+    // conf/keybinds.lua, nothing to call
+    readonly property string bindPreset: StateService.get("keybinds.preset", "vim")
+    readonly property string bindsLua: {
+        // Before the overrides: they may move these binds
+        let out = appsLua + specialsLua + workspacesLua + autostartLua + keyboardsLua;
+        // The preset changes the default keys, the overrides go on top
+        if (bindPreset !== "vim")
+            out += "\n-- Navigation keys (lyne_bind_preset is defined in conf/binds.lua)\nif lyne_bind_preset then\n    lyne_bind_preset(" + _luaString(bindPreset) + ")\nend\n";
+        if (bindOverrides.length > 0) {
+            out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
+            out += "if lyne_rebind then\n";
+            for (const o of bindOverrides)
+                out += "    lyne_rebind(" + _luaString(o.id) + ", " + _luaString(o.keys) + ")\n";
+            out += "end\n";
+        }
+        const custom = customBinds.filter(c => c.keys !== "" && c.command !== "");
+        if (custom.length > 0) {
+            out += "\n-- Custom shortcuts\n";
+            for (const c of custom)
+                out += "hl.bind(" + _luaString(c.keys) + ", hl.dsp.exec_cmd(" + _luaString(c.command) + "), { description = " + _luaString(c.description || c.command) + (KeybindsService.isLoneModifier(c.keys) ? ", release = true" : "") + " })\n";
+        }
+        return out;
+    }
+
+    // Apps opened by the Apps binds (AppsService), read when a bind is pressed
+    readonly property string appsLua: {
+        const apps = AppsService.slots.filter(s => s.luaKey !== "").map(s => s.luaKey + " = " + _luaString(AppsService.commandFor(s.key)));
+        return "\n-- Default apps (lyne_apps is defined in conf/keybinds.lua)\nif lyne_apps then\n    lyne_apps({ " + apps.join(", ") + " })\nend\n"; // i18n-ignore
+    }
+
+    // Special workspaces (SpecialsService), always written so the file
+    // replaces the defaults of hypr/conf/specials.lua
+    readonly property string specialsLua: {
+        let out = "\n-- Special workspaces (lyne_specials is defined in conf/specials.lua)\n";
+        out += "if lyne_specials then\n    lyne_specials({\n";
+        for (const s of SpecialsService.list) {
+            const fields = [["id", s.id], ["name", s.name], ["command", s.command ?? ""], ["class", s["class"] ?? ""], ["keys", s.keys ?? ""], ["move_keys", s.moveKeys ?? ""]];
+            out += "        { " + fields.map(f => f[0] + " = " + _luaString(f[1])).join(", ") + ", autostart = " + (s.autostart === true) + " },\n";
+        }
+        out += "    })\nend\n";
+        return out;
+    }
+
+    // How next/previous workspace behave and whether the laptop lid turns
+    // its screen off (Settings › Hyprland › Workspaces), read by
+    // hypr/conf/workspaces.lua
+    readonly property string workspacesLua: {
+        const skip = StateService.get("workspaces.skipEmpty", false) === true;
+        const wrap = StateService.get("workspaces.wrap", false) === true;
+        const lidOff = StateService.get("workspaces.lidOff", true) !== false;
+        return "\n-- Workspaces per monitor (lyne_workspaces is defined in conf/workspaces.lua)\nif lyne_workspaces then\n    lyne_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + ", lid_off = " + lidOff + " })\nend\n"; // i18n-ignore
+    }
+
+    // Your apps started at login (Settings › System › Autostart,
+    // AutostartService), always written so removing the last one sticks
+    readonly property string autostartLua: {
+        const apps = StateService.get("autostart.apps", StateService.getDefault("autostart.apps", []));
+        let out = "\n-- Apps started at login (lyne_autostart is defined in conf/autostart.lua)\n";
+        out += "if lyne_autostart then\n    lyne_autostart({\n";
+        for (const a of apps) {
+            const delay = Math.max(0, Math.round(Number(a.delay) || 0));
+            out += "        { name = " + _luaString(a.name ?? "") + ", command = " + _luaString(a.command ?? "") + ", delay = " + delay + ", workspace = " + _luaString(a.workspace ?? "") + ", enabled = " + (a.enabled !== false) + " },\n";
+        }
+        out += "    })\nend\n";
+        return out;
+    }
+
+    // Keyboards with their own layouts (Settings › Hyprland › Keyboard,
+    // KeyboardService), one hl.device() per interface of each keyboard.
+    // Only in the file: an eval can't take a device rule back, the reload
+    // after writing it can. Fields left out come from the input options
+    readonly property string keyboardsLua: {
+        const devices = StateService.get("keyboard.devices", StateService.getDefault("keyboard.devices", []));
+        let out = "\n-- Keyboards with their own layouts\n";
+        for (const d of devices) {
+            const fields = [];
+            if (d.layout) {
+                fields.push("kb_layout = " + _luaString(d.layout));
+                fields.push("kb_variant = " + _luaString(d.variant ?? ""));
+            }
+            if (d.options !== undefined)
+                fields.push("kb_options = " + _luaString(d.options));
+            if (d.model !== undefined)
+                fields.push("kb_model = " + _luaString(d.model));
+            if (fields.length === 0)
+                continue;
+            for (const name of (d.names && d.names.length > 0 ? d.names : [d.name]))
+                out += "hl.device({ name = " + _luaString(name) + ", " + fields.join(", ") + " })\n";
+        }
+        return out;
+    }
+
+    // The mouse cursor (Settings › Cursor, CursorService) for the apps
+    // started from now on: hl.env also hands XCURSOR_* to systemd and D-Bus
+    // (apps they start) when the value changes. conf/environment.lua leaves
+    // them out, so a reload doesn't flip them back; a uwsm login reads the
+    // state in uwsm/env-hyprland
+    readonly property string cursorLua: {
+        const theme = _luaString(CursorService.theme);
+        const size = _luaString(String(CursorService.size));
+        return "\n-- Mouse cursor\n" + "hl.env(\"XCURSOR_THEME\", " + theme + ", true)\n" + "hl.env(\"XCURSOR_SIZE\", " + size + ", true)\n" + "hl.env(\"HYPRCURSOR_THEME\", " + theme + ")\n" + "hl.env(\"HYPRCURSOR_SIZE\", " + size + ")\n"; // i18n-ignore
+    }
+
+    // Touchpads on or off (Settings › Input, TouchpadService). Always written,
+    // `enabled = true` too: Hyprland only changes a device's state while it
+    // has a rule, so taking the rule away would leave the touchpad off
+    readonly property string touchpadLua: {
+        const names = TouchpadService.names;
+        if (names.length === 0)
+            return "";
+        let out = "\n-- Touchpads on or off\n";
+        for (const name of names)
+            out += "hl.device({ name = " + _luaString(name) + ", enabled = " + TouchpadService.enabled + " })\n";
+        return out;
+    }
+
+    // Last `hyprctl eval` error, shown by the settings pages
+    property string error: ""
+
+    // Blur threshold of the Quickshell layers (lyne_set_blur_ignore_alpha in
+    // conf/appearance.lua), just below the background opacity: a lower one
+    // lets the blur show through the antialiased edges of rounded panels as
+    // a jagged light fringe. Only in memory, so it's sent again after every
+    // config reload
+    readonly property real blurIgnoreAlpha: Math.max(0, Config.backgroundOpacity - 0.05)
+
+    onBlurIgnoreAlphaChanged: blurDebounce.restart()
+    Component.onCompleted: blurDebounce.restart()
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            if (event.name === "configreloaded")
+                root.applyBlur();
+        }
+    }
+
+    onLuaChanged: {
+        if (!StateService.isLoading) {
+            evalDebounce.restart();
+            writeDebounce.restart();
+        }
+    }
+
+    // Binds aren't dragged like sliders: write soon after a change
+    onBindsLuaChanged: {
+        if (!StateService.isLoading)
+            bindsDebounce.restart();
+    }
+
+    onCursorLuaChanged: {
+        if (!StateService.isLoading)
+            bindsDebounce.restart();
+    }
+
+    // Device rules only reach Hyprland through the file (its reload)
+    onTouchpadLuaChanged: {
+        if (!StateService.isLoading)
+            bindsDebounce.restart();
+    }
+
+    // First load (the initial change happens while isLoading) and external
+    // edits of state.json
+    Connections {
+        target: StateService
+
+        function onStateLoaded() {
+            writeDebounce.restart();
+            blurDebounce.restart();
+        }
+    }
+
+    function _merge(base, over) {
+        const result = {};
+        for (const key of Object.keys(base))
+            result[key] = base[key];
+        for (const key of Object.keys(over)) {
+            const b = result[key], o = over[key];
+            const bothObjects = b && o && typeof b === "object" && typeof o === "object" && !Array.isArray(b) && !Array.isArray(o);
+            result[key] = bothObjects ? _merge(b, o) : o;
+        }
+        return result;
+    }
+
+    // Double-quoted Lua string; only the escapes Lua and JSON agree on
+    function _luaString(text: string): string {
+        return '"' + String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r") + '"';
+    }
+
+    function _toLua(value, depth: int): string {
+        if (typeof value === "string")
+            return _luaString(value);
+        if (typeof value === "boolean" || typeof value === "number")
+            return String(value);
+        if (value === null || typeof value !== "object")
+            return "nil";
+
+        const indent = "    ".repeat(depth + 1);
+        const entries = Object.keys(value).map(key => {
+            const luaKey = /^[A-Za-z_][A-Za-z0-9_]*$/.test(key) ? key : "[" + JSON.stringify(key) + "]";
+            return indent + luaKey + " = " + _toLua(value[key], depth + 1) + ",";
+        });
+        return "{\n" + entries.join("\n") + "\n" + "    ".repeat(depth) + "}";
+    }
+
+    readonly property string _fileContent: "-- Managed by Quickshell (Settings > Hyprland). Changes here are overwritten;\n" + "-- edit the values from the settings window or in state.json instead.\n\n" + lua + cursorLua + touchpadLua + bindsLua
+
+    // Live: only the in-memory config, no reload
+    function applyLive() {
+        evalProc.command = ["bash", "-c", 'hyprctl eval "$1" 2>&1', "_", lua];
+        evalProc.running = true;
+    }
+
+    function applyBlur() {
+        const value = blurIgnoreAlpha.toFixed(2);
+        blurProc.command = ["hyprctl", "eval", "if lyne_set_blur_ignore_alpha then lyne_set_blur_ignore_alpha(" + value + ") end"];
+        blurProc.running = true;
+    }
+
+    // Persist; Hyprland reloads and picks the file up
+    function write() {
+        // Already on disk (e.g. on startup): don't trigger a reload
+        if (settingsFile.loaded && settingsFile.text() === _fileContent)
+            return;
+        settingsFile.setText(_fileContent);
+    }
+
+    Timer {
+        id: evalDebounce
+        interval: 100
+        onTriggered: root.applyLive()
+    }
+
+    // The opacity slider changes it on every step
+    Timer {
+        id: blurDebounce
+        interval: 100
+        onTriggered: root.applyBlur()
+    }
+
+    Timer {
+        id: bindsDebounce
+        interval: 300
+        onTriggered: root.write()
+    }
+
+    Timer {
+        id: writeDebounce
+        interval: 1500
+        onTriggered: root.write()
+    }
+
+    FileView {
+        id: settingsFile
+        path: root.settingsPath
+        printErrors: false
+    }
+
+    Process {
+        id: evalProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = text.trim();
+                root.error = out === "ok" || out === "" ? "" : out;
+                if (root.error !== "")
+                    console.warn("[HyprlandSettings]", root.error);
+            }
+        }
+    }
+
+    Process {
+        id: blurProc
+    }
+}

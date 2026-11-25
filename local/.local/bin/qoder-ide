@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Native Wayland keeps fonts and icons sharp on Hyprland's fractional scale.
+export QODER_IDE_OZONE_PLATFORM="${QODER_IDE_OZONE_PLATFORM:-wayland}"
+exec /usr/bin/qoder-ide "$@"

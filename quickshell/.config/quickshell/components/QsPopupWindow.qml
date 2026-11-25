@@ -1,0 +1,311 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Quickshell
+import Quickshell.Wayland
+import qs.config
+import qs.services
+
+// Popup opened from a bar button (Quick Settings, calendar, system monitor).
+// Floats a gap away from the bar, or with bar.attachPopups grows out of it
+// (AttachedPanel), flush against the screen side too when the button is
+// close to it
+PanelWindow {
+    id: root
+
+    property int popupWidth: 380
+    property int popupMaxHeight: 700
+    property string anchorSide: "left"
+    // Bar button to open under: the popup centers on it, kept inside the screen
+    property Item anchorItem: null
+    property string moduleName: ""
+    property real contentImplicitHeight: 0
+
+    default property alias content: contentContainer.data
+    // Items whose Keys handlers get the key presses (the popup keeps the focus)
+    property list<Item> keyTargets
+
+    // While true, losing the focus grab doesn't close the popup (a menu
+    // opened from its content takes the grab); call regrab() afterwards
+    property bool holdOpen: false
+
+    signal closing
+
+    readonly property int screenMargin: 5
+    // Room between the panel's edge and its content
+    readonly property int contentMargin: Config.spacing * 2
+    // Tallest the content can be
+    readonly property real contentMaxHeight: popupMaxHeight - contentMargin * 2
+
+    // Attached: blur like the bar (wallpaper only) so both share one tint
+    WlrLayershell.namespace: attached ? "qs_attached" : "qs_modules"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.exclusiveZone: -1
+
+    readonly property bool anchored: anchorItem !== null
+
+    // Horizontal center of anchorItem on the screen. Re-evaluated whenever the
+    // popup opens (mapToItem isn't reactive to the bar layout moving)
+    readonly property real anchorCenterX: {
+        visible;
+        if (!anchorItem)
+            return 0;
+        return anchorItem.mapToItem(null, anchorItem.width / 2, 0).x;
+    }
+
+    // Opens toward the middle of the screen from the bar's edge
+    readonly property bool upward: Config.barOnBottom
+
+    // A fullscreen window hides the bar: the popup goes to the screen edge.
+    // Popups without a screen open where their bar button is
+    readonly property string screenName: screen?.name ?? anchorItem?.QsWindow.window?.screen?.name ?? ""
+    readonly property bool barCovered: BarService.coveredOn(screenName)
+
+    // --- Attached look ---
+    readonly property bool attached: StateService.get("bar.attachPopups", true)
+    // Docked bars: just below the bar; islands and floating bars have no
+    // continuous edge, so the popup grows out of the screen edge
+    readonly property real attachLine: Config.barIslands || Config.barFloating || barCovered ? 0 : Config.barHeight
+    readonly property real filletSize: Config.radiusLarge
+
+    readonly property real screenWidth: screen?.width ?? implicitWidth
+    // Room around the popup inside the window: the scale animation's
+    // overshoot, or the fillets when attached, and the shadow
+    readonly property real sidePad: Math.max(attached ? filletSize : screenMargin, Config.shadowPad)
+
+    // Left edge of the popup on the screen. Floating popups keep
+    // Config.spacing from the screen sides, the gap the bar islands use;
+    // attached ones close to a side go flush against it
+    readonly property real bodyX: {
+        const x = anchored ? anchorCenterX - popupWidth / 2 : anchorSide === "left" ? 0 : screenWidth - popupWidth;
+        if (attached) {
+            if (x < filletSize)
+                return 0;
+            if (x + popupWidth > screenWidth - filletSize)
+                return screenWidth - popupWidth;
+            return x;
+        }
+        return Math.max(Config.spacing, Math.min(x, screenWidth - popupWidth - Config.spacing));
+    }
+    readonly property real windowLeft: Math.max(0, Math.min(bodyX - sidePad, screenWidth - implicitWidth))
+
+    // Flush sides of the attached popup, the bar's first (it slides out of it)
+    readonly property var attachedEdges: {
+        const edges = [upward ? "bottom" : "top"];
+        if (bodyX <= 0)
+            edges.push("left");
+        if (bodyX >= screenWidth - popupWidth)
+            edges.push("right");
+        return edges;
+    }
+
+    anchors {
+        top: !upward
+        bottom: upward
+        left: true
+    }
+
+    // Distance from the screen edge on the bar's side
+    readonly property real fromBar: attached ? attachLine : (barCovered ? 0 : Config.barReservedHeight) + Config.spacing
+    // Room for the shadow on the bar's side of a floating popup, over the
+    // gap and the bar; it takes no input, so the bar stays clickable
+    readonly property real barRoom: attached ? 0 : Math.min(Config.shadowPad, fromBar)
+
+    margins {
+        top: root.upward ? 0 : root.fromBar - root.barRoom
+        bottom: root.upward ? root.fromBar - root.barRoom : 0
+        left: root.windowLeft
+    }
+
+    implicitWidth: popupWidth + sidePad * 2
+    implicitHeight: popupMaxHeight + Config.shadowPad + barRoom
+    color: "transparent"
+    mask: Region {
+        y: root.upward ? 0 : root.barRoom
+        width: root.width
+        height: root.height - root.barRoom
+    }
+
+    property bool isClosing: false
+    property bool isOpening: false
+    readonly property bool showState: visible && !isClosing && isOpening
+
+    function closeWindow() {
+        // Also while closing: `closing` handlers may call this again, and a
+        // restarted timer would hide the popup when it is reopened right after
+        if (!visible || isClosing)
+            return;
+        isClosing = true;
+        closeTimer.restart();
+    }
+
+    // Shows the popup again, also halfway through closing (a click on the bar
+    // clears the focus grab before the button that reopens it gets the click)
+    function reopen() {
+        if (!visible) {
+            visible = true;
+            return;
+        }
+        closeTimer.stop();
+        isClosing = false;
+        focusGrab.rearm();
+    }
+
+    // Takes the focus grab back (see holdOpen)
+    function regrab() {
+        if (visible && !isClosing)
+            focusGrab.rearm();
+    }
+
+    Timer {
+        id: closeTimer
+        // A little longer than the exit animation, so it ends hidden
+        interval: WindowManagerService.closeDuration
+        onTriggered: {
+            root.closing();
+            root.visible = false;
+            root.isClosing = false;
+        }
+    }
+
+    DelayedFocusGrab {
+        id: focusGrab
+        windows: [root]
+        wanted: root.visible && !root.isClosing
+        onTaken: frame.forceActiveFocus()
+        onCleared: {
+            if (!root.holdOpen)
+                root.closeWindow();
+        }
+    }
+
+    // Name in WindowManagerService's list of popups on screen
+    readonly property string popupName: moduleName !== "" ? moduleName : "Popup"
+
+    onVisibleChanged: {
+        if (visible) {
+            closeTimer.stop();
+            isClosing = false;
+            isOpening = true;
+            WindowManagerService.popupMapped(popupName);
+            if (moduleName !== "")
+                WindowManagerService.registerOpen(moduleName);
+        } else {
+            isOpening = false;
+            WindowManagerService.popupUnmapped(popupName);
+            if (moduleName !== "")
+                WindowManagerService.registerClose(moduleName);
+        }
+    }
+    Component.onDestruction: {
+        if (visible)
+            WindowManagerService.popupUnmapped(popupName);
+    }
+
+    // A shortcut opening something else closes this popup first
+    Connections {
+        target: WindowManagerService
+
+        function onCloseRequested(except: string): void {
+            if (except !== root.moduleName)
+                root.closeWindow();
+        }
+    }
+
+    // Click on background closes or clears selection
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.closeWindow()
+    }
+
+    // Place and size of the popup in the window
+    Item {
+        id: frame
+
+        x: root.bodyX - root.windowLeft
+        y: root.upward ? parent.height - height - root.barRoom : root.barRoom
+        width: root.popupWidth
+        height: Math.min(root.popupMaxHeight, root.contentImplicitHeight + root.contentMargin * 2)
+
+        Behavior on height {
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Easing.OutQuad
+            }
+        }
+
+        Keys.forwardTo: root.keyTargets
+        Keys.onEscapePressed: root.closeWindow()
+    }
+
+    Rectangle {
+        id: background
+
+        visible: !root.attached
+        x: frame.x
+        y: frame.y
+        width: frame.width
+        height: frame.height
+        color: Config.backgroundTransparentColor
+        radius: Config.radiusLarge
+
+        PanelShadow {
+            radius: background.radius
+        }
+
+        transformOrigin: {
+            if (root.anchored)
+                return root.upward ? Item.Bottom : Item.Top;
+            if (root.anchorSide === "left")
+                return root.upward ? Item.BottomLeft : Item.TopLeft;
+            return root.upward ? Item.BottomRight : Item.TopRight;
+        }
+
+        scale: root.showState ? 1.0 : 0.9
+        opacity: root.showState ? 1.0 : 0.0
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Config.animDurationLong
+                easing.type: Easing.OutExpo
+            }
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Config.animDurationShort
+            }
+        }
+    }
+
+    AttachedPanel {
+        id: attachedPanel
+
+        visible: root.attached
+        x: frame.x
+        y: frame.y
+        width: frame.width
+        height: frame.height
+        edges: root.attachedEdges
+        shown: root.showState && root.attached
+        shadow: true
+    }
+
+    // The content, inside whichever panel is in use
+    Item {
+        parent: root.attached ? attachedPanel.body : background
+        anchors.fill: parent
+        clip: true
+
+        // just to capture the click and prevent it from closing
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        Item {
+            id: contentContainer
+            anchors.fill: parent
+            anchors.margins: root.contentMargin
+        }
+    }
+}

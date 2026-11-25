@@ -1,0 +1,482 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import "network.js" as Net
+
+Singleton {
+    id: root
+
+    property var accessPoints: []
+    property var savedSsids: []
+    property bool wifiEnabled: true
+    property string wifiInterface: ""
+    property string connectingSsid: ""
+    property string connectivity: "unknown" // none | portal | limited | full | unknown
+    // The connected cable: { device, connection } or null. The bar, the
+    // Quick Settings tile and the page show it ahead of the Wi-Fi state
+    property var wired: null
+    readonly property bool ethernetConnected: wired !== null
+    readonly property string wiredIcon: "󰈀"
+    onWiredChanged: {
+        if (_viewers > 0)
+            fetchDetails();
+    }
+    property bool _portalNotified: false
+    readonly property bool scanning: rescanProc.running
+    readonly property bool hasCaptivePortal: {
+        const activeNetwork = accessPoints.find(ap => ap.active === true);
+        // Only "portal" is the real captive portal state.
+        // "limited" fires on many normal networks where the NM check URL is blocked.
+        return !!activeNetwork && connectivity === "portal";
+    }
+
+    onConnectivityChanged: {
+        if (connectivity === "portal" && !_portalNotified) {
+            _portalNotified = true;
+            openPortalProc.running = true;
+        } else if (connectivity !== "portal") {
+            _portalNotified = false;
+        }
+    }
+    readonly property string systemIcon: {
+        if (!wifiEnabled)
+            return "󰤮";
+        const activeNetwork = accessPoints.find(ap => ap.active === true);
+        if (activeNetwork) {
+            if (hasCaptivePortal)
+                return "󰤬";
+            return getWifiIcon(activeNetwork.signal);
+        }
+        return "󰤫";
+    }
+
+    // --- FUNCTIONS ---
+
+    function getWifiIcon(signal) {
+        if (signal > 80)
+            return "󰤨";
+        if (signal > 60)
+            return "󰤥";
+        if (signal > 40)
+            return "󰤢";
+        if (signal > 20)
+            return "󰤟";
+        return "󰤫";
+    }
+
+    // Status text
+    readonly property string statusText: {
+        if (!wifiEnabled)
+            return I18n.tr("Off");
+        const activeNetwork = accessPoints.find(ap => ap.active === true);
+        if (activeNetwork) {
+            if (hasCaptivePortal)
+                return I18n.tr("%1 · Portal", activeNetwork.ssid || I18n.tr("Hidden network"));
+            return activeNetwork.ssid || I18n.tr("Hidden network");
+        }
+        return I18n.tr("On");
+    }
+
+    function bandName(freq: int): string {
+        if (freq >= 5925)
+            return "6 GHz"; // i18n-ignore
+        if (freq >= 5000)
+            return "5 GHz"; // i18n-ignore
+        if (freq > 0)
+            return "2.4 GHz"; // i18n-ignore
+        return "";
+    }
+
+    readonly property var activeNetwork: accessPoints.find(ap => ap.active) ?? null
+
+    // IP / gateway / DNS of the active Wi-Fi connection and of the cable
+    // (plus its speed), fetched on demand (Wi-Fi page)
+    property var details: ({})
+    property var wiredDetails: ({})
+
+    function fetchDetails() {
+        if (wifiInterface !== "" && !detailsProc.running)
+            detailsProc.running = true;
+        if (wired !== null && !wiredDetailsProc.running)
+            wiredDetailsProc.running = true;
+    }
+
+    function openPortalBrowser() {
+        openPortalProc.running = true;
+    }
+
+    function toggleWifi() {
+        const cmd = wifiEnabled ? "off" : "on";
+        toggleWifiProc.command = ["nmcli", "radio", "wifi", cmd];
+        toggleWifiProc.running = true;
+    }
+
+    function scan() {
+        if (!scanning)
+            rescanProc.running = true;
+    }
+
+    function disconnect() {
+        if (wifiInterface !== "") {
+            console.log("Disconnecting interface: " + wifiInterface);
+            disconnectProc.command = ["nmcli", "dev", "disconnect", wifiInterface];
+            disconnectProc.running = true;
+        }
+    }
+
+    function connect(ssid, password) {
+        console.log("Attempting to connect to:", ssid);
+        root.connectingSsid = ssid; // Mark which one we are trying
+
+        const withPassword = !!password && password.length > 0;
+        // The password goes in through stdin (--ask), not the command line
+        // that ps shows. Only a profile this attempt creates may be removed
+        // if it fails: a saved network out of range must keep its profile
+        connectProc.run(["nmcli", "--ask", "dev", "wifi", "connect", ssid], {
+            ssid,
+            password: withPassword ? password : "",
+            created: withPassword && !root.savedSsids.includes(ssid)
+        });
+    }
+
+    // Removes every saved profile of the network, found by its SSID: a
+    // profile's name can differ from it ("Home 1", renamed ones)
+    function forget(ssid) {
+        console.log("Forgetting network: " + ssid);
+        forgetProc.run(["sh", "-c", `
+            nmcli -g UUID,TYPE connection show | while IFS=: read -r uuid type; do
+                [ "$type" = 802-11-wireless ] || continue
+                # -g escapes the colons inside values
+                s=$(nmcli -g 802-11-wireless.ssid connection show "$uuid" | sed 's/\\\\:/:/g')
+                [ "$s" = "$1" ] && nmcli connection delete uuid "$uuid"
+            done
+            true`, "sh", ssid]);
+    }
+
+    // A profile created by a failed attempt (wrong password)
+    function cleanUpBadConnection(ssid) {
+        console.warn("Connection failed. Removing the profile just created for: " + ssid);
+        forget(ssid);
+    }
+
+    // --- PROCESSES ---
+
+    // Connection Process
+    QueuedProcess {
+        id: connectProc
+
+        // Open for the password, closed right after it: a second prompt
+        // (wrong password) reads end of file and fails instead of waiting
+        stdinEnabled: true
+        onStarted: {
+            if (request.password !== "")
+                write(request.password + "\n");
+            stdinEnabled = false;
+        }
+
+        stdout: SplitParser {
+            onRead: data => console.log("[Wifi] " + data)
+        }
+        stderr: SplitParser {
+            onRead: data => console.error("[Wifi Error] " + data)
+        }
+
+        onExited: code => {
+            stdinEnabled = true;
+            if (code !== 0) {
+                console.error("Connect command exited with code: " + code);
+                // A non-zero exit can mean captive portal: WiFi associated but no internet.
+                // Check real connectivity before deciding to delete the profile.
+                portalCheckProc._failedSsid = request.created ? request.ssid : "";
+                portalCheckProc.running = true;
+            } else {
+                console.log("Connected successfully!");
+                root.connectingSsid = "";
+                getSavedProc.running = true;
+                getNetworksProc.running = true;
+                connectivityProc.running = true;
+            }
+        }
+    }
+
+    // Detect Wifi Interface
+    Process {
+        id: findInterfaceProc
+        command: ["nmcli", "-g", "DEVICE,TYPE", "device"]
+        running: true
+        stdout: SplitParser {
+            onRead: data => {
+                const lines = data.trim().split("\n");
+                lines.forEach(line => {
+                    const parts = line.split(":");
+                    if (parts.length >= 2 && parts[1] === "wifi") {
+                        root.wifiInterface = parts[0];
+                    }
+                });
+            }
+        }
+    }
+
+    // Status Monitor (Enabled/Disabled)
+    Process {
+        id: statusProc
+        command: ["nmcli", "radio", "wifi"]
+        running: true
+        stdout: SplitParser {
+            onRead: data => {
+                root.wifiEnabled = (data.trim() === "enabled");
+                if (root.wifiEnabled)
+                    getSavedProc.running = true;
+                getNetworksProc.running = true;
+            }
+        }
+    }
+
+    // Toggle On/Off
+    Process {
+        id: toggleWifiProc
+        onExited: statusProc.running = true
+    }
+
+    // Rescan (Refresh)
+    Process {
+        id: rescanProc
+        command: ["nmcli", "dev", "wifi", "list", "--rescan", "yes"]
+        onExited: getNetworksProc.running = true
+    }
+
+    // Disconnect
+    Process {
+        id: disconnectProc
+        onExited: getNetworksProc.running = true
+    }
+
+    // Forget Network
+    QueuedProcess {
+        id: forgetProc
+        onExited: {
+            getSavedProc.running = true;
+            getNetworksProc.running = true;
+        }
+    }
+
+    // The Wi-Fi page calls watch()/unwatch() while it's open
+    property int _viewers: 0
+
+    function watch() {
+        _viewers++;
+    }
+
+    function unwatch() {
+        _viewers = Math.max(0, _viewers - 1);
+    }
+
+    // Signal strengths from NetworkManager's last scan: every 10 s on the
+    // Wi-Fi page, every minute otherwise (the bar icon). Everything else
+    // follows `nmcli monitor`
+    Timer {
+        interval: root._viewers > 0 ? 10000 : 60000
+        running: root.wifiEnabled
+        repeat: true
+        onTriggered: getNetworksProc.running = true
+    }
+
+    // Wired state, refreshed on every NetworkManager event
+    Process {
+        id: wiredProc
+        command: ["nmcli", "-g", "DEVICE,TYPE,STATE,CONNECTION", "device"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const found = Net.wiredConnection(text);
+                // Same cable: keep the object, so bindings don't re-run on every event
+                if (JSON.stringify(found) !== JSON.stringify(root.wired))
+                    root.wired = found;
+            }
+        }
+    }
+
+    Process {
+        id: monitorProc
+        command: ["nmcli", "monitor"]
+        running: true
+        stdout: SplitParser {
+            onRead: monitorDebounce.restart()
+        }
+        // NetworkManager restarted: listen again
+        onExited: monitorRestart.start()
+    }
+
+    Timer {
+        id: monitorRestart
+        interval: 5000
+        onTriggered: {
+            monitorProc.running = true;
+            wiredProc.running = true;
+        }
+    }
+
+    // Any NetworkManager event (connections, devices, the radio switched
+    // elsewhere, connectivity): read it all again. statusProc rereads the
+    // saved and visible networks
+    Timer {
+        id: monitorDebounce
+        interval: 500
+        onTriggered: {
+            wiredProc.running = true;
+            connectivityProc.running = true;
+            statusProc.running = true;
+        }
+    }
+
+    // Connectivity check (detects captive portals)
+    Process {
+        id: connectivityProc
+        command: ["nmcli", "-g", "CONNECTIVITY", "general"]
+        running: true
+        stdout: SplitParser {
+            onRead: data => root.connectivity = data.trim().toLowerCase()
+        }
+    }
+
+    // Opens the default browser to the portal login page
+    Process {
+        id: openPortalProc
+        command: ["xdg-open", "http://detectportal.firefox.com/"]
+        stderr: SplitParser {
+            onRead: data => console.error("[Wifi:Portal] " + data)
+        }
+    }
+
+    // Checks connectivity after a failed connect to distinguish captive portal from real failure
+    Process {
+        id: portalCheckProc
+        property string _failedSsid: ""
+        command: ["nmcli", "-g", "CONNECTIVITY", "general"]
+
+        stdout: SplitParser {
+            onRead: data => {
+                const conn = data.trim().toLowerCase();
+                root.connectivity = conn;
+                if (conn === "none" || conn === "unknown") {
+                    if (portalCheckProc._failedSsid !== "")
+                        root.cleanUpBadConnection(portalCheckProc._failedSsid);
+                } else {
+                    console.log("[Wifi] Captive portal detected (" + conn + "), keeping profile");
+                }
+            }
+        }
+
+        onExited: {
+            portalCheckProc._failedSsid = "";
+            root.connectingSsid = "";
+            getSavedProc.running = true;
+            getNetworksProc.running = true;
+        }
+    }
+
+    Process {
+        id: detailsProc
+        command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS", "dev", "show", root.wifiInterface]
+        stdout: StdioCollector {
+            onStreamFinished: root.details = Net.deviceDetails(text)
+        }
+    }
+
+    Process {
+        id: wiredDetailsProc
+        command: ["nmcli", "-g", "IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,CAPABILITIES.SPEED", "dev", "show", root.wired?.device ?? ""]
+        stdout: StdioCollector {
+            onStreamFinished: root.wiredDetails = Net.deviceDetails(text)
+        }
+    }
+
+    // List Saved Networks
+    Process {
+        id: getSavedProc
+        command: ["nmcli", "-g", "NAME,TYPE", "connection", "show"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n");
+                var savedList = [];
+                lines.forEach(line => {
+                    const parts = line.split(":");
+                    if (parts.length >= 2 && parts[1] === "802-11-wireless") {
+                        savedList.push(parts[0]);
+                    }
+                });
+                root.savedSsids = savedList;
+            }
+        }
+    }
+
+    // List Available Networks (Scan)
+    Process {
+        id: getNetworksProc
+        command: ["nmcli", "-g", "IN-USE,SIGNAL,SSID,SECURITY,BSSID,CHAN,RATE,FREQ", "dev", "wifi", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n");
+                var tempParams = [];
+                const seen = new Set();
+
+                lines.forEach(line => {
+                    if (line.length < 5)
+                        return;
+                    // -g escapes ":" inside values (BSSID, SSIDs) as "\\:"
+                    const parts = line.replace(/\\:/g, "\u0000").split(":").map(p => p.replace(/\u0000/g, ":"));
+                    if (parts.length < 8)
+                        return;
+
+                    const inUse = parts[0] === "*";
+                    const signal = parseInt(parts[1]) || 0;
+                    const ssid = parts[2];
+                    const security = parts[3];
+                    const bssid = parts[4];
+                    const channel = parts[5];
+                    const rate = parts[6];
+                    const freq = parseInt(parts[7]) || 0;
+
+                    if (!ssid)
+                        return;
+                    if (seen.has(ssid))
+                        return; // Avoid visual duplicates
+                    seen.add(ssid);
+
+                    const isSaved = root.savedSsids.includes(ssid);
+
+                    tempParams.push({
+                        ssid: ssid,
+                        signal: signal,
+                        active: inUse,
+                        secure: security.length > 0,
+                        securityType: security || "Open",
+                        saved: isSaved,
+                        bssid: bssid,
+                        channel: channel,
+                        rate: rate,
+                        band: root.bandName(freq)
+                    });
+                });
+
+                // Sort: Connected > Saved > Signal
+                tempParams.sort((a, b) => {
+                    if (a.active)
+                        return -1;
+                    if (b.active)
+                        return 1;
+                    if (a.saved && !b.saved)
+                        return -1;
+                    if (!a.saved && b.saved)
+                        return 1;
+                    return b.signal - a.signal;
+                });
+
+                root.accessPoints = tempParams;
+            }
+        }
+    }
+}

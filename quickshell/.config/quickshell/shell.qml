@@ -1,0 +1,442 @@
+//@ pragma Env QS_NO_RELOAD_POPUP=1
+pragma ComponentBehavior: Bound
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+import Quickshell.Wayland
+import qs.services
+import "./modules/bar/"
+import "./modules/power/"
+import "./modules/lock/"
+import "./modules/screenshot/"
+import "./modules/notifications/"
+import "./modules/settings/"
+import "./modules/launcher/"
+import "./modules/wallpaper/"
+import "./modules/osd/"
+import "./modules/welcome/"
+import "./components/"
+
+ShellRoot {
+    id: root
+
+    // =========================================================================
+    // GLOBAL MODULE STATE
+    // =========================================================================
+
+    property bool screenshotActive: false
+
+    // Ensure IdleService singleton loads
+    property bool _idleReady: IdleService.caffeineEnabled
+
+    // Keeps hypr/local/settings.lua in sync with state.json
+    property string _hyprlandSettings: HyprlandSettingsService.lua
+
+    // Checks for a lyne-dots update a minute after the start
+    property bool _updateReady: UpdateService.checking
+
+    // Applies the saved mouse cursor on start
+    property string _cursor: CursorService.theme
+
+    // Applies the saved icon theme on start, and its variant on each mode
+    property string _icons: IconService.variant
+
+    // Answers `qs ipc call powerprofile`
+    property string _powerProfile: PowerProfileService.state
+
+    // Pauses a video wallpaper by its rules (Settings › Wallpaper)
+    property bool _videoPaused: WallpaperService.videoPaused
+
+    // Recording a shortcut in Settings puts Hyprland in the empty
+    // "lyne_capture" submap. If the shell reloaded or crashed mid-recording,
+    // Hyprland would be left without binds: always leave it on (re)load
+    Component.onCompleted: Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.submap("reset")'])
+
+    // Idle Monitors
+    IdleMonitor {
+        timeout: IdleService.lockTimeout
+        enabled: IdleService.lockTimeout > 0 && !IdleService.caffeineEnabled && !IdleService.mediaPlaying && !IdleService.systemInhibited && !StateService.isLoading
+        respectInhibitors: true
+
+        onIsIdleChanged: {
+            if (isIdle) {
+                console.log("[Idle] Lock timeout reached");
+                IdleService.lock();
+            }
+        }
+    }
+
+    IdleMonitor {
+        timeout: IdleService.dpmsTimeout
+        enabled: IdleService.dpmsTimeout > 0 && !IdleService.caffeineEnabled && !IdleService.mediaPlaying && !IdleService.systemInhibited && IdleService.dpmsEnabled && !StateService.isLoading
+        respectInhibitors: true
+
+        onIsIdleChanged: {
+            if (isIdle) {
+                console.log("[Idle] DPMS timeout, displays off");
+                IdleService.dpmsOff();
+            } else {
+                console.log("[Idle] User returned, displays on");
+                IdleService.dpmsOn();
+            }
+        }
+    }
+
+    // =========================================================================
+    // BLUETOOTH AGENT
+    // =========================================================================
+
+    readonly property string bluetoothAgentScriptPath: Qt.resolvedUrl("./scripts/bluetooth-agent.py").toString().replace("file://", "")
+
+    // Pairing needs the adapter on, so the agent (python + dbus, ~28 MB) only
+    // runs while it is; BlueZ forgets it when it exits
+    Process {
+        id: bluetoothAgent
+        command: ["python3", root.bluetoothAgentScriptPath]
+        running: BluetoothService.isPowered
+
+        stdout: SplitParser {
+            onRead: data => console.log("[BluetoothAgent]: " + data)
+        }
+        stderr: SplitParser {
+            onRead: data => console.error("[BluetoothAgent]: " + data)
+        }
+    }
+
+    // =========================================================================
+    // UI COMPONENTS - LAZY LOADING
+    // =========================================================================
+
+    // Bar - always active (main component)
+    Bar {}
+
+    // Notifications (the window only maps while there are popups)
+    NotificationOverlay {}
+
+    // Lock Screen
+    Loader {
+        id: lockLoader
+        active: LockService.locked
+        sourceComponent: LockScreen {}
+
+        onStatusChanged: {
+            if (status === Loader.Ready)
+                console.log("[Shell] LockScreen loaded");
+        }
+    }
+
+    // Power menu (dims every monitor, the menu on the focused one)
+    LazyLoader {
+        active: PowerService.visible
+
+        PowerOverlay {}
+    }
+
+    // Screenshot Manager
+    Loader {
+        id: screenshotLoader
+        active: root.screenshotActive
+        sourceComponent: ScreenshotManager {}
+
+        onStatusChanged: {
+            if (status === Loader.Ready) {
+                console.log("[Shell] ScreenshotManager loaded");
+                screenshotLoader.item.startCapture();
+            }
+        }
+
+        // Deactivate when screenshot finishes
+        Connections {
+            target: screenshotLoader.item
+            enabled: screenshotLoader.status === Loader.Ready
+
+            function onActiveChanged() {
+                if (screenshotLoader.item && !screenshotLoader.item.active) {
+                    root.screenshotActive = false;
+                }
+            }
+        }
+    }
+
+    // Launcher and wallpaper picker (SUPER+B): kept for their exit animation
+    KeepAliveLoader {
+        shown: LauncherService.visible
+        // Gone with its exit animation, so a shortcut waiting for it opens soon
+        exitDuration: WindowManagerService.closeDuration
+        sourceComponent: Launcher {}
+    }
+
+    KeepAliveLoader {
+        shown: WallpaperPickerService.visible
+        // Gone with its exit animation, so a shortcut waiting for it opens soon
+        exitDuration: WindowManagerService.closeDuration
+        sourceComponent: WallpaperPicker {}
+    }
+
+    // OSD (kept while mapped so the exit animation plays)
+    Loader {
+        active: OsdService.mapped
+        sourceComponent: OsdOverlay {}
+    }
+
+    // "Keep these display settings?" on every monitor while Settings ›
+    // Monitors tries new ones
+    LazyLoader {
+        active: MonitorsService.trialActive
+
+        MonitorsConfirm {}
+    }
+
+    // Settings › Monitors › Identify: which screen is which
+    LazyLoader {
+        active: MonitorsService.identifying
+
+        MonitorsIdentify {}
+    }
+
+    // Settings window (imported statically: Quickshell only resolves the
+    // pages/ and rows/ directories through static imports)
+    Loader {
+        active: SettingsService.visible
+        sourceComponent: SettingsWindow {}
+    }
+
+    // Welcome screen: on the first login after the install, or `lyne welcome`
+    Loader {
+        active: WelcomeService.visible
+        sourceComponent: WelcomeWindow {}
+    }
+
+    // What's new: from lyne update's notification or Settings › About
+    Loader {
+        active: WhatsNewService.visible
+        sourceComponent: WhatsNewWindow {}
+    }
+
+    // Actions requested from the UI (Quick Settings shortcuts)
+    Connections {
+        target: ShortcutService
+
+        function onScreenshotRequested() {
+            root.screenshotActive = true;
+        }
+    }
+
+    // =========================================================================
+    // GLOBAL SHORTCUTS
+    // =========================================================================
+    // Their descriptions only show in `hyprctl globalshortcuts`: English
+
+    // Shortcut: Screenshot (Print)
+    GlobalShortcut {
+        name: "take_screenshot"
+        description: "Screenshot capture" // i18n-ignore
+
+        onPressed: {
+            console.log("[Shell] Screenshot requested");
+            root.screenshotActive = true;
+        }
+    }
+
+    // Shortcut: Lock screen
+    GlobalShortcut {
+        name: "lock_screen"
+        description: "Lock screen" // i18n-ignore
+
+        onPressed: LockService.lock()
+    }
+
+    // Shortcut: Power Menu
+    GlobalShortcut {
+        name: "power_menu"
+        description: "Power menu" // i18n-ignore
+
+        onPressed: WindowManagerService.openAfterClose("Power", () => PowerService.toggle(), 0)
+    }
+
+    // Shortcut: Launcher (tapping Super by default). Pressed again while
+    // open, in any mode, it closes
+    GlobalShortcut {
+        name: "app_launcher"
+        description: "App Launcher" // i18n-ignore
+
+        onPressed: WindowManagerService.openAfterClose("Launcher", () => LauncherService.toggle(), 0)
+    }
+
+    // Shortcut: Volume Up
+    GlobalShortcut {
+        name: "volume_up"
+        description: "Increase volume" // i18n-ignore
+
+        onPressed: {
+            AudioService.increaseVolume();
+            OsdService.show("volume");
+        }
+    }
+
+    // Shortcut: Volume Down
+    GlobalShortcut {
+        name: "volume_down"
+        description: "Decrease volume" // i18n-ignore
+
+        onPressed: {
+            AudioService.decreaseVolume();
+            OsdService.show("volume");
+        }
+    }
+
+    // Shortcut: Volume Mute
+    GlobalShortcut {
+        name: "volume_mute"
+        description: "Mute volume" // i18n-ignore
+
+        onPressed: {
+            AudioService.toggleMute();
+            OsdService.show("volume");
+        }
+    }
+
+    // Shortcut: Microphone Mute
+    GlobalShortcut {
+        name: "mic_mute"
+        description: "Mute microphone" // i18n-ignore
+
+        onPressed: {
+            AudioService.toggleSourceMute();
+            OsdService.show("mic");
+        }
+    }
+
+    // Shortcut: Brightness Up
+    GlobalShortcut {
+        name: "brightness_up"
+        description: "Increase brightness" // i18n-ignore
+
+        onPressed: {
+            BrightnessService.increaseBrightness();
+            OsdService.show("brightness");
+        }
+    }
+
+    // Shortcut: Brightness Down
+    GlobalShortcut {
+        name: "brightness_down"
+        description: "Decrease brightness" // i18n-ignore
+
+        onPressed: {
+            BrightnessService.decreaseBrightness();
+            OsdService.show("brightness");
+        }
+    }
+
+    // Shortcut: Wallpaper Picker (SUPER+B by default). Pressed again while
+    // open, it closes
+    GlobalShortcut {
+        name: "wallpaper_picker"
+        description: "Wallpaper picker" // i18n-ignore
+
+        onPressed: WindowManagerService.openAfterClose("WallpaperPicker", () => WallpaperPickerService.toggle(), 0)
+    }
+
+    // Shortcut: Clipboard History
+    GlobalShortcut {
+        name: "clipboard_history"
+        description: "Clipboard history" // i18n-ignore
+
+        onPressed: WindowManagerService.openAfterClose("Launcher", () => LauncherService.toggleMode("clipboard"), 0)
+    }
+
+    // Shortcut: Settings
+    GlobalShortcut {
+        name: "settings"
+        description: "Settings" // i18n-ignore
+
+        onPressed: {
+            if (SettingsService.visible)
+                SettingsService.close();
+            else
+                WindowManagerService.openAfterClose("", () => SettingsService.open(""), 0);
+        }
+    }
+
+    // Shortcut: next window layout (dwindle → master → scrolling)
+    GlobalShortcut {
+        name: "cycle_tiling"
+        description: "Next window layout" // i18n-ignore
+
+        onPressed: HyprlandSettingsService.cycleTiling(1)
+    }
+
+    // Shortcut: Keybinds (settings page)
+    GlobalShortcut {
+        name: "keybinds_help"
+        description: "Keybinds settings" // i18n-ignore
+
+        onPressed: WindowManagerService.openAfterClose("", () => SettingsService.open("keybinds"), 0)
+    }
+
+    // Shortcuts: Dashboard on the current tab, or on one of them (no keys by
+    // default, set in Settings › Keybinds). Pressed again on that tab, closes
+    GlobalShortcut {
+        name: "dashboard"
+        description: "Dashboard" // i18n-ignore
+
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("", screen), 0);
+        }
+    }
+
+    GlobalShortcut {
+        name: "dashboard_overview"
+        description: "Dashboard tab: overview" // i18n-ignore
+
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("overview", screen), 0);
+        }
+    }
+
+    GlobalShortcut {
+        name: "dashboard_media"
+        description: "Dashboard tab: media" // i18n-ignore
+
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("media", screen), 0);
+        }
+    }
+
+    GlobalShortcut {
+        name: "dashboard_system"
+        description: "Dashboard tab: system" // i18n-ignore
+
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("system", screen), 0);
+        }
+    }
+
+    GlobalShortcut {
+        name: "dashboard_weather"
+        description: "Dashboard tab: weather" // i18n-ignore
+
+        onPressed: {
+            const screen = DashboardService.focusedScreen();
+            WindowManagerService.openAfterClose("Dashboard", () => DashboardService.toggle("weather", screen), 0);
+        }
+    }
+
+    // Shortcut: the notification history (the bell's popup) on the focused
+    // screen. No keys by default (set in Settings › Keybinds)
+    GlobalShortcut {
+        name: "notifications"
+        description: "Notifications" // i18n-ignore
+
+        onPressed: {
+            const screen = Hyprland.focusedMonitor?.name ?? "";
+            WindowManagerService.openAfterClose("Notifications", () => NotificationService.toggleHistory(screen), 0);
+        }
+    }
+}

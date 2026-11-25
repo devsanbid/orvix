@@ -1,0 +1,295 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Widgets
+import qs.config
+import qs.services
+import "../../components/"
+
+// Avatar, user, uptime, battery and power, plus a row of shortcuts
+Card {
+    id: root
+
+    signal closeWindow
+
+    readonly property int avatarSize: Config.fontSizeLarge * 3
+    readonly property int controlSize: Config.fontSizeIconSmall * 2
+
+    // The uptime is only sampled while the Quick Settings are open
+    Watcher {
+        service: SystemMonitorService
+        hold: "watch"
+        active: QsWindow.window?.visible ?? false
+    }
+
+    // The popup closes first; the service runs the shortcut after. The
+    // wallpaper, theme and keybinds shortcuts are Settings pages
+    function runShortcut(action: string) {
+        root.closeWindow();
+        if (["wallpaper", "theme", "keybinds"].includes(action))
+            QuickSettingsService.runShortcut("settings", action);
+        else
+            QuickSettingsService.runShortcut(action, "");
+    }
+
+    spacing: Config.padding * 2
+
+    // ========== PROFILE ==========
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Config.spacing + Config.padding
+
+        // Click picks a picture, right click goes back to the placeholder
+        Item {
+            implicitWidth: root.avatarSize
+            implicitHeight: root.avatarSize
+
+            ClippingRectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: Config.surface1Color
+
+                Image {
+                    id: avatarImage
+                    anchors.fill: parent
+                    visible: status === Image.Ready
+                    source: ProfileService.avatar !== "" ? "file://" + ProfileService.avatar : ""
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize: Qt.size(root.avatarSize * 2, root.avatarSize * 2)
+                    asynchronous: true
+                }
+
+                // md-account
+                Text {
+                    anchors.centerIn: parent
+                    visible: !avatarImage.visible
+                    text: "\u{f0004}"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconLarge
+                    color: Config.subtextColor
+                }
+
+                // Hover hint
+                Rectangle {
+                    anchors.fill: parent
+                    color: Qt.alpha(Config.backgroundColor, 0.6)
+                    opacity: avatarMouse.containsMouse ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Config.animDurationShort
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰄀"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconSmall
+                        color: Config.textColor
+                    }
+                }
+            }
+
+            MouseArea {
+                id: avatarMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton) {
+                        ProfileService.resetAvatar();
+                    } else {
+                        root.closeWindow();
+                        ProfileService.pickAvatar();
+                    }
+                }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Math.round(Config.padding / 3)
+
+            Text {
+                Layout.fillWidth: true
+                text: Quickshell.env("USER")
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeLarge
+                font.bold: true
+                color: Config.textColor
+                elide: Text.ElideRight
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: "󰅐 " + SystemMonitorService.uptime
+                font.family: Config.font
+                font.pixelSize: Config.fontSizeSmall
+                color: Config.subtextColor
+                elide: Text.ElideRight
+            }
+        }
+
+        // Battery: percentage and time left / to full
+        Rectangle {
+            visible: BatteryService.hasBattery
+            implicitWidth: batteryRow.implicitWidth + Config.spacing * 2
+            implicitHeight: root.controlSize
+            radius: Config.radius
+            color: Config.surface1Color
+
+            RowLayout {
+                id: batteryRow
+                anchors.centerIn: parent
+                spacing: Config.padding
+
+                Text {
+                    text: BatteryService.getBatteryIcon()
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeLarge
+                    color: {
+                        if (BatteryService.isCharging)
+                            return Config.successColor;
+                        if (BatteryService.percentage < 20)
+                            return Config.errorColor;
+                        if (BatteryService.percentage < 40)
+                            return Config.warningColor;
+                        return Config.textColor;
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 0
+
+                    Text {
+                        text: BatteryService.percentage + "%"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        font.bold: true
+                        color: Config.textColor
+                    }
+
+                    Text {
+                        visible: BatteryService.timeText !== ""
+                        text: BatteryService.timeText
+                        font.family: Config.font
+                        font.pixelSize: Math.round(Config.fontSizeSmall * 0.85)
+                        color: Config.subtextColor
+                    }
+                }
+            }
+        }
+
+        // Power profile: opens its page
+        ClearButton {
+            visible: PowerProfileService.available
+            icon: PowerProfileService.icon(PowerProfileService.profile)
+            baseColor: PowerProfileService.tone(PowerProfileService.profile)
+            Layout.preferredWidth: root.controlSize
+            Layout.preferredHeight: root.controlSize
+            onClicked: QuickSettingsService.showPage("powerProfile")
+        }
+
+        ClearButton {
+            icon: "⏻"
+            Layout.preferredWidth: root.controlSize
+            Layout.preferredHeight: root.controlSize
+            onClicked: root.runShortcut("power")
+        }
+    }
+
+    // ========== SHORTCUTS ==========
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Config.spacing
+
+        Repeater {
+            model: [
+                {
+                    "icon": "󰹑",
+                    "action": "screenshot",
+                    "label": I18n.tr("Screenshot")
+                },
+                {
+                    "icon": "󰅌",
+                    "action": "clipboard",
+                    "label": I18n.tr("Clipboard history")
+                },
+                {
+                    "icon": "󰸉",
+                    "action": "wallpaper",
+                    "label": I18n.tr("Wallpapers")
+                },
+                {
+                    "icon": "󰏘",
+                    "action": "theme",
+                    "label": I18n.tr("Themes")
+                },
+                {
+                    "icon": "󰌌",
+                    "action": "keybinds",
+                    "label": I18n.tr("Keybinds")
+                },
+                {
+                    "icon": "󰌾",
+                    "action": "lock",
+                    "label": I18n.tr("Lock screen")
+                },
+                {
+                    "icon": "󰒓",
+                    "action": "settings",
+                    "label": I18n.tr("Settings")
+                }
+            ]
+
+            Rectangle {
+                id: shortcut
+
+                required property var modelData
+
+                Layout.fillWidth: true
+                implicitHeight: root.controlSize
+                radius: Config.radius
+                color: shortcutMouse.containsMouse ? Config.surface2Color : Config.surface1Color
+                scale: shortcutMouse.pressed ? 0.95 : 1
+
+                Behavior on color {
+                    enabled: !Config.themeTransitioning
+                    ColorAnimation {
+                        duration: Config.animDurationShort
+                    }
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Config.animDurationShort
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: shortcut.modelData.icon
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeLarge
+                    color: shortcutMouse.containsMouse ? Config.accentColor : Config.textColor
+                }
+
+                MouseArea {
+                    id: shortcutMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.runShortcut(shortcut.modelData.action)
+                }
+
+                QsToolTip {
+                    text: shortcut.modelData.label
+                    shown: shortcutMouse.containsMouse
+                }
+            }
+        }
+    }
+}

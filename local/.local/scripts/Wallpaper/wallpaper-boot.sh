@@ -1,0 +1,40 @@
+#!/bin/bash
+# =============================================================================
+# Wallpaper Boot Script
+# =============================================================================
+# awww-daemon restores its last wallpaper on its own. This makes sure the one
+# saved in ~/.local/wallpapers/.current (written by Quickshell's
+# WallpaperService) is shown, and falls back to the first wallpaper only when
+# nothing is displayed at all. A saved video starts again through
+# wallpaper-set.sh, which keeps the poster awww restored and doesn't start a
+# second player for one already playing.
+# =============================================================================
+
+CURRENT_FILE="$HOME/.local/wallpapers/.current"
+WALLPAPER_DIR="$HOME/.local/wallpapers"
+
+# Wait for the daemon (started right before this script)
+for _ in $(seq 1 20); do
+    awww query >/dev/null 2>&1 && break
+    sleep 0.25
+done
+
+[[ -f "$CURRENT_FILE" ]] && WALLPAPER="$(head -n 1 "$CURRENT_FILE")"
+
+if [[ -z "$WALLPAPER" || ! -f "$WALLPAPER" ]]; then
+    # Keep what the daemon restored from its cache
+    awww query 2>/dev/null | grep -q "image:" && exit 0
+    WALLPAPER="$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' \) | sort | head -1)"
+fi
+
+# Already on screen (an image restored from the cache): nothing to do for
+# awww. owed still has to follow, or its layer keeps the theme default.
+if [[ "$(realpath "$WALLPAPER" 2>/dev/null)" == "$(awww query 2>/dev/null | sed -n 's/.*image: //p' | head -n 1)" ]]; then
+    command -v owe >/dev/null && owe set "$WALLPAPER" >/dev/null 2>&1 || true
+    exit 0
+fi
+
+# Same transition as a change from the shell (Settings › Wallpaper)
+if [[ -n "$WALLPAPER" && -f "$WALLPAPER" ]]; then
+    "$HOME/.config/quickshell/scripts/wallpaper-set.sh" "$WALLPAPER"
+fi

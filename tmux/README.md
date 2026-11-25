@@ -1,0 +1,91 @@
+# tmux
+
+The prefix is `C-Space`: press Ctrl + Space, let go, then press the key (`C-Space |` means prefix, then `|`). The mouse clicks, scrolls and resizes; windows and panes count from 1.
+
+A **session** is a whole workspace with a name (one per project, its name on the left of the bar); it holds **windows**, the tabs on top; a window holds **panes**, its splits.
+
+> **Every key, searchable:** `C-Space ?` (tmux's and Neovim's). This guide: `C-Space T`; the Neovim one: `C-Space N`.
+
+## Move around
+
+| Keys | Does |
+| :--- | :--- |
+| `C-h` / `C-j` / `C-k` / `C-l` | Focus the pane on the left / below / above / on the right (inside Neovim, its splits first) |
+| `C-M-h` / `C-M-l` | Previous / next window |
+| `C-Space z` | Zoom the pane (again to bring the others back) |
+| `C-Space P` | Projects and sessions: switch, or start a session in a project folder (`~/Dev`, lyne-dots); Escape then `j` / `k` to move, Escape again to close. `Ctrl+d` (`dd` after Escape) closes a session (asks y/n) or hides a folder; `Ctrl+h` (`H`) shows the hidden ones, where `Ctrl+d` brings one back |
+| `C-Space w` | Pick a window from a list (every session's) |
+
+## Split and arrange
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space \|` | Split side by side (same folder) |
+| `C-Space -` | Split top and bottom (same folder) |
+| `M-h` / `M-j` / `M-k` / `M-l` | Grow or shrink the pane (inside Neovim, its splits first) |
+| `C-S-h` / `C-S-j` / `C-S-k` / `C-S-l` | Swap places with the pane on that side |
+| `C-Space x` | Close the pane |
+
+## Floating
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space S` | Scratch terminal: shows it, and from inside hides it again (it keeps running) |
+| `C-Space G` | Lazygit in the pane's folder |
+| `C-Space *` | New floating pane (the mouse moves and resizes it) |
+| `C-Space @` | Float the pane, or put a floating one back in the layout |
+
+## Windows (the tabs on top)
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space c` | New window in the same folder |
+| `C-Space 1` | Go to window 1 (any number) |
+| `C-Space ,` | Rename the window (empty: back to the automatic name) |
+| `C-Space &` | Close the window (asks first) |
+| `C-M-S-h` / `C-M-S-l` | Move the window one place left / right (Ctrl+Alt+Shift, like Super+Ctrl+Shift+H/L for workspaces) |
+
+## Copy text
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space [` | Enter copy mode (scroll with the mouse or the Vim keys) |
+| `v` | Start a selection |
+| `y` | Copy the selection and leave |
+| `Escape` | Leave without copying |
+
+## Sessions
+
+tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; a new tmux starts empty and `C-Space C-r` brings the last save back, Neovim panes with their folder's session. The autosave goes on in the new tmux too: its first one comes after 15 minutes and replaces the last save, so use `C-Space C-r` before that. Each project has one Neovim: an `nvim` typed in another window of the project takes you to its pane (`lyne nvim open` does it from outside, as Godot does; the Neovim guide has more).
+
+From the shell, the `tm` commands:
+
+| Command | Does |
+| :--- | :--- |
+| `tm` | In a project's folder (or below it), that project's session; anywhere else the session `main`, made in `~` when there's none. No numbered sessions pile up (a plain `tmux` does the same) |
+| `tmn <name> [folder]` | A new session with that name, in the folder (the current one by default); a name already there just goes to it (inside tmux: `C-Space C`) |
+| `tmq [name]` | Close a session: with no name, the one you're in (the terminal goes to the one used last) |
+| `tmk` | Close every session (`C-Space C-r` in the next tmux brings them back) |
+| `tmkf` | Close every session and forget the save: `C-Space C-r` finds nothing |
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space s` | Every session in a list: Enter goes there, `x` closes the one selected (asks first; closing yours takes you to the one used last), `t` marks several and `X` closes the marked ones, `→` shows its windows, `q` leaves |
+| `C-Space C` | New session: asks its name, starts it in the pane's folder (a name already there goes to it) |
+| `C-Space (` / `C-Space )` | Previous / next session |
+| `C-Space L` | Back to the session you were in last |
+| `C-Space $` | Rename the session |
+| `C-Space d` | Detach: leave tmux running in the background (`tm` in the project's folder, or anywhere else for `main`, comes back) |
+| `C-Space C-s` / `C-Space C-r` | Save now / restore the last save (tmux-resurrect) |
+| `C-Space X` | Close every session and forget the save: `C-Space C-r` finds nothing (asks first) |
+
+## Help and config
+
+| Keys | Does |
+| :--- | :--- |
+| `C-Space ?` | Search every shortcut (tmux and Neovim) |
+| `C-Space T` / `C-Space N` | This guide / the Neovim guide |
+| `C-Space r` | Reload `~/.tmux.conf` |
+| `C-Space I` / `C-Space U` | Install / update the plugins (TPM) |
+
+A plugin: add `set -g @plugin 'user/plugin'` to `~/.tmux.conf`, then `C-Space I`. Project folders other than `~/Dev`: `LYNE_PROJECT_ROOTS` (colon separated) in your environment. A folder there that isn't a project itself (no `.git`, `.root`, `project.godot` or `*.sln`), like `~/Dev/Python`, shows the projects inside it instead, down to three levels. Inside a project, only a folder with `.root` is listed as another one, within the same three levels, like `~/Dev/solves/projetos/pong-game` next to `~/Dev/solves`. A key of your own: give it a note (`bind -N "What it does" ...`) and the search lists it.

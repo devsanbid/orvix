@@ -1,0 +1,499 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import qs.config
+import qs.services
+import "../../components/"
+
+// Weather now, the next 24 hours (every 2 hours, over a temperature curve)
+// and the week, each day's range drawn against the whole week's
+ColumnLayout {
+    id: root
+
+    // Shown to the user (the dashboard is open on this tab)
+    property bool active: false
+
+    readonly property var current: WeatherService.current
+    readonly property var today: WeatherService.daily[0] ?? null
+    // One every 2 hours
+    readonly property var hours: WeatherService.hourly.filter((h, i) => i % 2 === 0)
+    readonly property real weekMin: Math.min(...WeatherService.daily.map(d => d.min))
+    readonly property real weekMax: Math.max(...WeatherService.daily.map(d => d.max))
+
+    onActiveChanged: {
+        if (active)
+            WeatherService.refresh(false);
+    }
+
+    spacing: Config.spacing
+
+    function uvLabel(uv: int): string {
+        if (uv >= 11)
+            return I18n.tr("Extreme");
+        if (uv >= 8)
+            return I18n.tr("Very high");
+        if (uv >= 6)
+            return I18n.tr("High");
+        if (uv >= 3)
+            return I18n.tr("Moderate");
+        return I18n.tr("Low");
+    }
+
+    function uvColor(uv: int): color {
+        if (uv >= 8)
+            return Config.errorColor;
+        if (uv >= 6)
+            return Config.warningColor;
+        return Config.successColor;
+    }
+
+    // ==================== EMPTY / ERROR ====================
+    Card {
+        visible: !WeatherService.available
+        Layout.fillWidth: true
+        Layout.preferredHeight: Config.fontSizeIconLarge * 8
+
+        Item {
+            Layout.fillHeight: true
+        }
+
+        Spinner {
+            Layout.alignment: Qt.AlignHCenter
+            running: WeatherService.loading
+            visible: running
+            color: Config.subtextColor
+        }
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            visible: !WeatherService.loading
+            text: "\u{f05aa}  " + (WeatherService.error || I18n.tr("Weather unavailable"))
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            color: Config.subtextColor
+        }
+
+        RefreshButton {
+            Layout.alignment: Qt.AlignHCenter
+            visible: !WeatherService.loading
+            size: Config.fontSizeSmall * 2
+            loading: WeatherService.loading
+            onClicked: WeatherService.refresh(true)
+        }
+
+        Item {
+            Layout.fillHeight: true
+        }
+    }
+
+    // ==================== NOW ====================
+    Card {
+        visible: WeatherService.available
+        Layout.fillWidth: true
+
+        CardHeader {
+            icon: "\u{f034e}"
+            title: WeatherService.location
+            subtitle: WeatherService.lastUpdate > 0 ? I18n.tr("Updated %1", new Date(WeatherService.lastUpdate).toLocaleTimeString(I18n.locale, "hh:mm")) : ""
+
+            RefreshButton {
+                size: Config.fontSizeSmall * 2
+                loading: WeatherService.loading
+                onClicked: WeatherService.refresh(true)
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Config.spacing * 2
+
+            // Conditions
+            RowLayout {
+                Layout.alignment: Qt.AlignVCenter
+                spacing: Config.spacing * 2
+
+                Text {
+                    text: root.current ? WeatherService.icon(root.current.code, root.current.isDay) : ""
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconLarge * 2.2
+                    color: Config.accentColor
+                }
+
+                ColumnLayout {
+                    spacing: 0
+
+                    Text {
+                        text: (root.current?.temp ?? 0) + "°"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIconLarge * 1.5
+                        font.bold: true
+                        color: Config.textColor
+                    }
+
+                    Text {
+                        text: root.current ? WeatherService.description(root.current.code) : ""
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeNormal
+                        color: Config.textColor
+                    }
+
+                    Text {
+                        text: I18n.tr("Feels %1°", root.current?.feelsLike ?? 0)
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
+                    }
+
+                    Text {
+                        text: "\u{f005d} " + (root.today?.max ?? 0) + "°  \u{f0045} " + (root.today?.min ?? 0) + "°"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        color: Config.subtextColor
+                    }
+                }
+            }
+
+            // Details
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 3
+                uniformCellWidths: true
+                rowSpacing: Config.padding
+                columnSpacing: Config.padding
+
+                DetailTile {
+                    icon: "\u{f058e}"
+                    label: I18n.tr("Humidity")
+                    value: (root.current?.humidity ?? 0) + "%"
+                }
+
+                DetailTile {
+                    icon: "\u{f059d}"
+                    label: I18n.tr("Wind")
+                    value: (root.current?.wind ?? 0) + " km/h"
+                }
+
+                DetailTile {
+                    icon: "\u{f058c}"
+                    label: I18n.tr("Rain")
+                    value: (root.today?.rain ?? 0) + "%"
+                }
+
+                DetailTile {
+                    icon: "\u{f0599}"
+                    label: "UV"
+                    value: (root.current?.uv ?? 0) + " " + root.uvLabel(root.current?.uv ?? 0)
+                    accent: root.uvColor(root.current?.uv ?? 0)
+                }
+
+                DetailTile {
+                    icon: "\u{f059c}"
+                    label: I18n.tr("Sunrise")
+                    value: WeatherService.sunrise
+                    accent: Config.warningColor
+                }
+
+                DetailTile {
+                    icon: "\u{f059b}"
+                    label: I18n.tr("Sunset")
+                    value: WeatherService.sunset
+                    accent: Config.warningColor
+                }
+            }
+        }
+    }
+
+    // ==================== NEXT 24 HOURS ====================
+    Card {
+        visible: WeatherService.available && root.hours.length > 0
+        Layout.fillWidth: true
+
+        CardHeader {
+            icon: "\u{f0150}"
+            title: I18n.tr("Next 24 hours")
+        }
+
+        Item {
+            id: hoursArea
+
+            readonly property real columnWidth: width / Math.max(1, root.hours.length)
+            readonly property real labelHeight: Config.fontSizeSmall + Config.padding
+            readonly property real iconHeight: Config.fontSizeIcon + Config.padding
+            // The curve lives between the icons and the rain bars
+            readonly property real curveTop: labelHeight + iconHeight + labelHeight
+            readonly property real curveHeight: Config.fontSizeIconLarge * 1.5
+            // Rain chance bars under the curve, their value below when likely
+            readonly property real rainTop: curveTop + curveHeight + Config.padding * 2
+            readonly property real rainHeight: Config.fontSizeIcon
+            readonly property int rainShown: 20
+            readonly property real minTemp: Math.min(...root.hours.map(h => h.temp))
+            readonly property real maxTemp: Math.max(...root.hours.map(h => h.temp))
+
+            function pointY(temp: real): real {
+                const span = Math.max(1, maxTemp - minTemp);
+                return curveTop + curveHeight * (1 - (temp - minTemp) / span);
+            }
+
+            Layout.fillWidth: true
+            implicitHeight: rainTop + rainHeight + labelHeight
+
+            Canvas {
+                id: curve
+                anchors.fill: parent
+
+                // Canvas colors aren't bindings: repaint when the theme changes
+                readonly property color lineColor: Config.accentColor
+
+                onWidthChanged: requestPaint()
+                onLineColorChanged: requestPaint()
+                Connections {
+                    target: WeatherService
+                    function onHourlyChanged() {
+                        curve.requestPaint();
+                    }
+                }
+
+                onPaint: {
+                    const ctx = getContext("2d");
+                    ctx.reset();
+                    const pts = root.hours.map((h, i) => [hoursArea.columnWidth * (i + 0.5), hoursArea.pointY(h.temp)]);
+                    if (pts.length < 2)
+                        return;
+
+                    // Soft fill under a smooth line
+                    const path = () => {
+                        ctx.moveTo(pts[0][0], pts[0][1]);
+                        for (let i = 1; i < pts.length; i++) {
+                            const mx = (pts[i - 1][0] + pts[i][0]) / 2;
+                            ctx.bezierCurveTo(mx, pts[i - 1][1], mx, pts[i][1], pts[i][0], pts[i][1]);
+                        }
+                    };
+                    const bottom = hoursArea.curveTop + hoursArea.curveHeight;
+                    ctx.beginPath();
+                    path();
+                    ctx.lineTo(pts[pts.length - 1][0], bottom);
+                    ctx.lineTo(pts[0][0], bottom);
+                    ctx.closePath();
+                    const grad = ctx.createLinearGradient(0, hoursArea.curveTop, 0, bottom);
+                    grad.addColorStop(0, Qt.alpha(lineColor, 0.4));
+                    grad.addColorStop(1, Qt.alpha(lineColor, 0));
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    path();
+                    ctx.strokeStyle = lineColor;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = lineColor;
+                    for (const p of pts) {
+                        ctx.beginPath();
+                        ctx.arc(p[0], p[1], 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            Repeater {
+                model: root.hours
+
+                Item {
+                    id: hour
+
+                    required property var modelData
+                    required property int index
+
+                    x: hoursArea.columnWidth * index
+                    width: hoursArea.columnWidth
+                    height: hoursArea.height
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: hour.index === 0 ? I18n.tr("Now") : hour.modelData.date.toLocaleTimeString(I18n.locale, "hh")
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        font.bold: hour.index === 0
+                        color: hour.index === 0 ? Config.textColor : Config.subtextColor
+                    }
+
+                    Text {
+                        y: hoursArea.labelHeight
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: WeatherService.icon(hour.modelData.code, hour.modelData.isDay)
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeIcon
+                        color: Config.textColor
+                    }
+
+                    // Temperature just above its point
+                    Text {
+                        y: hoursArea.pointY(hour.modelData.temp) - height - Config.padding / 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: hour.modelData.temp + "°"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall
+                        font.bold: true
+                        color: Config.textColor
+                    }
+
+                    // Rain chance: a bar on a faint track
+                    Rectangle {
+                        y: hoursArea.rainTop
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Config.padding
+                        height: hoursArea.rainHeight
+                        radius: width / 2
+                        color: Qt.alpha(Config.surface3Color, 0.35)
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            width: parent.width
+                            height: hour.modelData.rain > 0 ? Math.max(width, parent.height * hour.modelData.rain / 100) : 0
+                            radius: width / 2
+                            color: Qt.alpha(Config.accentColor, hour.modelData.rain >= hoursArea.rainShown ? 1 : 0.5)
+                        }
+                    }
+
+                    Text {
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: hour.modelData.rain >= hoursArea.rainShown
+                        text: hour.modelData.rain + "%"
+                        font.family: Config.font
+                        font.pixelSize: Config.fontSizeSmall - 2
+                        font.bold: true
+                        color: Config.accentColor
+                    }
+                }
+            }
+        }
+    }
+
+    // ==================== WEEK ====================
+    Card {
+        visible: WeatherService.available && WeatherService.daily.length > 0
+        Layout.fillWidth: true
+        spacing: Config.padding
+
+        CardHeader {
+            icon: "\u{f0a33}"
+            title: I18n.trn("%n day", "%n days", WeatherService.daily.length)
+        }
+
+        Repeater {
+            model: WeatherService.daily
+
+            RowLayout {
+                id: day
+
+                required property var modelData
+                required property int index
+
+                Layout.fillWidth: true
+                spacing: Config.spacing
+
+                Text {
+                    Layout.preferredWidth: Config.fontSizeNormal * 4
+                    text: day.index === 0 ? I18n.tr("Today") : I18n.capitalize(day.modelData.date.toLocaleDateString(I18n.locale, "ddd"))
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeNormal
+                    font.bold: day.index === 0
+                    color: day.index === 0 ? Config.textColor : Config.subtextColor
+                }
+
+                Text {
+                    Layout.preferredWidth: Config.fontSizeIcon * 1.5
+                    text: WeatherService.icon(day.modelData.code, true)
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeIconSmall
+                    color: Config.textColor
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    Layout.preferredWidth: Config.fontSizeSmall * 4
+                    text: "\u{f058c} " + day.modelData.rain + "%"
+                    opacity: day.modelData.rain >= 20 ? 1 : 0.35
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: day.modelData.rain >= 20 ? Config.accentColor : Config.subtextColor
+                }
+
+                Text {
+                    Layout.preferredWidth: Config.fontSizeSmall * 2.5
+                    text: day.modelData.min + "°"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: Config.subtextColor
+                    horizontalAlignment: Text.AlignRight
+                }
+
+                // Day's range against the week's
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: Config.padding
+
+                    readonly property real span: Math.max(1, root.weekMax - root.weekMin)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: height / 2
+                        color: Qt.alpha(Config.surface3Color, 0.5)
+                    }
+
+                    Rectangle {
+                        x: parent.width * (day.modelData.min - root.weekMin) / parent.span
+                        width: Math.max(height, parent.width * (day.modelData.max - day.modelData.min) / parent.span)
+                        height: parent.height
+                        radius: height / 2
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop {
+                                position: 0
+                                color: Config.accentColor
+                            }
+                            GradientStop {
+                                position: 1
+                                color: Config.warningColor
+                            }
+                        }
+                    }
+
+                    // Now, on today's bar
+                    Rectangle {
+                        visible: day.index === 0 && root.current !== null
+                        readonly property real ratio: ((root.current?.temp ?? 0) - root.weekMin) / parent.span
+                        x: parent.width * Math.max(0, Math.min(1, ratio)) - width / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.height * 2
+                        height: width
+                        radius: width / 2
+                        color: Config.textColor
+                        border.width: 2
+                        border.color: Config.accentColor
+                    }
+                }
+
+                Text {
+                    Layout.preferredWidth: Config.fontSizeSmall * 2.5
+                    text: day.modelData.max + "°"
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    font.bold: true
+                    color: Config.textColor
+                }
+
+                // UV, its level shown by the color only
+                Text {
+                    Layout.preferredWidth: Config.fontSizeSmall * 3
+                    text: "\u{f0599} " + day.modelData.uv
+                    font.family: Config.font
+                    font.pixelSize: Config.fontSizeSmall
+                    color: root.uvColor(day.modelData.uv)
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
+    }
+}

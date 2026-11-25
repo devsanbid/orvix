@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Dolphin follows KDE's color scheme; qt6ct's platform theme leaves it light.
+export QT_QPA_PLATFORMTHEME=kde
+exec /usr/bin/dolphin "$@"
