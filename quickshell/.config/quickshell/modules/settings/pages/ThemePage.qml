@@ -137,24 +137,33 @@ ColumnLayout {
 
         SelectRow {
             label: I18n.tr("Source")
-            description: I18n.tr("A theme's palette, or colors picked from your wallpaper")
+            description: I18n.tr("A theme's palette, colors picked from your wallpaper, or the active Omarchy theme")
             segmentWidth: Config.fontSizeNormal * 9
-            options: [
-                {
+            options: {
+                const list = [{
                     label: I18n.tr("Theme"),
                     icon: "\u{f03d8}",
                     value: "preset"
-                },
-                {
+                }, {
                     label: I18n.tr("Material You"),
                     icon: "\u{f0e09}",
                     value: "auto"
+                }];
+                if (ThemeService.omarchyAvailable) {
+                    list.push({
+                        label: I18n.tr("Omarchy"),
+                        icon: "\u{f0e09}",
+                        value: "omarchy"
+                    });
                 }
-            ]
+                return list;
+            }
             value: ThemeService.themeMode
             onSelected: value => {
                 if (value === "auto")
                     ThemeService.setAutoMode();
+                else if (value === "omarchy")
+                    ThemeService.setOmarchyMode();
                 else
                     ThemeService.setPresetMode(ThemeService.currentThemeName);
             }
@@ -163,6 +172,7 @@ ColumnLayout {
         SelectRow {
             label: I18n.tr("Mode")
             description: ThemeService.schemeHint || I18n.tr("Also applied to GTK and Qt apps, Kitty and Neovim")
+            enabled: !ThemeService.isOmarchyMode
             options: [
                 {
                     label: I18n.tr("Dark"),

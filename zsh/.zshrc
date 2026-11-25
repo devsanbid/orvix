@@ -167,3 +167,6 @@ export NVM_DIR="$HOME/.config/nvm"
 # that as an error)
 if [[ -s "$NVM_DIR/nvm.sh" ]]; then . "$NVM_DIR/nvm.sh"; fi
 if [[ -s "$NVM_DIR/bash_completion" ]]; then . "$NVM_DIR/bash_completion"; fi
+
+# LS Code
+export PATH="/home/rice/.lscode/bin:$PATH"

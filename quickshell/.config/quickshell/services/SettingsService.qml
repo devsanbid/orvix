@@ -28,7 +28,8 @@ Singleton {
     // categories are kept in English (I18n.noop) and shown with
     // I18n.translate; `category` matches an entry of `categories`
     readonly property var categories: [I18n.noop("Appearance"), I18n.noop("Shell"), I18n.noop("Hyprland"), I18n.noop("System")]
-    readonly property var pages: [
+    // Every page, including ones that only make sense on some machines
+    readonly property var _pages: [
         {
             id: "theme",
             label: I18n.noop("Theme"),
@@ -233,6 +234,13 @@ Singleton {
             category: "System"
         },
         {
+            id: "omarchy",
+            label: I18n.noop("Omarchy"),
+            icon: "\u{f0e09}",
+            description: I18n.noop("Omarchy version, current theme, theme list and config refresh"),
+            category: "System"
+        },
+        {
             id: "about",
             label: I18n.noop("About"),
             icon: "\u{f02fd}",
@@ -240,6 +248,9 @@ Singleton {
             category: "System"
         }
     ]
+
+    // Sidebar pages: the Omarchy page only appears when Omarchy is installed
+    readonly property var pages: _pages.filter(p => p.id !== "omarchy" || OmarchyService.available)
 
     readonly property var currentEntry: pages.find(p => p.id === currentPage) ?? pages[0]
     // Page ids in sidebar order (grouped by category)

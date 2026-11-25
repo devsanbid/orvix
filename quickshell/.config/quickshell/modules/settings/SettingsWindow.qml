@@ -65,6 +65,7 @@ FloatingWindow {
             apps: appsPage,
             autostart: autostartPage,
             profile: profilePage,
+            omarchy: omarchyPage,
             about: aboutPage
         })
 
@@ -374,6 +375,11 @@ FloatingWindow {
     Component {
         id: aboutPage
         AboutPage {}
+    }
+
+    Component {
+        id: omarchyPage
+        OmarchyPage {}
     }
 
     // Stays English: Hyprland window rules match the title

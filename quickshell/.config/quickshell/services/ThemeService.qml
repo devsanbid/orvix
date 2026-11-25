@@ -39,10 +39,13 @@ Singleton {
     readonly property string matugenCachePath: Quickshell.env("HOME") + "/.cache/matugen"
 
     property string currentThemeName: getState("theme.name", "tokyonight")
-    property string themeMode: getState("theme.mode", "preset") // "preset" | "auto"
+    property string themeMode: getState("theme.mode", "preset") // "preset" | "auto" | "omarchy"
     // The mode picked in Settings: the theme list shows its themes
     property string colorScheme: getState("theme.scheme", "dark") // "dark" | "light"
     readonly property bool isAutoMode: themeMode === "auto"
+    // Orvix follows the active Omarchy theme (read-only; Omarchy owns it)
+    readonly property bool isOmarchyMode: themeMode === "omarchy"
+    readonly property bool omarchyAvailable: OmarchyService.available
     // Variant of the preset on screen. GTK and Qt follow it, not
     // colorScheme: picking Light on a theme without a light version keeps
     // it until a light theme is chosen
@@ -51,6 +54,8 @@ Singleton {
     readonly property bool isDarkMode: appliedScheme === "dark"
     // The current preset has no version for the picked mode
     readonly property string schemeHint: {
+        if (isOmarchyMode)
+            return "";
         if (isAutoMode || appliedVariant === colorScheme)
             return "";
         const name = themePreviews[currentThemeName]?.name ?? currentThemeName;
@@ -145,7 +150,9 @@ Singleton {
             // currentThemeName changes when the theme is applied, so a new
             // name from outside (orvix theme set) counts as another theme
             const name = root.getState("theme.name", "tokyonight");
-            if (root.isAutoMode) {
+            if (root.isOmarchyMode) {
+                root.applyOmarchyTheme(true);
+            } else if (root.isAutoMode) {
                 const wallpaper = root.getState("wallpaper.current", "");
                 if (wallpaper) {
                     root.runMatugen(wallpaper);
@@ -190,6 +197,49 @@ Singleton {
         const wallpaper = getState("wallpaper.current", "");
         if (wallpaper) {
             runMatugen(wallpaper);
+        }
+    }
+
+    // Follow the active Omarchy theme. The palette, Kitty, Neovim, GTK, Qt
+    // and Hyprland borders come from Omarchy's colors.toml; the wallpaper and
+    // opacity stay the user's (Omarchy has its own wallpaper handling).
+    function setOmarchyMode() {
+        if (!OmarchyService.available) {
+            console.log("[Theme] Omarchy theme not available");
+            return;
+        }
+        console.log("[Theme] Switching to Omarchy theme mode");
+        themeMode = "omarchy";
+        setState("theme.mode", "omarchy");
+        applyOmarchyTheme();
+    }
+
+    function applyOmarchyTheme(restoring = false) {
+        const data = OmarchyService.themeData;
+        if (!data) {
+            // Omarchy was removed while selected: keep the last palette and
+            // let the user pick another mode in Settings
+            console.log("[Theme] Omarchy theme unavailable");
+            return;
+        }
+        root.palette = data.palette;
+        root.appliedVariant = data.variant;
+        _applyHyprland(data.hyprland);
+        _applyKitty(data.terminal);
+        _applyNeovim(data.palette, data.terminal);
+        ZenService.applyPalette(data.palette);
+        _applyGtkFromPalette(data.palette);
+        _applyQtFromPalette(data.palette);
+        console.log("[Theme] Omarchy theme applied:", data.name || "Omarchy");
+    }
+
+    // Omarchy rewrote its theme: follow it live while selected
+    Connections {
+        target: OmarchyService
+
+        function onThemeChanged() {
+            if (root.isOmarchyMode)
+                root.applyOmarchyTheme(true);
         }
     }
 
