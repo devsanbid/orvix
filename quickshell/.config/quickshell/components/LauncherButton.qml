@@ -5,7 +5,7 @@ import Quickshell.Io
 import qs.config
 import qs.services
 
-// Bar button that opens the launcher. Shows the lyne-dots logo (or the
+// Bar button that opens the launcher. Shows the orvix logo (or the
 // distro's Nerd Font glyph) in one of three styles:
 //   logo    — no background at rest, a pill the size of the logo on hover
 //   pill    — a soft accent pill that is always there
@@ -377,7 +377,7 @@ BarButton {
         // Squeezed while pressed, around the center
         scale: 1 - root.press * 0.15
 
-        LyneLogo {
+        OrvixLogo {
             id: logo
             anchors.centerIn: parent
             height: Config.fontSizeNormal

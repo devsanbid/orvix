@@ -1,5 +1,5 @@
 # Shared setup for the bats tests: load with `load helpers` and call
-# `lyne_setup` from setup().
+# `orvix_setup` from setup().
 #
 # Every test gets a throwaway HOME and runs with stand-ins (tests/bash/stubs)
 # for sudo, pacman, systemctl, udevadm, mkinitcpio and yay first in PATH:
@@ -10,22 +10,22 @@ bats_load_library bats-support
 bats_load_library bats-assert
 
 REPO="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
-# LYNE_TEST_LIB points the tests at another copy of the libs
-LIB="${LYNE_TEST_LIB:-$REPO/.data/lyne-cli/lib}"
+# ORVIX_TEST_LIB points the tests at another copy of the libs
+LIB="${ORVIX_TEST_LIB:-$REPO/.data/orvix-cli/lib}"
 # shellcheck disable=SC2034 # used by the .bats files
 FIXTURES="$BATS_TEST_DIRNAME/fixtures"
 
-lyne_setup() {
+orvix_setup() {
     export HOME="$BATS_TEST_TMPDIR/home"
     mkdir -p "$HOME"
     # Set in the user's session: with a fake HOME they'd still point at the
     # real ~/.local/state and friends
     unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_CACHE_HOME XDG_DATA_HOME
     # Nor the graphical session: nothing may reach the user's Hyprland
-    unset HYPRLAND_INSTANCE_SIGNATURE LYNE_HYPR_LOG WAYLAND_DISPLAY DISPLAY
-    export DOTS_DIR="$HOME/.lyne-dots"
-    # The lyne CLI would otherwise follow its own path to the real repo
-    export LYNE_DOTS="$DOTS_DIR"
+    unset HYPRLAND_INSTANCE_SIGNATURE ORVIX_HYPR_LOG WAYLAND_DISPLAY DISPLAY
+    export DOTS_DIR="$HOME/.orvix"
+    # The orvix CLI would otherwise follow its own path to the real repo
+    export ORVIX_DIR="$DOTS_DIR"
 
     export PATH="$BATS_TEST_DIRNAME/stubs:$PATH"
     export STUB_LOG="$BATS_TEST_TMPDIR/stub.log"
@@ -49,31 +49,31 @@ pkgs() {
     done
 }
 
-# in_lyne LIB... -- CODE: runs CODE in a new bash the way the lyne CLI runs
+# in_orvix LIB... -- CODE: runs CODE in a new bash the way the orvix CLI runs
 # its commands: state.sh and log.sh sourced, then each lib sourced inside a
 # function (some declare `local` at their top level)
-in_lyne() {
+in_orvix() {
     local libs=()
     while (($#)) && [[ "$1" != -- ]]; do
         libs+=("$1")
         shift
     done
     shift
-    LYNE_TEST_CODE="$1" bash -c '
+    ORVIX_TEST_CODE="$1" bash -c '
         source "$1/state.sh"
         source "$2"
-        _lyne_test() {
-            local _lyne_test_lib
-            for _lyne_test_lib in "${@:3}"; do
-                source "$1/$_lyne_test_lib.sh" || return 1
+        _orvix_test() {
+            local _orvix_test_lib
+            for _orvix_test_lib in "${@:3}"; do
+                source "$1/$_orvix_test_lib.sh" || return 1
             done
-            eval "$LYNE_TEST_CODE"
+            eval "$ORVIX_TEST_CODE"
         }
-        _lyne_test "$@"' _ "$LIB" "$REPO/.install/lib/log.sh" "${libs[@]}"
+        _orvix_test "$@"' _ "$LIB" "$REPO/.install/lib/log.sh" "${libs[@]}"
 }
 
 # fx_gpu ROOT PCI VENDOR:DEVICE [key=value...]: one display controller in a
-# fake sysfs at ROOT (LYNE_SYSFS). Keys: driver, card, outputs ("eDP-1:connected
+# fake sysfs at ROOT (ORVIX_SYSFS). Keys: driver, card, outputs ("eDP-1:connected
 # HDMI-A-1:disconnected"), boot_vga, vram (bytes), class
 fx_gpu() {
     local root=$1 pci=$2 ids=$3
@@ -117,12 +117,12 @@ fx_gpu() {
 # links, except what tests write to: the shell config folder is a real one
 # with its own state.json (from defaults.json, linked from
 # ~/.config/quickshell like an install does), kde and theming are copies
-# without the files kept out of git, and .data/lyne-cli/migrations
-# can point elsewhere (LYNE_TEST_MIGRATIONS for a copy). Writing through a link would change the repo: tests
+# without the files kept out of git, and .data/orvix-cli/migrations
+# can point elsewhere (ORVIX_TEST_MIGRATIONS for a copy). Writing through a link would change the repo: tests
 # that use this call `repo_unchanged` in teardown.
 fake_dots() {
     local item cfg="$DOTS_DIR/quickshell/.config/quickshell"
-    mkdir -p "$DOTS_DIR/.data/lyne-cli" "$cfg" "$HOME/.config"
+    mkdir -p "$DOTS_DIR/.data/orvix-cli" "$cfg" "$HOME/.config"
     for item in "$REPO"/* "$REPO"/.[!.]*; do
         case "${item##*/}" in
         .git | .data | quickshell) ;;
@@ -137,11 +137,11 @@ fake_dots() {
         esac
     done
     for item in "$REPO"/.data/*; do
-        [[ "${item##*/}" == lyne-cli ]] || ln -s "$item" "$DOTS_DIR/.data/"
+        [[ "${item##*/}" == orvix-cli ]] || ln -s "$item" "$DOTS_DIR/.data/"
     done
-    ln -s "$LIB" "$DOTS_DIR/.data/lyne-cli/lib"
-    ln -s "$REPO/.data/lyne-cli/commands" "$DOTS_DIR/.data/lyne-cli/"
-    ln -s "${1:-${LYNE_TEST_MIGRATIONS:-$REPO/.data/lyne-cli/migrations}}" "$DOTS_DIR/.data/lyne-cli/migrations"
+    ln -s "$LIB" "$DOTS_DIR/.data/orvix-cli/lib"
+    ln -s "$REPO/.data/orvix-cli/commands" "$DOTS_DIR/.data/orvix-cli/"
+    ln -s "${1:-${ORVIX_TEST_MIGRATIONS:-$REPO/.data/orvix-cli/migrations}}" "$DOTS_DIR/.data/orvix-cli/migrations"
     for item in "$REPO"/quickshell/.config/quickshell/*; do
         [[ "${item##*/}" == state.json ]] || ln -s "$item" "$cfg/"
     done
@@ -167,9 +167,9 @@ repo_unchanged() {
 snapshot() {
     (
         cd "$HOME" || exit 1
-        find . -path ./.lyne-dots -prune -o -type l -printf '%p -> %l\n' | sort
-        find . -path ./.lyne-dots -prune -o -type f -print0 | xargs -0 -r sha1sum | sort -k2
-        find .lyne-dots -type f -print0 | xargs -0 -r sha1sum | sort -k2
+        find . -path ./.orvix -prune -o -type l -printf '%p -> %l\n' | sort
+        find . -path ./.orvix -prune -o -type f -print0 | xargs -0 -r sha1sum | sort -k2
+        find .orvix -type f -print0 | xargs -0 -r sha1sum | sort -k2
     )
     sort "$FAKE_PKGS"
 }

@@ -5,12 +5,12 @@
 #   █▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█
 #
 #   Installation Script
-#   https://github.com/caioax/lyne-dots
+#   https://github.com/caioax/orvix
 #
 # =============================================================================
 # Every question comes first (.install/lib/ask.sh); after the review screen
 # and the sudo password the install runs on its own, showing its progress
-# (.install/lib/run.sh) and writing everything to ~/.cache/lyne/install-*.log
+# (.install/lib/run.sh) and writing everything to ~/.cache/orvix/install-*.log
 # =============================================================================
 
 # =============================================================================
@@ -25,8 +25,8 @@ source "$LIB_DIR/log.sh"
 source "$LIB_DIR/ui.sh"
 source "$LIB_DIR/ask.sh"
 source "$LIB_DIR/run.sh"
-# lyne_state_set, also used by gpu-order.sh
-source "$DOTFILES_DIR/.data/lyne-cli/lib/state.sh"
+# orvix_state_set, also used by gpu-order.sh
+source "$DOTFILES_DIR/.data/orvix-cli/lib/state.sh"
 
 # Categories offered in the questionnaire (value|label|description|default).
 # nvidia.sh has no packages yet: its environment files are a question of
@@ -175,7 +175,7 @@ install_yay() {
     rm -rf "$TEMP_DIR"
 }
 
-# jq: the installer's state.json changes and the lyne CLI need it
+# jq: the installer's state.json changes and the orvix CLI need it
 step_base() {
     log_step "Installing GNU Stow, git and jq..."
     sudo pacman -S --needed --noconfirm stow git jq
@@ -183,8 +183,8 @@ step_base() {
 
 # step_nvidia <multilib 0|1>
 step_nvidia() {
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/nvidia.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/nvidia.sh"
     gpu_detect
     nvidia_plan "${1:-0}"
     nvidia_plan_lines | sed 's/^/[>>] Plan: /'
@@ -194,8 +194,8 @@ step_nvidia() {
 # step_gpus <order spec>: /dev/dri links by PCI (udev) and the order
 # Hyprland uses them in (local/gpus.lua, state.json)
 step_gpus() {
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpu-order.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/gpu-order.sh"
     gpu_detect
     gpu_links
     gpu_rules_install
@@ -220,11 +220,11 @@ step_stow() {
     run_stow_main "${packages[@]}"
 }
 
-# The lyne-dots logo as a system icon (used by lyne update notifications)
+# The orvix logo as a system icon (used by orvix update notifications)
 step_icons() {
-    log_step "Installing the lyne-dots icon..."
+    log_step "Installing the orvix icon..."
     local DOTS_DIR="$DOTFILES_DIR"
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/install-icons.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/install-icons.sh"
 }
 
 step_hyprland() {
@@ -246,14 +246,14 @@ step_state_aur_helper() {
     fi
 
     log_step "Setting AUR helper in state.json..."
-    LYNE_STATE_FILE="$STATE_FILE" lyne_state_set '.system.aurHelper = $helper' --arg helper "$AUR_HELPER"
+    ORVIX_STATE_FILE="$STATE_FILE" orvix_state_set '.system.aurHelper = $helper' --arg helper "$AUR_HELPER"
     log_info "AUR helper set to: $AUR_HELPER"
 
-    # The packages linked, so lyne update and the migrations leave the others
+    # The packages linked, so orvix update and the migrations leave the others
     # alone
     local stowed
     stowed="$(source "$SETUP_DIR/stow.sh" && stow_packages "${CATEGORIES[@]}")"
-    LYNE_STATE_FILE="$STATE_FILE" lyne_state_set '.system.stow = ($pkgs | split("\n"))' --arg pkgs "$stowed"
+    ORVIX_STATE_FILE="$STATE_FILE" orvix_state_set '.system.stow = ($pkgs | split("\n"))' --arg pkgs "$stowed"
     log_info "Linked packages: ${stowed//$'\n'/ }"
 }
 
@@ -378,7 +378,7 @@ step_services() {
 # Power profiles (Quick Settings, Settings › System › Power profiles): on
 # laptops with nothing else managing power, power-profiles-daemon
 step_power_profiles() {
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/power-profiles.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/power-profiles.sh"
     log_step "Checking power profiles..."
     pp_auto_install
 }
@@ -449,22 +449,22 @@ step_theming() {
 # The lyne-sddm login screen, built with makepkg (lib/sddm.sh). The shell
 # syncs it on its first start
 step_sddm() {
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/sddm.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/sddm.sh"
     log_step "Installing the lyne-sddm login screen..."
     # The update channel picks the version (stable: lyne-sddm's newest release)
     local channel
     channel="$(jq -r '.update.channel // "stable"' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
     # Never a prompt behind the progress screen (tty 0)
     if ! sddm_install "${channel:-stable}" 0; then
-        log_warn "lyne-sddm wasn't installed: run 'lyne sddm install' later"
+        log_warn "lyne-sddm wasn't installed: run 'orvix sddm install' later"
         return 0
     fi
     log_info "Login screen: lyne-sddm (shows on the next login)"
 }
 
 step_migrations() {
-    local MIGRATIONS_DIR="$DOTFILES_DIR/.data/lyne-cli/migrations"
-    local DONE_FILE="$HOME/.local/share/lyne/migrations-done"
+    local MIGRATIONS_DIR="$DOTFILES_DIR/.data/orvix-cli/migrations"
+    local DONE_FILE="$HOME/.local/share/orvix/migrations-done"
 
     mkdir -p "$(dirname "$DONE_FILE")"
     touch "$DONE_FILE"
@@ -508,7 +508,7 @@ plan_steps() {
     fi
 
     step_add step_stow "Linking the dotfiles (stow)" 1
-    step_add step_icons "lyne-dots icon"
+    step_add step_icons "orvix icon"
     step_add step_hyprland "Hyprland local files"
     gpu_multi && step_add "step_gpus ${ANSWERS[gpu_order]:-auto}" "GPU links and order"
     step_add step_state_aur_helper "Quickshell settings"
@@ -524,7 +524,7 @@ plan_steps() {
     has_category core && step_add step_wallpaper "Wallpaper"
     has_category theming && step_add step_theming "GTK theme and matugen"
     [[ "${ANSWERS[sddm]:-no}" == yes ]] && step_add step_sddm "Login screen (lyne-sddm)" 2
-    step_add step_migrations "Lyne CLI"
+    step_add step_migrations "Orvix CLI"
 }
 
 # =============================================================================
@@ -601,13 +601,13 @@ _gpu_order_label() {
 }
 
 # Only where SDDM is the display manager: it would not show otherwise, and
-# switching display managers is left to the user (lyne sddm install later)
+# switching display managers is left to the user (orvix sddm install later)
 q_sddm() {
     [[ "$(sddm_dm)" == sddm ]] || return 3
     ask_single sddm "Login screen" \
         "SDDM starts your session. lyne-sddm is a login screen in the same style as the lock screen, following the theme." \
         "yes|Install lyne-sddm|built from GitHub with makepkg, selected for the next login|1" \
-        "no|Keep the current one|lyne sddm install adds it later"
+        "no|Keep the current one|orvix sddm install adds it later"
 }
 
 q_reboot() {
@@ -625,7 +625,7 @@ review_stow_packages() {
 }
 
 # Every target that goes to the backup, then where to:
-# "~/.zshrc, ~/.config/nvim\nto ~/.lyne-dots-backup/<date>"
+# "~/.zshrc, ~/.config/nvim\nto ~/.orvix-backup/<date>"
 backup_summary() {
     local -a paths=() packages
     local target
@@ -636,7 +636,7 @@ backup_summary() {
     ((${#paths[@]} == 0)) && return
     local shown
     shown="$(printf '%s, ' "${paths[@]}")"
-    printf '%s\nto %s' "${shown%, }" "${LYNE_BACKUP_DIR/#$HOME/\~}"
+    printf '%s\nto %s' "${shown%, }" "${ORVIX_BACKUP_DIR/#$HOME/\~}"
 }
 
 # The review screen's rows ("Key|value"), also written to the log
@@ -676,9 +676,9 @@ review_rows() {
     else
         rows+=("Reboot|no")
     fi
-    local log="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/install-$STAMP.log"
+    local log="${XDG_CACHE_HOME:-$HOME/.cache}/orvix/install-$STAMP.log"
     rows+=("Log|${log/#$HOME/\~}")
-    [[ -n "${LYNE_DRY_RUN:-}" ]] && rows+=("Dry run|HOME is ${LYNE_DRY_HOME}")
+    [[ -n "${ORVIX_DRY_RUN:-}" ]] && rows+=("Dry run|HOME is ${ORVIX_DRY_HOME}")
     REVIEW_ROWS=("${rows[@]}")
 }
 
@@ -718,7 +718,7 @@ answer_defaults() {
     # GPU order: automatic (the GPU with the built-in screen renders) unless
     # an answers file sets one. Not asked: NVIDIA first on a laptop leaves it
     # without a desktop away from the external monitor (Hyprland 0.57);
-    # Settings › Graphics and lyne gpu order change it later
+    # Settings › Graphics and orvix gpu order change it later
     [[ -v "ANSWERS[gpu_order]" ]] || ANSWERS[gpu_order]=auto
     # Only a GPU with a driver can get one
     if [[ "${ANSWERS[nvidia]}" == driver* ]]; then
@@ -766,10 +766,10 @@ show_summary() {
     done
     echo ""
     echo "  Took $(_run_clock "$RUN_SECONDS"). Full output: ${LOG_FILE/#$HOME/\~}"
-    if [[ -d "$LYNE_BACKUP_DIR" ]]; then
-        echo "  Your previous files are in ${LYNE_BACKUP_DIR/#$HOME/\~}"
+    if [[ -d "$ORVIX_BACKUP_DIR" ]]; then
+        echo "  Your previous files are in ${ORVIX_BACKUP_DIR/#$HOME/\~}"
     fi
-    [[ -n "${LYNE_DRY_RUN:-}" ]] && echo "  Dry run: the files written are in $LYNE_DRY_HOME"
+    [[ -n "${ORVIX_DRY_RUN:-}" ]] && echo "  Dry run: the files written are in $ORVIX_DRY_HOME"
 
     if ((RUN_CANCELLED || RUN_ABORTED)); then
         echo ""
@@ -794,13 +794,13 @@ show_summary() {
     if gpu_multi; then
         echo ""
         echo -e "${C_WARN}GPUs:${C_RESET}"
-        echo "  - Links and order: lyne gpu (lyne gpu order changes which GPU renders)"
+        echo "  - Links and order: orvix gpu (orvix gpu order changes which GPU renders)"
     fi
 
-    if [[ "$LYNE_NVIDIA_ENV" == yes ]]; then
+    if [[ "$ORVIX_NVIDIA_ENV" == yes ]]; then
         echo ""
         echo -e "${C_WARN}NVIDIA:${C_RESET}"
-        [[ "${ANSWERS[nvidia]}" == driver* ]] && echo "  - After the reboot, check the driver with: lyne nvidia"
+        [[ "${ANSWERS[nvidia]}" == driver* ]] && echo "  - After the reboot, check the driver with: orvix nvidia"
         echo "  - Review ~/.config/hypr/local/extra_environment.lua"
     fi
 
@@ -851,16 +851,16 @@ main() {
     check_not_root
 
     STAMP="$(date +%Y%m%d-%H%M%S)"
-    export LYNE_BACKUP_DIR="$HOME/.lyne-dots-backup/$STAMP"
+    export ORVIX_BACKUP_DIR="$HOME/.orvix-backup/$STAMP"
     # The GPUs, for the Graphics question and the log
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/nvidia.sh"
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpu-order.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/nvidia.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/gpu-order.sh"
     gpu_detect
     gpu_links
     nvidia_plan 0
     # sddm_dm, for the Login screen question
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/sddm.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/sddm.sh"
 
     ui_setup
     # Plain summary when the output goes to a file
@@ -887,9 +887,9 @@ main() {
     fi
 
     read -ra CATEGORIES <<<"${ANSWERS[categories]}"
-    LYNE_NVIDIA_ENV=no
-    [[ "${ANSWERS[nvidia]}" == none ]] || LYNE_NVIDIA_ENV=yes
-    export LYNE_NVIDIA_ENV
+    ORVIX_NVIDIA_ENV=no
+    [[ "${ANSWERS[nvidia]}" == none ]] || ORVIX_NVIDIA_ENV=yes
+    export ORVIX_NVIDIA_ENV
 
     # sudo once, kept alive until the end
     log_step "The installation needs your sudo password (asked only now)."
@@ -900,11 +900,11 @@ main() {
 
     run_log_init "$STAMP"
     {
-        echo "lyne-dots install $(date -Iseconds)"
+        echo "orvix install $(date -Iseconds)"
         echo "dotfiles: $DOTFILES_DIR ($(git -C "$DOTFILES_DIR" rev-parse --short HEAD 2>/dev/null))"
         local key
         for key in "${!ANSWERS[@]}"; do echo "answer $key=${ANSWERS[$key]}"; done
-        [[ -n "${LYNE_DRY_RUN:-}" ]] && echo "dry run, HOME=$HOME"
+        [[ -n "${ORVIX_DRY_RUN:-}" ]] && echo "dry run, HOME=$HOME"
         echo ""
         local row
         review_rows
@@ -950,7 +950,7 @@ usage() {
     echo "                    found has one), multilib=yes (lib32 driver),"
     echo "                    gpu_order=igpu|dgpu|auto (hybrid machines), reboot=yes|no"
     echo "  --dry-run         Change nothing: a throwaway HOME and stand-ins for sudo,"
-    echo "                    pacman -S, yay, stow, systemctl... (LYNE_DRY_HOME=dir"
+    echo "                    pacman -S, yay, stow, systemctl... (ORVIX_DRY_HOME=dir"
     echo "                    reuses one)"
     echo ""
     echo "Available categories:"
@@ -1002,7 +1002,7 @@ stow)
     check_arch
     sudo pacman -S --needed --noconfirm stow
     source "$SETUP_DIR/stow.sh"
-    # The packages linked before (lyne link adds others)
+    # The packages linked before (orvix link adds others)
     mapfile -t STOW_LIST < <(stow_default_packages)
     run_stow_main "${STOW_LIST[@]}" || exit 1
     stow_record "${STOW_LIST[@]}" || true
@@ -1024,7 +1024,7 @@ packages)
     source "$RUN_STATE"
     rm -f "$RUN_STATE"
     if [[ "$PACKAGE_CATEGORY" == nvidia ]]; then
-        # The driver for the GPU found (like lyne nvidia install, no questions)
+        # The driver for the GPU found (like orvix nvidia install, no questions)
         sudo -v || exit 1
         step_nvidia 0
     else

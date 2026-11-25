@@ -50,7 +50,7 @@ end
 -- conf/variables.lua reads $HOME
 require("conf/keybinds")
 require("conf/specials")
-lyne_specials_fallback()
+orvix_specials_fallback()
 
 -- Key names as printed in the README
 local key_names = {

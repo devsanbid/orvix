@@ -27,7 +27,7 @@ ColumnLayout {
     property bool pickingFromLibrary: false
     property bool confirmingDelete: false
     readonly property bool generating: WallpaperService.generatingFor === theme
-    readonly property bool hasLyneWallpapers: WallpaperService.themeWallpapers.some(p => WallpaperService.fileName(p).startsWith("lyne-" + theme + "-"))
+    readonly property bool hasOrvixWallpapers: WallpaperService.themeWallpapers.some(p => WallpaperService.fileName(p).startsWith("orvix-" + theme + "-"))
     readonly property string generateError: I18n.translate(WallpaperService.generateErrors[theme] ?? "")
     readonly property bool custom: preview.custom === true
 
@@ -353,11 +353,11 @@ ColumnLayout {
             }
         }
 
-        // The lyne-dots contour scene rendered in the theme's colors
+        // The orvix contour scene rendered in the theme's colors
         SettingRow {
             id: generateRow
 
-            label: I18n.tr("lyne-dots wallpaper")
+            label: I18n.tr("orvix wallpaper")
             description: {
                 if (root.generating)
                     return I18n.tr("Rendering the contour scene…");
@@ -365,13 +365,13 @@ ColumnLayout {
                     return root.generateError;
                 if (WallpaperService.generatingFor !== "")
                     return I18n.tr("Another theme's wallpaper is rendering");
-                if (root.hasLyneWallpapers)
+                if (root.hasOrvixWallpapers)
                     return I18n.tr("The contour scene in the colors of %1. Render it again after changing its colors", root.displayName);
                 return I18n.tr("Render the contour scene in the colors of %1", root.displayName);
             }
             descriptionColor: root.generateError !== "" && !root.generating ? Config.errorColor : Config.subtextColor
 
-            leading: LyneLogo {
+            leading: OrvixLogo {
                 height: Config.fontSizeIconSmall
                 dotColor: root.themePalette.accent ?? Config.accentColor
             }
@@ -386,7 +386,7 @@ ColumnLayout {
                 visible: !root.generating
                 opacity: WallpaperService.generatingFor === "" ? 1 : 0.4
                 icon: "\u{f1a00}"
-                text: root.hasLyneWallpapers ? I18n.tr("Render again") : I18n.tr("Generate")
+                text: root.hasOrvixWallpapers ? I18n.tr("Render again") : I18n.tr("Generate")
                 baseColor: generateRow.controlColor
                 onClicked: {
                     if (WallpaperService.generatingFor === "")

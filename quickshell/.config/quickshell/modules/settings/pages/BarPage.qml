@@ -122,12 +122,12 @@ ColumnLayout {
 
         SelectRow {
             label: I18n.tr("Icon")
-            description: I18n.tr("The lyne-dots logo, or your distro's logo from the Nerd Font")
+            description: I18n.tr("The orvix logo, or your distro's logo from the Nerd Font")
             path: "bar.launcher.icon"
             options: [
                 {
-                    label: "lyne-dots",
-                    value: "lyne"
+                    label: "orvix",
+                    value: "orvix"
                 },
                 {
                     label: I18n.tr("Distro"),

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Runs the lyne-dots test suite: tests/run.sh [section...]
+# Runs the orvix test suite: tests/run.sh [section...]
 #   js     node tests of the shell's JavaScript libraries (tests/js)
-#   bash   bats tests of the lyne CLI, migrations and installer (tests/bash)
+#   bash   bats tests of the orvix CLI, migrations and installer (tests/bash)
 #   lint   shellcheck over every script in the repo, the tests included
 #   qml    qmllint over the shell, against tests/qml/lint-baseline.txt
 #   smoke  the whole shell in a nested Hyprland, every window and page
@@ -12,7 +12,7 @@
 #          the popups (lazygit, scratch, projects); the color preview;
 #          QML (Treesitter, qmlls finding Quickshell's modules); web pages
 #          (Emmet, closing tags, the browser preview); one
-#          Neovim per project (its socket) and lyne nvim open
+#          Neovim per project (its socket) and orvix nvim open
 #          (needs tmux and the plugins lazy.nvim and Mason installed)
 # No section = all of them. Exits 1 when a section fails or its tool is
 # missing (nothing is skipped silently).
@@ -60,7 +60,7 @@ run_lint() {
     local files
     # Tracked and new (not ignored) scripts
     mapfile -t files < <(git ls-files --cached --others --exclude-standard '*.sh' '*.bats' '*.bash' \
-        local/.local/bin/lyne 'tests/bash/stubs/*')
+        local/.local/bin/orvix 'tests/bash/stubs/*')
     # A tracked script deleted but not committed yet is still listed
     local f existing=()
     for f in "${files[@]}"; do [[ -f "$f" ]] && existing+=("$f"); done

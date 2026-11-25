@@ -5,14 +5,14 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The mouse cursor theme and size (Settings › Cursor; also `lyne cursor`).
-// scripts/cursor.sh (lyne's cursor.sh lib) lists the installed themes and
+// The mouse cursor theme and size (Settings › Cursor; also `orvix cursor`).
+// scripts/cursor.sh (orvix's cursor.sh lib) lists the installed themes and
 // switches the running Hyprland, GSettings and the default theme apps
 // inherit; HyprlandSettingsService writes the XCURSOR_* variables new apps
 // start with to hypr/local/settings.lua. Applied on start and on every
-// change (Settings, `lyne cursor`, an edit of state.json). Previews: PNGs of
+// change (Settings, `orvix cursor`, an edit of state.json). Previews: PNGs of
 // a few shapes per theme and size, made by scripts/cursor-preview.py in
-// ~/.cache/lyne/cursors (only again when a theme's folder changes).
+// ~/.cache/orvix/cursors (only again when a theme's folder changes).
 // install() picks an archive with zenity and unpacks its themes into
 // ~/.local/share/icons (cursor_install in the lib); remove() deletes one of
 // those
@@ -22,7 +22,7 @@ Singleton {
     readonly property string script: Qt.resolvedUrl("../scripts/cursor.sh").toString().replace("file://", "")
     readonly property string previewScript: Qt.resolvedUrl("../scripts/cursor-preview.py").toString().replace("file://", "")
     readonly property string installDir: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/icons"
-    readonly property string previewDir: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/lyne/cursors"
+    readonly property string previewDir: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/orvix/cursors"
 
     // Sizes xcursor themes come in: others are scaled and blur
     readonly property var sizes: [24, 32, 48, 64]

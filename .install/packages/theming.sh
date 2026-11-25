@@ -26,7 +26,7 @@ THEMING_PACKAGES=(
     "matugen" # Generate Material You colors from wallpapers
 
     # Theme creation in Settings: accent colors from a wallpaper and the
-    # lyne-dots wallpapers of a new theme (.data/wallpapers/generator)
+    # orvix wallpapers of a new theme (.data/wallpapers/generator)
     "python-numpy"  # Wallpaper generator
     "python-pillow" # Wallpaper generator, wallpaper color extraction
     "librsvg"       # rsvg-convert, rasterizes the generator's shapes
@@ -88,9 +88,9 @@ setup_theming() {
     log_info "GTK theme applied!"
 
     # GSettings, the default theme apps without a setting inherit and, inside
-    # Hyprland, the running cursor (lyne cursor; Settings > Cursor)
+    # Hyprland, the running cursor (orvix cursor; Settings > Cursor)
     log_step "Applying the cursor theme..."
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/cursor.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/cursor.sh"
     if cursor_apply "$CURSOR_DEFAULT_THEME" "$CURSOR_DEFAULT_SIZE"; then
         log_info "Cursor: $CURSOR_DEFAULT_THEME, size $CURSOR_DEFAULT_SIZE"
     else
@@ -98,10 +98,10 @@ setup_theming() {
     fi
 
     # The default icon theme's dark version (the install starts dark) in
-    # GSettings, qt6ct/qt5ct, kdeglobals and the GTK settings.ini (lyne
+    # GSettings, qt6ct/qt5ct, kdeglobals and the GTK settings.ini (orvix
     # icons; Settings > Icons)
     log_step "Applying the icon theme..."
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/icons.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/icons.sh"
     local icons
     if icons="$(icons_variant "$ICONS_DEFAULT_THEME" dark)" && icons_apply "$icons" >/dev/null; then
         log_info "Icons: $icons"

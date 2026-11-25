@@ -33,7 +33,7 @@ ShellRoot {
     // Keeps hypr/local/settings.lua in sync with state.json
     property string _hyprlandSettings: HyprlandSettingsService.lua
 
-    // Checks for a lyne-dots update a minute after the start
+    // Checks for a orvix update a minute after the start
     property bool _updateReady: UpdateService.checking
 
     // Applies the saved mouse cursor on start
@@ -49,7 +49,7 @@ ShellRoot {
     property bool _videoPaused: WallpaperService.videoPaused
 
     // Recording a shortcut in Settings puts Hyprland in the empty
-    // "lyne_capture" submap. If the shell reloaded or crashed mid-recording,
+    // "orvix_capture" submap. If the shell reloaded or crashed mid-recording,
     // Hyprland would be left without binds: always leave it on (re)load
     Component.onCompleted: Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.submap("reset")'])
 
@@ -202,13 +202,13 @@ ShellRoot {
         sourceComponent: SettingsWindow {}
     }
 
-    // Welcome screen: on the first login after the install, or `lyne welcome`
+    // Welcome screen: on the first login after the install, or `orvix welcome`
     Loader {
         active: WelcomeService.visible
         sourceComponent: WelcomeWindow {}
     }
 
-    // What's new: from lyne update's notification or Settings › About
+    // What's new: from orvix update's notification or Settings › About
     Loader {
         active: WhatsNewService.visible
         sourceComponent: WhatsNewWindow {}

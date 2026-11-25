@@ -181,7 +181,7 @@ QtObject {
     // Workspaces); hypr/conf/workspaces.lua picks it
     function step(direction) {
         if (live && monitorName !== "")
-            Hyprland.dispatch("lyne_workspace_step(" + direction + ", \"" + monitorName + "\")");
+            Hyprland.dispatch("orvix_workspace_step(" + direction + ", \"" + monitorName + "\")");
     }
     function toggleSpecial() {
         if (specialName)

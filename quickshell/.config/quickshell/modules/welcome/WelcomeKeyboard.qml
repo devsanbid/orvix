@@ -7,7 +7,7 @@ import "../settings/rows/"
 import "../settings/pages/"
 import "../../components/"
 
-// Keyboard step: the layout (the system's, when lyne-dots still has its
+// Keyboard step: the layout (the system's, when orvix still has its
 // default) with a field to try it, and the navigation keys preset
 ColumnLayout {
     id: root

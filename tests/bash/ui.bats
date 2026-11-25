@@ -6,14 +6,14 @@
 load helpers
 
 setup() {
-    lyne_setup
-    INSTALL_LIB="${LYNE_TEST_INSTALL_LIB:-$REPO/.install/lib}"
+    orvix_setup
+    INSTALL_LIB="${ORVIX_TEST_INSTALL_LIB:-$REPO/.install/lib}"
 }
 
 # in_ui CODE: runs CODE with ui.sh and ask.sh sourced, plain glyphs and
 # UI_WIDTH 40
 in_ui() {
-    LYNE_ASCII=1 bash -c '
+    ORVIX_ASCII=1 bash -c '
         source "$1/ui.sh" && source "$1/ask.sh"
         ui_setup
         UI_WIDTH=40
@@ -36,12 +36,12 @@ in_ui() {
 }
 
 @test "ui_wrap: keeps the text's own line breaks, cuts a word too long" {
-    run in_ui 'ui_wrap "$(printf "a b\nto ~/.lyne-dots-backup/20261020-120000")" 12'
+    run in_ui 'ui_wrap "$(printf "a b\nto ~/.orvix-backup/20261020-120000")" 12'
     assert_success
     assert_line --index 0 "a b"
     assert_line --index 1 "to"
     # Fitted with the ASCII ellipsis
-    assert_line --index 2 "~/.lyne-d..."
+    assert_line --index 2 "~/.orvix-d..."
     assert_equal "${#lines[@]}" 3
 }
 

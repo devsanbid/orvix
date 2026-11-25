@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# GPUs for Settings › Hyprland › Graphics (GpuService), from the lyne libs
-# (.data/lyne-cli/lib/gpus.sh, gpu-order.sh, nvidia.sh).
+# GPUs for Settings › Hyprland › Graphics (GpuService), from the orvix libs
+# (.data/orvix-cli/lib/gpus.sh, gpu-order.sh, nvidia.sh).
 #
 #   gpus.sh json            GPUs, links, the order in use and the NVIDIA
 #                           driver state, as one JSON object
@@ -8,7 +8,7 @@
 #                           = automatic). state.json is written by Quickshell
 #
 # Changing the udev rules or the driver needs sudo: the page opens
-# `lyne gpu links` / `lyne nvidia install` in a terminal instead.
+# `orvix gpu links` / `orvix nvidia install` in a terminal instead.
 
 set -uo pipefail
 
@@ -16,9 +16,9 @@ SELF="$(realpath "${BASH_SOURCE[0]}")"
 DOTS_DIR="$(cd "$(dirname "$SELF")/../../../.." && pwd)"
 
 source "$DOTS_DIR/.install/lib/log.sh"
-source "$DOTS_DIR/.data/lyne-cli/lib/gpus.sh"
-source "$DOTS_DIR/.data/lyne-cli/lib/gpu-order.sh"
-source "$DOTS_DIR/.data/lyne-cli/lib/nvidia.sh"
+source "$DOTS_DIR/.data/orvix-cli/lib/gpus.sh"
+source "$DOTS_DIR/.data/orvix-cli/lib/gpu-order.sh"
+source "$DOTS_DIR/.data/orvix-cli/lib/nvidia.sh"
 
 # JSON array of strings from the arguments
 _array() {
@@ -52,9 +52,9 @@ json() {
 
     # The order the saved gpus.lua was written for
     local lua_order=""
-    lua_order="$(sed -nE 's/^lyne_gpus_file = "(.*)"$/\1/p' "$GPU_LUA" 2>/dev/null)"
+    lua_order="$(sed -nE 's/^orvix_gpus_file = "(.*)"$/\1/p' "$GPU_LUA" 2>/dev/null)"
 
-    # NVIDIA: what lyne nvidia status says
+    # NVIDIA: what orvix nvidia status says
     nvidia_plan 0
     local nv='null'
     if ((NV_GPU >= 0)); then

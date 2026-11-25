@@ -6,12 +6,12 @@ import Quickshell
 import Quickshell.Io
 
 // GPUs and the order Hyprland uses them in, for Settings › Hyprland ›
-// Graphics. scripts/gpus.sh reads them (lyne's gpus.sh, gpu-order.sh and
+// Graphics. scripts/gpus.sh reads them (orvix's gpus.sh, gpu-order.sh and
 // nvidia.sh libs). The order lives in state.json (gpus.order: PCI
 // addresses, first renders, [] = automatic) and is written to
 // hypr/local/gpus.lua, which sets AQ_DRM_DEVICES when Hyprland starts: it
 // applies at the next login. The udev links and the NVIDIA driver need
-// sudo, so they run in a terminal (lyne gpu links, lyne nvidia install)
+// sudo, so they run in a terminal (orvix gpu links, orvix nvidia install)
 Singleton {
     id: root
 
@@ -147,7 +147,7 @@ Singleton {
     }
 
     // gpus.lua written for another order (a failed write, state synced by
-    // lyne update...): write it again
+    // orvix update...): write it again
     function _syncLua() {
         if (!multi)
             return;

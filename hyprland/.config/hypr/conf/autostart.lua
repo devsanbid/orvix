@@ -4,9 +4,9 @@
 
 -- Programs started once Hyprland is up:
 --   * the essential ones below, always (Settings › System › Autostart lists
---     them as "System", exported to $XDG_RUNTIME_DIR/lyne-autostart.json)
+--     them as "System", exported to $XDG_RUNTIME_DIR/orvix-autostart.json)
 --   * your apps, added in that page: local/settings.lua (generated) calls
---     lyne_autostart() with them
+--     orvix_autostart() with them
 -- Apps of special workspaces started at login are set in Settings ›
 -- Hyprland › Specials (conf/specials.lua).
 
@@ -15,7 +15,7 @@ local HOME = os.getenv("HOME")
 
 -- Quickshell runs with 2 jemalloc arenas: by default every new worker thread
 -- gets an arena that keeps its memory after the thread ends (~70 MB more RSS,
--- same CPU). lyne reload starts it the same way.
+-- same CPU). orvix reload starts it the same way.
 local system = {
     { name = "Quickshell",        command = "env MALLOC_CONF=narenas:2 quickshell",
       about = "Bar, notifications, launcher and this settings window" },
@@ -54,7 +54,7 @@ do
         table.insert(items, string.format('{"name":%s,"command":%s,"about":%s}',
             json_string(app.name), json_string(app.command), json_string(app.about)))
     end
-    local file = io.open(RUNTIME .. "/lyne-autostart.json", "w")
+    local file = io.open(RUNTIME .. "/orvix-autostart.json", "w")
     if file then
         file:write('{"system":[' .. table.concat(items, ",") .. "]}\n")
         file:close()
@@ -62,11 +62,11 @@ do
 end
 
 -- Delayed apps: kept here so the timers aren't collected before they fire
-LYNE_AUTOSTART_TIMERS = {}
+ORVIX_AUTOSTART_TIMERS = {}
 
 -- Your apps: { name, command, delay (seconds), workspace ("" or a
 -- workspace like "3 silent"), enabled }
-function lyne_autostart(list)
+function orvix_autostart(list)
     hl.on("hyprland.start", function()
         for _, app in ipairs(list) do
             local command = app.command or ""
@@ -81,7 +81,7 @@ function lyne_autostart(list)
                 end
                 local delay = tonumber(app.delay) or 0
                 if delay > 0 then
-                    table.insert(LYNE_AUTOSTART_TIMERS, hl.timer(run, { timeout = math.floor(delay * 1000), type = "oneshot" }))
+                    table.insert(ORVIX_AUTOSTART_TIMERS, hl.timer(run, { timeout = math.floor(delay * 1000), type = "oneshot" }))
                 else
                     run()
                 end
@@ -97,7 +97,7 @@ end
 --   {"ok":true,"error":"","apps":[{"command","workspace","delay"}],"other":N}
 -- `other` counts what can't be imported (binds, options, commands run on
 -- every reload...); the file must stay when it isn't 0
-function lyne_autostart_import(path, out)
+function orvix_autostart_import(path, out)
     local apps, other = {}, 0
     local in_start, delay = false, 0
 

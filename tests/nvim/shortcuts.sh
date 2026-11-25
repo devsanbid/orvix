@@ -11,9 +11,9 @@
 #   a second Escape closes the list and the popup.
 #
 # Usage: tests/nvim/shortcuts.sh   (needs tmux, nvim, python3 and the plugins)
-#   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
-#   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
-#   LYNE_TEST_TMUX_GUIDE=<file> another copy of tmux/README.md
+#   ORVIX_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   ORVIX_TEST_TMUX_GUIDE=<file> another copy of tmux/README.md
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -22,8 +22,8 @@ set -uo pipefail
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
-TMUX_GUIDE="${LYNE_TEST_TMUX_GUIDE:-$REPO/tmux/README.md}"
+TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+TMUX_GUIDE="${ORVIX_TEST_TMUX_GUIDE:-$REPO/tmux/README.md}"
 
 need_tools tmux nvim python3
 
@@ -87,13 +87,13 @@ guide() {
 }
 check "the tmux guide cites only keys tmux has" "" "$(guide "$TMUX_GUIDE" tmux)"
 check "the Neovim guide cites only keys Neovim has" "" "$(guide "$NVIM_DIR/README.md" nvim)"
-# The file a popup key opens, with ~ and ${LYNE_DOTS:-...} as the shell would
+# The file a popup key opens, with ~ and ${ORVIX_DIR:-...} as the shell would
 # see them here (list-keys shows $ escaped)
 guide_file() {
     local f
     f="$(T list-keys -T prefix "$1" | grep -o "[^ \"']*README\.md" | tr -d "\\\\")"
     f="${f/#\~/$HOME}"
-    f="${f/\$\{LYNE_DOTS:-\$HOME\/.lyne-dots\}/$REPO}"
+    f="${f/\$\{ORVIX_DIR:-\$HOME\/.orvix\}/$REPO}"
     echo "$f"
 }
 for key in N T; do

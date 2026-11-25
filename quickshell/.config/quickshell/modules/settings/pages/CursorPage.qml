@@ -8,7 +8,7 @@ import qs.services
 import "../rows/"
 import "../../../components/"
 
-// The mouse cursor theme and size (CursorService; also `lyne cursor`)
+// The mouse cursor theme and size (CursorService; also `orvix cursor`)
 ColumnLayout {
     id: root
 

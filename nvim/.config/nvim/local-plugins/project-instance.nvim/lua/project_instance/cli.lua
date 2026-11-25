@@ -1,4 +1,4 @@
--- The plugin for scripts (lyne nvim), run without the config:
+-- The plugin for scripts (orvix nvim), run without the config:
 --   nvim --clean --headless -l .../project_instance/cli.lua <command> ...
 --
 --   locate [--project DIR] [FILE]

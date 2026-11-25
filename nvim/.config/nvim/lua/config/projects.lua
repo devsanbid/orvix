@@ -1,13 +1,13 @@
 -- tmux's sessions and project folders in one Telescope list (tmux's
 -- prefix + P): a session switches to it; a folder switches to the session
 -- named after it, starting one there first when there's none. The folders
--- come from each root ($LYNE_PROJECT_ROOTS, colon separated, or ~/Dev): a
+-- come from each root ($ORVIX_PROJECT_ROOTS, colon separated, or ~/Dev): a
 -- folder in it that is a project (project_instance's markers) is listed; one
 -- that isn't lists the projects inside it instead, down to three levels
 -- below the root (~/Dev/Python gives ~/Dev/Python/game), or itself when it
 -- has none. Inside a project only a .root makes another one (a repo's
 -- submodules and vendored repos stay out), within the same three levels.
--- lyne-dots itself is always there.
+-- orvix itself is always there.
 --
 -- dd (Ctrl+d while typing) on an entry: a session closes (after a y/n), a
 -- folder is hidden from the list (saved in Neovim's state folder); H (Ctrl+h)
@@ -21,7 +21,7 @@ local function tmux(args)
 end
 
 function M.roots()
-    local env = vim.env.LYNE_PROJECT_ROOTS
+    local env = vim.env.ORVIX_PROJECT_ROOTS
     if env and env ~= "" then
         return vim.split(env, ":", { trimempty = true })
     end
@@ -111,7 +111,7 @@ function M.folders()
             end
         end
     end
-    local dots = vim.fs.normalize(vim.env.LYNE_DOTS or "~/.lyne-dots")
+    local dots = vim.fs.normalize(vim.env.ORVIX_DIR or "~/.orvix")
     if vim.fn.isdirectory(dots) == 1 and not vim.tbl_contains(out, dots) then
         table.insert(out, dots)
     end
@@ -120,7 +120,7 @@ end
 
 -- The folders hidden from the list: a JSON list of paths
 local function hidden_file()
-    return vim.fn.stdpath("state") .. "/lyne-projects-hidden.json"
+    return vim.fn.stdpath("state") .. "/orvix-projects-hidden.json"
 end
 
 -- The hidden folders, as a set of paths

@@ -3,8 +3,8 @@
 #
 #   term [--float] <command> [args...]
 #       Runs a command in the default terminal (apps with Terminal=true, the
-#       launcher, lyne update...). Reads the terminal from state.json.
-#       --float gives the window the class lyne.terminal, which Hyprland
+#       launcher, orvix update...). Reads the terminal from state.json.
+#       --float gives the window the class orvix.terminal, which Hyprland
 #       floats in the middle (hypr/conf/rules.lua): the terminals Settings
 #       opens would otherwise tile behind it. Terminals without a class flag
 #       open as usual
@@ -15,12 +15,12 @@
 #         browser               links and web pages
 #         editor                plain text files
 #       Apps without a .desktop file, or that run in a terminal (nvim, yazi),
-#       get a hidden lyne-<slot>.desktop that opens them through `term`,
+#       get a hidden orvix-<slot>.desktop that opens them through `term`,
 #       named and drawn like the app (the terminal's icon when it has none)
 #   apply-all
 #       apply for every slot with the values of state.json (install, migrations)
 #   refresh
-#       apply again only the slots that have a lyne-<slot>.desktop, so an
+#       apply again only the slots that have a orvix-<slot>.desktop, so an
 #       older one gets what this version writes (migrations)
 #   status <mime-type>...
 #       Prints "<mime-type> <desktop file>" with what xdg-open uses now
@@ -41,7 +41,7 @@ declare -A MIMES=(
 )
 
 # Class of the terminals `term --float` opens (a valid GTK app id, for ghostty)
-FLOAT_CLASS="lyne.terminal"
+FLOAT_CLASS="orvix.terminal"
 
 # How each terminal takes the command to run (the rest use -e), with the
 # window class $2 when it has a flag for it. printf, as echo would take "-e"
@@ -130,10 +130,10 @@ write_wrapper() {
     [[ -z "$icon" && "$terminal" == 1 ]] && icon="$(terminal_icon)"
 
     mkdir -p "$APPS_DIR"
-    cat >"$APPS_DIR/lyne-$slot.desktop" <<EOF
+    cat >"$APPS_DIR/orvix-$slot.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=${name:-$command} (lyne $slot)
+Name=${name:-$command} (orvix $slot)
 Comment=Default $slot chosen in Settings > System > Apps
 ${icon:+Icon=$icon
 }Exec=$exec $code
@@ -175,9 +175,9 @@ cmd_apply() {
     local target="$id.desktop"
     if [[ -z "$file" || "$terminal" == 1 ]]; then
         write_wrapper "$slot" "$command" "$terminal" "$mimes" "$file"
-        target="lyne-$slot.desktop"
+        target="orvix-$slot.desktop"
     else
-        rm -f "$APPS_DIR/lyne-$slot.desktop"
+        rm -f "$APPS_DIR/orvix-$slot.desktop"
     fi
     # shellcheck disable=SC2086
     xdg-mime default "$target" $mimes
@@ -194,10 +194,10 @@ cmd_apply_all() {
 cmd_refresh() {
     local slot
     for slot in fileManager browser; do
-        [[ -f "$APPS_DIR/lyne-$slot.desktop" ]] &&
+        [[ -f "$APPS_DIR/orvix-$slot.desktop" ]] &&
             cmd_apply "$slot" "$(state_value ".apps.$slot.command")" "$(state_value ".apps.$slot.desktop")"
     done
-    [[ -f "$APPS_DIR/lyne-editor.desktop" ]] && cmd_apply editor "$(state_value '.system.editor')"
+    [[ -f "$APPS_DIR/orvix-editor.desktop" ]] && cmd_apply editor "$(state_value '.system.editor')"
     return 0
 }
 

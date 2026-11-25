@@ -1,28 +1,28 @@
 #!/usr/bin/env bats
-# .data/lyne-cli/migrations and lib/run-migrations.sh, on a fake $DOTS_DIR:
+# .data/orvix-cli/migrations and lib/run-migrations.sh, on a fake $DOTS_DIR:
 # every migration must work on a fresh install and on an old one, and running
-# it again must change nothing (lyne update retries a chain that stopped)
+# it again must change nothing (orvix update retries a chain that stopped)
 
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     SYS="$BATS_TEST_TMPDIR/sys"
-    export LYNE_SYSFS="$SYS" LYNE_PCI_IDS="$FIXTURES/pci.ids" LYNE_UDEV_DIR="$BATS_TEST_TMPDIR/udev"
-    export LYNE_PP_BUS_NAMES="" LYNE_PP_COMMANDS="" LYNE_PP_POWER_SUPPLY="$BATS_TEST_TMPDIR/power_supply"
-    mkdir -p "$LYNE_UDEV_DIR" "$LYNE_PP_POWER_SUPPLY"
+    export ORVIX_SYSFS="$SYS" ORVIX_PCI_IDS="$FIXTURES/pci.ids" ORVIX_UDEV_DIR="$BATS_TEST_TMPDIR/udev"
+    export ORVIX_PP_BUS_NAMES="" ORVIX_PP_COMMANDS="" ORVIX_PP_POWER_SUPPLY="$BATS_TEST_TMPDIR/power_supply"
+    mkdir -p "$ORVIX_UDEV_DIR" "$ORVIX_PP_POWER_SUPPLY"
     fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="HDMI-A-1:connected"
     fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="eDP-1:connected"
     STATE="$HOME/.config/quickshell/state.json"
     # No display manager unless a test links one (not this machine's)
-    export LYNE_DM_LINK="$BATS_TEST_TMPDIR/display-manager.service" LYNE_SDDM_THEME="$BATS_TEST_TMPDIR/theme"
+    export ORVIX_DM_LINK="$BATS_TEST_TMPDIR/display-manager.service" ORVIX_SDDM_THEME="$BATS_TEST_TMPDIR/theme"
 }
 
 teardown() { repo_unchanged; }
 
 # migrate NAME: one migration, the way run-migrations.sh runs it
-migrate() { in_lyne -- "(source \"\$DOTS_DIR/.data/lyne-cli/migrations/$1\")"; }
-chain() { in_lyne run-migrations -- ''; }
+migrate() { in_orvix -- "(source \"\$DOTS_DIR/.data/orvix-cli/migrations/$1\")"; }
+chain() { in_orvix run-migrations -- ''; }
 state() { jq -c "$1" "$STATE"; }
 
 # An install from before the migrations: old state values and the files
@@ -60,7 +60,7 @@ legacy_home() {
 @test "fresh install: each migration succeeds, and again changes nothing" {
     fake_dots
     local m name before after failed=()
-    for m in "$DOTS_DIR"/.data/lyne-cli/migrations/*.sh; do
+    for m in "$DOTS_DIR"/.data/orvix-cli/migrations/*.sh; do
         name="${m##*/}"
         run migrate "$name"
         [[ $status -eq 0 ]] || { failed+=("$name (status $status): $output"); continue; }
@@ -80,8 +80,8 @@ legacy_home() {
     run chain
     assert_success
     refute_output --partial "failed"
-    local done_file="$HOME/.local/share/lyne/migrations-done"
-    assert_equal "$(wc -l <"$done_file")" "$(find "$REPO/.data/lyne-cli/migrations" -name '*.sh' | wc -l)"
+    local done_file="$HOME/.local/share/orvix/migrations-done"
+    assert_equal "$(wc -l <"$done_file")" "$(find "$REPO/.data/orvix-cli/migrations" -name '*.sh' | wc -l)"
     run chain
     assert_output --partial "No pending migrations"
 
@@ -105,7 +105,7 @@ legacy_home() {
     assert_equal "$(state '.brightness.pollInterval')" 0
     assert_equal "$(state '.typography.font')" '"CaskaydiaCove Nerd Font"'
     assert_equal "$(state '.dashboard.holidays')" '"auto"'
-    assert_equal "$(state '.specials.list[0].command')" '"lyne whatsapp"'
+    assert_equal "$(state '.specials.list[0].command')" '"orvix whatsapp"'
     # The old default of pause on battery: unset, so laptops get it on
     assert_equal "$(state '.wallpaper.pauseOnBattery')" null
     # nwg-displays monitors: imported, then moved to local/
@@ -113,8 +113,8 @@ legacy_home() {
     assert [ -f "$hypr/local/monitors.lua" ]
     refute [ -e "$hypr/monitors.lua" ]
     # Old workspace blocks kept in Hyprland's state
-    grep -q '{ slot = 0, desc = "", name = "eDP-1" }' "$HOME/.local/state/lyne/workspace-monitors.lua"
-    grep -q '{ slot = 1, desc = "", name = "HDMI-A-1" }' "$HOME/.local/state/lyne/workspace-monitors.lua"
+    grep -q '{ slot = 0, desc = "", name = "eDP-1" }' "$HOME/.local/state/orvix/workspace-monitors.lua"
+    grep -q '{ slot = 1, desc = "", name = "HDMI-A-1" }' "$HOME/.local/state/orvix/workspace-monitors.lua"
     refute [ -e "$hypr/workspaces.lua" ]
     # Legacy .conf backed up, not translated
     refute [ -e "$hypr/local/old_keybinds.conf" ]
@@ -123,9 +123,9 @@ legacy_home() {
     assert [ -f "$hypr/local/autostart.lua" ]
     # GPU order from the hand-written AQ_DRM_DEVICES, its line commented out
     assert_equal "$(state '.gpus.order')" '["0000:00:02.0","0000:01:00.0"]'
-    grep -q '^-- Set in local/gpus.lua now (lyne gpu order): hl.env("AQ_DRM_DEVICES"' "$hypr/local/extra_environment.lua"
+    grep -q '^-- Set in local/gpus.lua now (orvix gpu order): hl.env("AQ_DRM_DEVICES"' "$hypr/local/extra_environment.lua"
     grep -q 'path = "/dev/dri/intel-igpu"' "$hypr/local/gpus.lua"
-    assert [ -f "$LYNE_UDEV_DIR/90-lyne-gpus.rules" ]
+    assert [ -f "$ORVIX_UDEV_DIR/90-orvix-gpus.rules" ]
     # The packages linked are recorded (hypr is a real folder here), none
     # unlinked
     assert_equal "$(state '.system.stow')" '["quickshell","nvim","zsh"]'
@@ -151,7 +151,7 @@ legacy_home() {
     assert_success
     assert_output --partial "GPU order kept"
     grep -q 'skip_non_kms_dmabuf_formats = false' "$hypr/local/gpus.lua"
-    grep -q 'lyne_gpus_file = "0000:01:00.0 0000:00:02.0"' "$hypr/local/gpus.lua"
+    grep -q 'orvix_gpus_file = "0000:01:00.0 0000:00:02.0"' "$hypr/local/gpus.lua"
     assert_equal "$(state '.gpus.order')" '["0000:01:00.0","0000:00:02.0"]'
     refute grep -qE '^hl\.env\("(LIBVA_DRIVER_NAME|__GLX_VENDOR_LIBRARY_NAME|NVD_BACKEND)"' "$hypr/local/extra_environment.lua"
     assert_equal "$(grep -c '^-- Set in local/gpus.lua now, only when NVIDIA renders: hl.env' "$hypr/local/extra_environment.lua")" 3
@@ -200,17 +200,17 @@ legacy_home() {
     cmp "$REPO/.data/hyprland/templates/extra_environment_nvidia.lua" "$HOME/.config/hypr/local/extra_environment.lua"
 }
 
-@test "041: an old lyne-editor.desktop gets the app's name and icon" {
+@test "041: an old orvix-editor.desktop gets the app's name and icon" {
     fake_dots
-    local share="$BATS_TEST_TMPDIR/share/applications" wrapper="$HOME/.local/share/applications/lyne-editor.desktop"
+    local share="$BATS_TEST_TMPDIR/share/applications" wrapper="$HOME/.local/share/applications/orvix-editor.desktop"
     mkdir -p "$share" "$(dirname "$wrapper")"
     printf '%s\n' '[Desktop Entry]' 'Name=Neovim' 'Icon=nvim' 'Terminal=true' >"$share/nvim.desktop"
-    printf '%s\n' '[Desktop Entry]' 'Name=nvim (lyne editor)' 'Exec=x term nvim %F' 'MimeType=text/plain;' >"$wrapper"
+    printf '%s\n' '[Desktop Entry]' 'Name=nvim (orvix editor)' 'Exec=x term nvim %F' 'MimeType=text/plain;' >"$wrapper"
     jq '.system.editor = "nvim"' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
     XDG_DATA_DIRS="$BATS_TEST_TMPDIR/share" run migrate 041-default-app-icons.sh
     assert_success
     run cat "$wrapper"
-    assert_line "Name=Neovim (lyne editor)"
+    assert_line "Name=Neovim (orvix editor)"
     assert_line "Icon=nvim"
 }
 
@@ -282,10 +282,10 @@ real_stow() {
     real_stow
     ln -sr "$DOTS_DIR/nvim/.config/nvim" "$HOME/.config/nvim"
     echo mine >"$HOME/.clang-format"
-    local backup="$HOME/.lyne-dots-backup/20261026-000000"
-    LYNE_BACKUP_DIR="$backup" run migrate 042-clang-format.sh
+    local backup="$HOME/.orvix-backup/20261026-000000"
+    ORVIX_BACKUP_DIR="$backup" run migrate 042-clang-format.sh
     assert_success
-    assert_line "   Your ~/.clang-format moved to the backup: ~/.lyne-dots-backup/20261026-000000"
+    assert_line "   Your ~/.clang-format moved to the backup: ~/.orvix-backup/20261026-000000"
     assert_line "   Linked ~/.clang-format (C/C++ style)"
     [ "$(realpath "$HOME/.clang-format")" == "$DOTS_DIR/nvim/.clang-format" ]
     assert_equal "$(cat "$backup/.clang-format")" mine
@@ -300,10 +300,10 @@ real_stow() {
     real_stow
     ln -s "$DOTS_DIR/nvim/.config/nvim" "$HOME/.config/nvim"
     echo mine >"$HOME/.clang-format"
-    local backup="$HOME/.lyne-dots-backup/20261026-000000"
-    LYNE_BACKUP_DIR="$backup" run migrate 042-clang-format.sh
+    local backup="$HOME/.orvix-backup/20261026-000000"
+    ORVIX_BACKUP_DIR="$backup" run migrate 042-clang-format.sh
     assert_success
-    assert_line "   Warning: could not link ~/.clang-format; lyne link nvim tries again"
+    assert_line "   Warning: could not link ~/.clang-format; orvix link nvim tries again"
     refute [ -L "$HOME/.clang-format" ]
     assert_equal "$(cat "$HOME/.clang-format")" mine
     refute [ -e "$backup" ]
@@ -383,7 +383,7 @@ real_stow() {
     cmp "$REPO/.data/themes/mono.json" "$HOME/.local/themes/mono.json"
     [ "$(jq -r .darkPair "$HOME/.local/themes/mono-light.json")" == mono ]
     for theme in mono mono-light; do
-        assert_equal "$(ls "$HOME/.local/wallpapers/themes/$theme")" "lyne-$theme-contour.jpg"
+        assert_equal "$(ls "$HOME/.local/wallpapers/themes/$theme")" "orvix-$theme-contour.jpg"
     done
     refute compgen -G "$HOME/.local/wallpapers/*.jpg"
     echo '{"name": "Mine"}' > "$HOME/.local/themes/mono.json"
@@ -442,20 +442,20 @@ real_stow() {
     assert_failure
     assert_output --partial "migration '002-two.sh' failed, stopping"
     assert_equal "$(cat "$HOME/ran" | xargs)" "one two"
-    assert_equal "$(cat "$HOME/.local/share/lyne/migrations-done")" "001-one.sh"
+    assert_equal "$(cat "$HOME/.local/share/orvix/migrations-done")" "001-one.sh"
     touch "$HOME/fixed"
-    run in_lyne run-migrations -- 'echo "pwd=$PWD leaked=${leaked:-no}"'
+    run in_orvix run-migrations -- 'echo "pwd=$PWD leaked=${leaked:-no}"'
     assert_success
     assert_equal "$(cat "$HOME/ran" | xargs)" "one two two three"
     # An exit or a cd in a migration stays in it
     assert_line "pwd=$PWD leaked=no"
-    assert_equal "$(xargs <"$HOME/.local/share/lyne/migrations-done")" "001-one.sh 002-two.sh 003-three.sh 004-exit.sh"
+    assert_equal "$(xargs <"$HOME/.local/share/orvix/migrations-done")" "001-one.sh 002-two.sh 003-three.sh 004-exit.sh"
 }
 
 @test "migrations are numbered and their numbers unique" {
-    run bash -c 'ls "$1" | grep -vE "^[0-9]{3}-[a-z0-9-]+\.sh$"' _ "$REPO/.data/lyne-cli/migrations"
+    run bash -c 'ls "$1" | grep -vE "^[0-9]{3}-[a-z0-9-]+\.sh$"' _ "$REPO/.data/orvix-cli/migrations"
     assert_output ""
-    run bash -c 'ls "$1" | cut -c1-3 | uniq -d' _ "$REPO/.data/lyne-cli/migrations"
+    run bash -c 'ls "$1" | cut -c1-3 | uniq -d' _ "$REPO/.data/orvix-cli/migrations"
     assert_output ""
 }
 
@@ -464,10 +464,10 @@ real_stow() {
     run migrate 048-lyne-sddm-hint.sh
     assert_success
     assert_output ""
-    ln -s /nonexistent/systemd/sddm.service "$LYNE_DM_LINK"
+    ln -s /nonexistent/systemd/sddm.service "$ORVIX_DM_LINK"
     run migrate 048-lyne-sddm-hint.sh
     assert_success
-    assert_output --partial "lyne sddm install"
+    assert_output --partial "orvix sddm install"
     echo "lyne-sddm-git 0.1.0.r7.g48662c9-1" >>"$FAKE_PKGS"
     run migrate 048-lyne-sddm-hint.sh
     assert_success
@@ -475,8 +475,8 @@ real_stow() {
     # Installed by its install.sh: told how to move to the package, any
     # display manager
     : >"$FAKE_PKGS"
-    rm "$LYNE_DM_LINK"
-    mkdir -p "$LYNE_SDDM_THEME" && touch "$LYNE_SDDM_THEME/metadata.desktop"
+    rm "$ORVIX_DM_LINK"
+    mkdir -p "$ORVIX_SDDM_THEME" && touch "$ORVIX_SDDM_THEME/metadata.desktop"
     run migrate 048-lyne-sddm-hint.sh
     assert_success
     assert_output --partial "replaces the script install and keeps its settings"

@@ -69,13 +69,13 @@ setup_monitors() {
         # Automatic settings for every monitor; Settings › Hyprland ›
         # Monitors rewrites it
         cat >"$MONITORS_FILE" <<'EOF'
--- Monitors: managed by lyne (Settings › Hyprland › Monitors)
+-- Monitors: managed by orvix (Settings › Hyprland › Monitors)
 -- Automatic settings for every monitor until they're set up in Settings,
 -- which rewrites this file (not tracked by git)
 
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
-lyne_monitors_file = "automatic"
+orvix_monitors_file = "automatic"
 EOF
         log_info "  Created: local/monitors.lua (generic configuration)"
     else
@@ -124,7 +124,7 @@ EOF
 
 # =============================================================================
 # Ask about NVIDIA (only when run on its own: install.sh asks beforehand and
-# sets LYNE_NVIDIA_ENV to yes or no)
+# sets ORVIX_NVIDIA_ENV to yes or no)
 # =============================================================================
 ask_nvidia() {
     echo ""
@@ -147,7 +147,7 @@ setup_nvidia() {
 
     # Hybrid laptops: local/gpus.lua sets the NVIDIA variables, only when
     # NVIDIA renders (set for the whole session they'd send every app to it)
-    source "$DOTFILES_DIR/.data/lyne-cli/lib/gpus.sh"
+    source "$DOTFILES_DIR/.data/orvix-cli/lib/gpus.sh"
     gpu_detect
     if gpu_hybrid_laptop; then
         copy_template \
@@ -231,7 +231,7 @@ setup_wallpapers() {
 
     if [[ "$file_count" -eq 0 ]]; then
         if [[ -d "$WALLPAPERS_DATA/themes" ]]; then
-            # Theme wallpaper folders (themes/{name}/lyne-{name}-{scene}.jpg,
+            # Theme wallpaper folders (themes/{name}/orvix-{name}-{scene}.jpg,
             # made by .data/wallpapers/generator/generate.py). Only there:
             # the root (the "All" view) is the user's own library
             cp -rn "$WALLPAPERS_DATA/themes" "$WALLPAPERS_DIR/"
@@ -289,11 +289,11 @@ run_hyprland_main() {
     setup_wallpapers
     setup_themes
 
-    if [[ -z "${LYNE_NVIDIA_ENV:-}" ]]; then
-        ask_nvidia && LYNE_NVIDIA_ENV=yes || LYNE_NVIDIA_ENV=no
+    if [[ -z "${ORVIX_NVIDIA_ENV:-}" ]]; then
+        ask_nvidia && ORVIX_NVIDIA_ENV=yes || ORVIX_NVIDIA_ENV=no
     fi
 
-    if [[ "$LYNE_NVIDIA_ENV" == yes ]]; then
+    if [[ "$ORVIX_NVIDIA_ENV" == yes ]]; then
         setup_nvidia
     else
         setup_no_nvidia

@@ -4,18 +4,18 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     SYS="$BATS_TEST_TMPDIR/sys"
     ETC="$BATS_TEST_TMPDIR/etc"
-    export LYNE_SYSFS="$SYS" LYNE_PCI_IDS="$FIXTURES/pci.ids"
-    export LYNE_PACMAN_CONF="$ETC/pacman.conf" LYNE_MKINITCPIO_CONF="$ETC/mkinitcpio.conf"
-    export LYNE_MKINITCPIO_DIR="$ETC/mkinitcpio.conf.d" LYNE_MKINITCPIO_PRESETS="$ETC/mkinitcpio.d"
-    export LYNE_MODULES_DIR="$BATS_TEST_TMPDIR/modules"
-    mkdir -p "$ETC/mkinitcpio.d" "$LYNE_MODULES_DIR/6.17.1-arch1-1" "$LYNE_MODULES_DIR/6.12.50-1-lts"
-    echo linux >"$LYNE_MODULES_DIR/6.17.1-arch1-1/pkgbase"
-    echo linux-lts >"$LYNE_MODULES_DIR/6.12.50-1-lts/pkgbase"
-    printf '[options]\nHoldPkg = pacman glibc\n\n[core]\nInclude = /etc/pacman.d/mirrorlist\n\n#[multilib]\n#Include = /etc/pacman.d/mirrorlist\n' >"$LYNE_PACMAN_CONF"
-    printf 'MODULES=()\nHOOKS=(base udev autodetect kms modconf block filesystems)\n' >"$LYNE_MKINITCPIO_CONF"
+    export ORVIX_SYSFS="$SYS" ORVIX_PCI_IDS="$FIXTURES/pci.ids"
+    export ORVIX_PACMAN_CONF="$ETC/pacman.conf" ORVIX_MKINITCPIO_CONF="$ETC/mkinitcpio.conf"
+    export ORVIX_MKINITCPIO_DIR="$ETC/mkinitcpio.conf.d" ORVIX_MKINITCPIO_PRESETS="$ETC/mkinitcpio.d"
+    export ORVIX_MODULES_DIR="$BATS_TEST_TMPDIR/modules"
+    mkdir -p "$ETC/mkinitcpio.d" "$ORVIX_MODULES_DIR/6.17.1-arch1-1" "$ORVIX_MODULES_DIR/6.12.50-1-lts"
+    echo linux >"$ORVIX_MODULES_DIR/6.17.1-arch1-1/pkgbase"
+    echo linux-lts >"$ORVIX_MODULES_DIR/6.12.50-1-lts/pkgbase"
+    printf '[options]\nHoldPkg = pacman glibc\n\n[core]\nInclude = /etc/pacman.d/mirrorlist\n\n#[multilib]\n#Include = /etc/pacman.d/mirrorlist\n' >"$ORVIX_PACMAN_CONF"
+    printf 'MODULES=()\nHOOKS=(base udev autodetect kms modconf block filesystems)\n' >"$ORVIX_MKINITCPIO_CONF"
     echo 'PRESETS=(default)' >"$ETC/mkinitcpio.d/linux.preset"
 }
 
@@ -27,7 +27,7 @@ laptop() {
 desktop() { fx_gpu "$SYS" 0000:01:00.0 "10de:$1" driver=nouveau card=card0; }
 
 # nv CODE [MULTILIB]: detect, plan, then CODE
-nv() { in_lyne gpus nvidia -- "gpu_detect; nvidia_plan ${2:-0}; $1"; }
+nv() { in_orvix gpus nvidia -- "gpu_detect; nvidia_plan ${2:-0}; $1"; }
 
 plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remove=${NV_REMOVE[*]}"; echo "repo=${NV_REPO[*]}"; echo "aur=${NV_AUR[*]}"; echo "services=${NV_SERVICES[*]}"; echo "multilib=$NV_MULTILIB enable=$NV_ENABLE_MULTILIB igpu=$NV_IGPU_MODULE dropin=$NV_DROPIN_CHANGE"'
 
@@ -50,7 +50,7 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
     assert_line "multilib=0 enable=0 igpu=i915 dropin=1"
     run nv 'nvidia_plan_lines'
     assert_line "Install: linux-headers linux-lts-headers nvidia-open-dkms nvidia-utils libva-nvidia-driver nvidia-prime"
-    assert_line "Write $LYNE_MKINITCPIO_DIR/lyne-nvidia.conf (no kms hook, i915 early) and rebuild the initramfs"
+    assert_line "Write $ORVIX_MKINITCPIO_DIR/orvix-nvidia.conf (no kms hook, i915 early) and rebuild the initramfs"
 }
 
 @test "multilib: enabled on request, lib32 utils whenever it's on" {
@@ -58,7 +58,7 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
     run nv "$plan" 1
     assert_line --partial "repo=linux-headers linux-lts-headers nvidia-open-dkms nvidia-utils lib32-nvidia-utils"
     assert_line "multilib=1 enable=1 igpu=i915 dropin=1"
-    sed -i 's/^#\[multilib\]/[multilib]/' "$LYNE_PACMAN_CONF"
+    sed -i 's/^#\[multilib\]/[multilib]/' "$ORVIX_PACMAN_CONF"
     run nv "$plan"
     assert_line --partial "lib32-nvidia-utils"
     assert_line "multilib=1 enable=0 igpu=i915 dropin=1"
@@ -106,7 +106,7 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
 @test "the drop-in, sourced like mkinitcpio does, drops kms and adds the iGPU module" {
     laptop
     run nv '_nv_dropin_content "$NV_IGPU_MODULE" >"$BATS_TEST_TMPDIR/dropin.conf"'
-    run bash -c 'source "$1"; source "$2"; echo "HOOKS=${HOOKS[*]}"; echo "MODULES=${MODULES[*]}"; declare -p _lyne_hooks 2>/dev/null || echo clean' _ "$LYNE_MKINITCPIO_CONF" "$BATS_TEST_TMPDIR/dropin.conf"
+    run bash -c 'source "$1"; source "$2"; echo "HOOKS=${HOOKS[*]}"; echo "MODULES=${MODULES[*]}"; declare -p _orvix_hooks 2>/dev/null || echo clean' _ "$ORVIX_MKINITCPIO_CONF" "$BATS_TEST_TMPDIR/dropin.conf"
     assert_line "HOOKS=base udev autodetect modconf block filesystems"
     assert_line "MODULES=i915"
     assert_line clean
@@ -115,7 +115,7 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
 @test "everything set up: nothing to change" {
     laptop
     pkgs linux-headers linux-lts-headers nvidia-open-dkms nvidia-utils libva-nvidia-driver nvidia-prime
-    mkdir -p "$LYNE_MKINITCPIO_DIR"
+    mkdir -p "$ORVIX_MKINITCPIO_DIR"
     run nv '_nv_dropin_content i915 >"$NV_DROPIN"'
     run nv "$plan; nvidia_plan_lines; nvidia_plan_lines_changes || echo no-changes"
     assert_line "action=ok family=open current=nvidia-open-dkms"
@@ -130,9 +130,9 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
     run nv 'nvidia_apply' 1
     assert_success
     assert_line --partial "Reboot to load it"
-    grep -qx '\[multilib\]' "$LYNE_PACMAN_CONF"
-    grep -qx 'Include = /etc/pacman.d/mirrorlist' <(sed -n '/^\[multilib\]/{n;p}' "$LYNE_PACMAN_CONF")
-    grep -q '^MODULES+=(i915)$' "$LYNE_MKINITCPIO_DIR/lyne-nvidia.conf"
+    grep -qx '\[multilib\]' "$ORVIX_PACMAN_CONF"
+    grep -qx 'Include = /etc/pacman.d/mirrorlist' <(sed -n '/^\[multilib\]/{n;p}' "$ORVIX_PACMAN_CONF")
+    grep -q '^MODULES+=(i915)$' "$ORVIX_MKINITCPIO_DIR/orvix-nvidia.conf"
     run grep -E '^(pacman -S|pacman -Syu|mkinitcpio)' "$STUB_LOG"
     assert_line --index 0 "pacman -Syu --noconfirm"
     assert_line --index 1 "pacman -S --needed --noconfirm linux-lts-headers nvidia-open-dkms nvidia-utils lib32-nvidia-utils libva-nvidia-driver nvidia-prime"
@@ -147,7 +147,7 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
     run nv 'nvidia_apply'
     assert_failure
     assert_output --partial "An AUR helper (yay or paru) is needed for nvidia-580xx-dkms nvidia-580xx-utils"
-    refute [ -e "$LYNE_MKINITCPIO_DIR/lyne-nvidia.conf" ]
+    refute [ -e "$ORVIX_MKINITCPIO_DIR/orvix-nvidia.conf" ]
     : >"$STUB_LOG"
     run nv 'AUR_HELPER=yay nvidia_apply'
     assert_success
@@ -169,14 +169,14 @@ plan='echo "action=$NV_ACTION family=$NV_FAMILY current=$NV_CURRENT"; echo "remo
     laptop
     pkgs linux-headers nvidia-open-dkms=595.45-1
     echo nvidia-suspend.service >>"$FAKE_ENABLED"
-    printf 'MODULES=(nvidia nvidia_drm)\n' >"$LYNE_MKINITCPIO_CONF"
+    printf 'MODULES=(nvidia nvidia_drm)\n' >"$ORVIX_MKINITCPIO_CONF"
     echo 'default_config="/etc/mkinitcpio-custom.conf"' >"$ETC/mkinitcpio.d/linux.preset"
     run nv 'nvidia_status'
     assert_success
     assert_line --partial "Driver     nvidia-open-dkms 595.45-1"
     assert_line "  ! linux-lts-headers is missing: DKMS can't build the driver for linux-lts"
     assert_line --partial "! nvidia-suspend are enabled: not needed with 595+ drivers"
-    assert_line "  ! $ETC/mkinitcpio.d/linux.preset sets its own config, so mkinitcpio skips the drop-ins in $LYNE_MKINITCPIO_DIR"
-    assert_line "  ! $LYNE_MKINITCPIO_CONF loads the NVIDIA modules early (MODULES): hibernation won't work"
-    assert_line "  ! Not everything is set up (lyne nvidia install shows what's missing)"
+    assert_line "  ! $ETC/mkinitcpio.d/linux.preset sets its own config, so mkinitcpio skips the drop-ins in $ORVIX_MKINITCPIO_DIR"
+    assert_line "  ! $ORVIX_MKINITCPIO_CONF loads the NVIDIA modules early (MODULES): hibernation won't work"
+    assert_line "  ! Not everything is set up (orvix nvidia install shows what's missing)"
 }

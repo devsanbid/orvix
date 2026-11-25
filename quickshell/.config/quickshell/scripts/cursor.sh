@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mouse cursor themes for CursorService (Settings › Cursor), from lyne's
+# Mouse cursor themes for CursorService (Settings › Cursor), from orvix's
 # cursor.sh lib.
 #
 #   cursor.sh json                 the installed themes as JSON
@@ -13,7 +13,7 @@ set -uo pipefail
 SELF="$(realpath "${BASH_SOURCE[0]}")"
 DOTS_DIR="$(cd "$(dirname "$SELF")/../../../.." && pwd)"
 
-source "$DOTS_DIR/.data/lyne-cli/lib/cursor.sh"
+source "$DOTS_DIR/.data/orvix-cli/lib/cursor.sh"
 
 case "${1:-}" in
     json) cursor_json ;;

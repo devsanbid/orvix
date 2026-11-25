@@ -114,7 +114,7 @@ ColumnLayout {
 
         ToggleRow {
             label: "DDC/CI"
-            description: BrightnessService.ddcMissing ? I18n.tr("ddcutil isn't installed: run lyne update, or install it and load the i2c-dev module") : I18n.tr("Controls the brightness of external monitors through their cable (needs ddcutil and the i2c-dev module)")
+            description: BrightnessService.ddcMissing ? I18n.tr("ddcutil isn't installed: run orvix update, or install it and load the i2c-dev module") : I18n.tr("Controls the brightness of external monitors through their cable (needs ddcutil and the i2c-dev module)")
             descriptionColor: BrightnessService.ddcMissing && Config.brightnessDdc ? Config.warningColor : Config.subtextColor
             path: "brightness.ddc"
         }

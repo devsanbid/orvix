@@ -7,13 +7,13 @@ import Quickshell.Io
 
 // Hyprland keybinds for Settings. The catalog (binds declared with bind() in
 // hypr/conf/keybinds.lua, with their default keys) is exported by Hyprland to
-// $XDG_RUNTIME_DIR/lyne-keybinds.json on every config load; changes live in
+// $XDG_RUNTIME_DIR/orvix-keybinds.json on every config load; changes live in
 // state.json (keybinds.overrides / keybinds.custom) and reach Hyprland
 // through HyprlandSettingsService (hypr/local/settings.lua)
 Singleton {
     id: root
 
-    readonly property string catalogPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lyne-keybinds.json"
+    readonly property string catalogPath: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/orvix-keybinds.json"
 
     // [{ id, group, description, keys, preset }] with default keys (the
     // navigation preset's where it moves them); preset: a preset can move it
@@ -205,7 +205,7 @@ Singleton {
     function startCapture() {
         capturing = true;
         captureTimeout.restart();
-        submapProc.command = ["hyprctl", "dispatch", 'hl.dsp.submap("lyne_capture")'];
+        submapProc.command = ["hyprctl", "dispatch", 'hl.dsp.submap("orvix_capture")'];
         submapProc.running = true;
     }
 

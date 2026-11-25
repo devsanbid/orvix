@@ -106,7 +106,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: I18n.tr("Some shortcuts to start with. Every one of them can be changed in Settings › %1, and this screen opens again from Settings › %2 or with lyne welcome.", I18n.translate("Keybinds"), I18n.translate("About"))
+            text: I18n.tr("Some shortcuts to start with. Every one of them can be changed in Settings › %1, and this screen opens again from Settings › %2 or with orvix welcome.", I18n.translate("Keybinds"), I18n.translate("About"))
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeNormal

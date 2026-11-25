@@ -13,7 +13,7 @@ A **session** is a whole workspace with a name (one per project, its name on the
 | `C-h` / `C-j` / `C-k` / `C-l` | Focus the pane on the left / below / above / on the right (inside Neovim, its splits first) |
 | `C-M-h` / `C-M-l` | Previous / next window |
 | `C-Space z` | Zoom the pane (again to bring the others back) |
-| `C-Space P` | Projects and sessions: switch, or start a session in a project folder (`~/Dev`, lyne-dots); Escape then `j` / `k` to move, Escape again to close. `Ctrl+d` (`dd` after Escape) closes a session (asks y/n) or hides a folder; `Ctrl+h` (`H`) shows the hidden ones, where `Ctrl+d` brings one back |
+| `C-Space P` | Projects and sessions: switch, or start a session in a project folder (`~/Dev`, orvix); Escape then `j` / `k` to move, Escape again to close. `Ctrl+d` (`dd` after Escape) closes a session (asks y/n) or hides a folder; `Ctrl+h` (`H`) shows the hidden ones, where `Ctrl+d` brings one back |
 | `C-Space w` | Pick a window from a list (every session's) |
 
 ## Split and arrange
@@ -56,7 +56,7 @@ A **session** is a whole workspace with a name (one per project, its name on the
 
 ## Sessions
 
-tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; a new tmux starts empty and `C-Space C-r` brings the last save back, Neovim panes with their folder's session. The autosave goes on in the new tmux too: its first one comes after 15 minutes and replaces the last save, so use `C-Space C-r` before that. Each project has one Neovim: an `nvim` typed in another window of the project takes you to its pane (`lyne nvim open` does it from outside, as Godot does; the Neovim guide has more).
+tmux keeps running after you close the terminal. Everything is saved every 15 minutes and when you log out, reboot or shut down from the shell's power menu; a new tmux starts empty and `C-Space C-r` brings the last save back, Neovim panes with their folder's session. The autosave goes on in the new tmux too: its first one comes after 15 minutes and replaces the last save, so use `C-Space C-r` before that. Each project has one Neovim: an `nvim` typed in another window of the project takes you to its pane (`orvix nvim open` does it from outside, as Godot does; the Neovim guide has more).
 
 From the shell, the `tm` commands:
 
@@ -88,4 +88,4 @@ From the shell, the `tm` commands:
 | `C-Space r` | Reload `~/.tmux.conf` |
 | `C-Space I` / `C-Space U` | Install / update the plugins (TPM) |
 
-A plugin: add `set -g @plugin 'user/plugin'` to `~/.tmux.conf`, then `C-Space I`. Project folders other than `~/Dev`: `LYNE_PROJECT_ROOTS` (colon separated) in your environment. A folder there that isn't a project itself (no `.git`, `.root`, `project.godot` or `*.sln`), like `~/Dev/Python`, shows the projects inside it instead, down to three levels. Inside a project, only a folder with `.root` is listed as another one, within the same three levels, like `~/Dev/solves/projetos/pong-game` next to `~/Dev/solves`. A key of your own: give it a note (`bind -N "What it does" ...`) and the search lists it.
+A plugin: add `set -g @plugin 'user/plugin'` to `~/.tmux.conf`, then `C-Space I`. Project folders other than `~/Dev`: `ORVIX_PROJECT_ROOTS` (colon separated) in your environment. A folder there that isn't a project itself (no `.git`, `.root`, `project.godot` or `*.sln`), like `~/Dev/Python`, shows the projects inside it instead, down to three levels. Inside a project, only a folder with `.root` is listed as another one, within the same three levels, like `~/Dev/solves/projetos/pong-game` next to `~/Dev/solves`. A key of your own: give it a note (`bind -N "What it does" ...`) and the search lists it.

@@ -5,8 +5,8 @@
 load helpers
 
 setup() {
-    lyne_setup
-    CONFIG="${LYNE_TEST_MATUGEN:-$REPO/.data/matugen}/config.toml"
+    orvix_setup
+    CONFIG="${ORVIX_TEST_MATUGEN:-$REPO/.data/matugen}/config.toml"
 }
 
 @test "every template's input is a relative path to a file next to the config" {

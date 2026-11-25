@@ -4,7 +4,7 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     export XDG_RUNTIME_DIR="$BATS_TEST_TMPDIR/run" FAKE_SYSTEMD_ENV="$BATS_TEST_TMPDIR/systemd-env"
     mkdir -p "$XDG_RUNTIME_DIR/hypr/old" "$XDG_RUNTIME_DIR/hypr/new"
     printf 'HYPRLAND_INSTANCE_SIGNATURE=new\nWAYLAND_DISPLAY=wayland-2\nOTHER=x\n' >"$FAKE_SYSTEMD_ENV"
@@ -12,7 +12,7 @@ setup() {
 
 # A live Hyprland's socket
 live() { python3 -c 'import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "$XDG_RUNTIME_DIR/hypr/$1/.socket.sock"; }
-env_after() { in_lyne session-env -- 'lyne_session_env; echo "$HYPRLAND_INSTANCE_SIGNATURE $WAYLAND_DISPLAY"'; }
+env_after() { in_orvix session-env -- 'orvix_session_env; echo "$HYPRLAND_INSTANCE_SIGNATURE $WAYLAND_DISPLAY"'; }
 
 @test "a dead signature is replaced by the session's from systemd" {
     live new
@@ -33,10 +33,10 @@ env_after() { in_lyne session-env -- 'lyne_session_env; echo "$HYPRLAND_INSTANCE
     assert_output "old wayland-1"
 }
 
-@test "the lyne CLI fixes them before running any command" {
-    local entry="$REPO/local/.local/bin/lyne" fix run_cmd
-    fix=$(grep -n '^lyne_session_env$' "$entry" | cut -d: -f1)
-    run_cmd=$(grep -n '_lyne_run "\$@"$' "$entry" | cut -d: -f1)
+@test "the orvix CLI fixes them before running any command" {
+    local entry="$REPO/local/.local/bin/orvix" fix run_cmd
+    fix=$(grep -n '^orvix_session_env$' "$entry" | cut -d: -f1)
+    run_cmd=$(grep -n '_orvix_run "\$@"$' "$entry" | cut -d: -f1)
     assert [ -n "$fix" ]
     assert [ "$fix" -lt "$run_cmd" ]
 }

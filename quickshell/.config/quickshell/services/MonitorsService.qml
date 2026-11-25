@@ -22,7 +22,7 @@ Singleton {
 
     readonly property string script: Qt.resolvedUrl("../scripts/monitors.sh").toString().replace("file://", "")
     readonly property string filePath: Quickshell.env("HOME") + "/.config/hypr/local/monitors.lua"
-    // Where nwg-displays writes (and lyne kept it before migration 025):
+    // Where nwg-displays writes (and orvix kept it before migration 025):
     // hyprland.lua only reads it while local/monitors.lua isn't there
     readonly property string legacyPath: Quickshell.env("HOME") + "/.config/hypr/monitors.lua"
     readonly property int trialSeconds: 15

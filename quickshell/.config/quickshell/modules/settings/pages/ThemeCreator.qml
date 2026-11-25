@@ -96,9 +96,9 @@ ColumnLayout {
     property bool fineTune: false
     property string fineTuneSection: "palette"
     property bool applyAfter: true
-    // Render the lyne-dots wallpaper after saving: new themes without a picked
+    // Render the orvix wallpaper after saving: new themes without a picked
     // wallpaper, and edits of themes that use one of theirs
-    property bool generateWallpapers: editSlug !== "" ? String(editPreview?.wallpaper ?? "").includes("/lyne-") : !(source === "wallpaper" && useWallpaper)
+    property bool generateWallpapers: editSlug !== "" ? String(editPreview?.wallpaper ?? "").includes("/orvix-") : !(source === "wallpaper" && useWallpaper)
     property bool saving: false
     property string saveError: ""
     // Something was changed since opening: leaving asks for a second Escape
@@ -812,7 +812,7 @@ ColumnLayout {
                 }
 
                 ToggleRow {
-                    label: root.editSlug !== "" ? I18n.tr("Render its lyne-dots wallpaper again") : I18n.tr("Generate lyne-dots wallpaper")
+                    label: root.editSlug !== "" ? I18n.tr("Render its orvix wallpaper again") : I18n.tr("Generate orvix wallpaper")
                     description: root.editSlug === "" && !(root.source === "wallpaper" && root.useWallpaper) ? I18n.tr("The contour scene in the theme's colors, ready a few seconds after saving; it becomes its wallpaper") : I18n.tr("The contour scene in the theme's colors, ready a few seconds after saving")
                     checked: root.generateWallpapers
                     onToggled: value => root.generateWallpapers = value

@@ -14,7 +14,7 @@
 #
 # Both caches are keyed by hashes, so a deleted or replaced wallpaper leaves
 # its files behind: each use touches a file, and once a day the ones unused
-# for LYNE_CACHE_DAYS (30) days go, thumbnails and posters alike. Listing the
+# for ORVIX_CACHE_DAYS (30) days go, thumbnails and posters alike. Listing the
 # library asks for every one in use, so only leftovers age out.
 # =============================================================================
 
@@ -27,10 +27,10 @@ shift
 width="${BASH_REMATCH[1]}"
 height="${BASH_REMATCH[2]}"
 
-cache="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/wallpaper-thumbs"
-posters="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/wallpaper-posters"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/orvix/wallpaper-thumbs"
+posters="${XDG_CACHE_HOME:-$HOME/.cache}/orvix/wallpaper-posters"
 poster_script="$(dirname "$(realpath "$0")")/wallpaper-poster.sh"
-jobs_max="${LYNE_THUMB_JOBS:-4}"
+jobs_max="${ORVIX_THUMB_JOBS:-4}"
 
 thumb_of() {
     local path="$1" real key thumb tmp source
@@ -69,7 +69,7 @@ thumb_of() {
 # Once a day: files nothing used for that long (temporary ones a killed run
 # left included)
 prune() {
-    local stamp="${cache%/*}/.wallpaper-cache-pruned" days="${LYNE_CACHE_DAYS:-30}"
+    local stamp="${cache%/*}/.wallpaper-cache-pruned" days="${ORVIX_CACHE_DAYS:-30}"
     [[ -n "$(find "$stamp" -mmin -1440 2>/dev/null)" ]] && return
     touch "$stamp"
     find "$cache" "$posters" -maxdepth 1 -type f -name '*.jpg' -mtime "+$((days - 1))" -delete 2>/dev/null

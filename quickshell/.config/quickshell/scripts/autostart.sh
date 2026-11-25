@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # XDG autostart entries for Settings › System › Autostart (AutostartService)
-# and `lyne autostart`.
+# and `orvix autostart`.
 #
 #   autostart.sh list         every entry, records "\x1e<scope>\t<path>\n<text>"
 #                             (scope user/system), then the generated systemd
@@ -11,7 +11,7 @@
 #
 # A user file (~/.config/autostart/<id>) replaces the system one with the same
 # name. Turning a system entry off writes a small user file with Hidden=true
-# and X-Lyne-Override=true, removed again to turn it on; a user entry just
+# and X-Orvix-Override=true, removed again to turn it on; a user entry just
 # gets Hidden=true / Hidden=false.
 
 set -u
@@ -30,7 +30,7 @@ system_file() {
 # Sets Hidden=<value> in the [Desktop Entry] group of $1 (atomically)
 set_hidden() {
     local file="$1" value="$2" tmp
-    tmp="$(mktemp "$USER_DIR/.lyne-XXXXXX")" || return 1
+    tmp="$(mktemp "$USER_DIR/.orvix-XXXXXX")" || return 1
     awk -v value="$value" '
         /^\[/ {
             if (entry && !done) { print "Hidden=" value; done = 1 }
@@ -73,8 +73,8 @@ hide)
         set_hidden "$USER_DIR/$id" true
     elif sys="$(system_file "$id")"; then
         name="$(grep -m1 '^Name=' "$sys" | cut -d= -f2-)"
-        tmp="$(mktemp "$USER_DIR/.lyne-XXXXXX")" || exit 1
-        printf '[Desktop Entry]\nType=Application\nName=%s\nHidden=true\nX-Lyne-Override=true\n' "${name:-$id}" >"$tmp"
+        tmp="$(mktemp "$USER_DIR/.orvix-XXXXXX")" || exit 1
+        printf '[Desktop Entry]\nType=Application\nName=%s\nHidden=true\nX-Orvix-Override=true\n' "${name:-$id}" >"$tmp"
         chmod 644 "$tmp" && mv -f "$tmp" "$USER_DIR/$id"
     else
         echo "autostart.sh: no entry '$id'" >&2
@@ -86,7 +86,7 @@ show)
     valid_id "$id" || { echo "autostart.sh: bad id '$id'" >&2; exit 1; }
     file="$USER_DIR/$id"
     [[ -f "$file" ]] || exit 0
-    if grep -q '^X-Lyne-Override=true' "$file"; then
+    if grep -q '^X-Orvix-Override=true' "$file"; then
         rm -f "$file"
     else
         set_hidden "$file" false

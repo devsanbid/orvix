@@ -8,11 +8,11 @@ import Quickshell.Io
 // Default apps (terminal, file manager, browser, editor) shared by the whole
 // shell, chosen in Settings › System › Apps. Each is a command plus the id of
 // its .desktop file (apps.<slot> in state.json; the editor stays in
-// system.editor for `lyne state`). They reach:
-//   * the Apps keybinds: HyprlandSettingsService writes lyne_apps() to
+// system.editor for `orvix state`). They reach:
+//   * the Apps keybinds: HyprlandSettingsService writes orvix_apps() to
 //     hypr/local/settings.lua (hypr/conf/keybinds.lua)
-//   * apps run in a terminal (launcher): terminalArgv(); lyne commands
-//     Settings runs (lyne update, sudo installs): floatingTerminalArgv()
+//   * apps run in a terminal (launcher): terminalArgv(); orvix commands
+//     Settings runs (orvix update, sudo installs): floatingTerminalArgv()
 //   * xdg-open and Dolphin: scripts/default-apps.sh sets mimeapps.list and
 //     kdeglobals when a slot changes here
 Singleton {
@@ -35,7 +35,7 @@ Singleton {
             bindId: "terminal",
             luaKey: "terminal",
             mimes: [],
-            usage: I18n.tr("Terminal apps from the launcher, lyne update, Dolphin's \"Open terminal here\"")
+            usage: I18n.tr("Terminal apps from the launcher, orvix update, Dolphin's \"Open terminal here\"")
         },
         {
             key: "fileManager",
@@ -74,7 +74,7 @@ Singleton {
             bindId: "",
             luaKey: "",
             mimes: ["text/plain"],
-            usage: I18n.tr("Text files, lyne state and $EDITOR in new shells (GUI editors may need a flag like code --wait)")
+            usage: I18n.tr("Text files, orvix state and $EDITOR in new shells (GUI editors may need a flag like code --wait)")
         }
     ]
 
@@ -176,7 +176,7 @@ Singleton {
     }
 
     // The same in a window Hyprland floats in the middle (class
-    // lyne.terminal), so it isn't tiled behind the floating Settings
+    // orvix.terminal), so it isn't tiled behind the floating Settings
     function floatingTerminalArgv(argv): var {
         return [script, "term", "--float", ...argv];
     }
@@ -252,7 +252,7 @@ Singleton {
     // .desktop file a slot's mime types should open with
     function expectedDesktop(key: string): string {
         const entry = entryFor(key);
-        return entry && !needsTerminal(key) ? entry.id + ".desktop" : "lyne-" + key + ".desktop";
+        return entry && !needsTerminal(key) ? entry.id + ".desktop" : "orvix-" + key + ".desktop";
     }
 
     // What xdg-open uses instead of the slot's app ("" = it's the app)

@@ -1,7 +1,7 @@
 // Links clicked in WhatsApp Web go to the default browser (the
-// lyne.open_link native host runs xdg-open). content.js catches them before
+// orvix.open_link native host runs xdg-open). content.js catches them before
 // Chromium opens anything; a new tab that still shows up with a page outside
-// WhatsApp is handed off and closed. Installed by `lyne whatsapp`.
+// WhatsApp is handed off and closed. Installed by `orvix whatsapp`.
 
 const HOME = "web.whatsapp.com";
 const handled = new Set();
@@ -24,7 +24,7 @@ async function handOff(tabId, url) {
     if (win?.type !== "normal" || handled.has(tabId))
         return;
     handled.add(tabId);
-    chrome.runtime.sendNativeMessage("lyne.open_link", { url }, reply => {
+    chrome.runtime.sendNativeMessage("orvix.open_link", { url }, reply => {
         // Without the host the link stays open here
         if (chrome.runtime.lastError || !reply?.ok) {
             handled.delete(tabId);
@@ -38,7 +38,7 @@ async function handOff(tabId, url) {
 chrome.runtime.onMessage.addListener((message, sender) => {
     if (sender.id !== chrome.runtime.id || !sender.url?.startsWith("https://" + HOME + "/") || !external(message?.url))
         return;
-    chrome.runtime.sendNativeMessage("lyne.open_link", { url: message.url }, reply => {
+    chrome.runtime.sendNativeMessage("orvix.open_link", { url: message.url }, reply => {
         if (chrome.runtime.lastError || !reply?.ok)
             chrome.tabs.create({ url: message.url });
     });

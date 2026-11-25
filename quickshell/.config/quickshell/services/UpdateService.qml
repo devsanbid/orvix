@@ -5,14 +5,14 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// lyne-dots updates: `lyne update status` for Settings › About, and one check
+// orvix updates: `orvix update status` for Settings › About, and one check
 // a minute after the shell starts (again 10 minutes later when GitHub wasn't
 // reachable) that notifies once per new version: the release on Stable, the
 // commit on Latest. Off main (dev, a fork's branch) it never notifies
 Singleton {
     id: root
 
-    // `lyne update status --json`
+    // `orvix update status --json`
     property var status: ({})
     property bool checking: false
 
@@ -39,14 +39,14 @@ Singleton {
         }
         checking = true;
         _fetching = fetch;
-        statusProc.command = ["lyne", "update", "status", "--json", "--channel", channel].concat(fetch ? ["--fetch"] : []);
+        statusProc.command = ["orvix", "update", "status", "--json", "--channel", channel].concat(fetch ? ["--fetch"] : []);
         statusProc.running = true;
     }
 
     // In the default terminal, so the output (and any sudo prompt from
     // migrations) is visible; it stays open until a key is pressed
     function runUpdate() {
-        Quickshell.execDetached(AppsService.floatingTerminalArgv(["bash", "-c", `lyne update --channel ${channel}; echo; read -rsn1 -p "Press any key to close"`]));
+        Quickshell.execDetached(AppsService.floatingTerminalArgv(["bash", "-c", `orvix update --channel ${channel}; echo; read -rsn1 -p "Press any key to close"`]));
     }
 
     function _startupCheck() {
@@ -63,10 +63,10 @@ Singleton {
             return;
         StateService.set("update.notified", key);
         const stable = channel === "stable";
-        const title = stable ? I18n.tr("Lyne %1 is available", status.target) : I18n.trn("Lyne: %n update available", "Lyne: %n updates available", behind);
+        const title = stable ? I18n.tr("Orvix %1 is available", status.target) : I18n.trn("Orvix: %n update available", "Orvix: %n updates available", behind);
         const body = stable ? I18n.tr("New release. Update from here or Settings › About") : I18n.tr("Latest channel, up to %1. Update from here or Settings › About", status.targetCommit);
         const details = I18n.tr("Details");
-        notifyProc.command = ["timeout", "1h", "notify-send", "-a", "Lyne", "-i", "lyne-dots", "-A", "default=" + details, "-A", "update=" + I18n.tr("Update"), "-A", "about=" + details, title, body];
+        notifyProc.command = ["timeout", "1h", "notify-send", "-a", "Orvix", "-i", "orvix", "-A", "default=" + details, "-A", "update=" + I18n.tr("Update"), "-A", "about=" + details, title, body];
         notifyProc.running = true;
     }
 

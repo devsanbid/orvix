@@ -19,9 +19,9 @@
 #
 # Usage: tests/nvim/sessions.sh   (needs tmux, nvim, zsh, the plugins and
 # TPM's tmux-resurrect and tmux-continuum)
-#   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
-#   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
-#   LYNE_TEST_ZSHRC=<file>     another copy of zsh/.zshrc
+#   ORVIX_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   ORVIX_TEST_ZSHRC=<file>     another copy of zsh/.zshrc
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -29,8 +29,8 @@ set -uo pipefail
 
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
-ZSHRC="${LYNE_TEST_ZSHRC:-$REPO/zsh/.zshrc}"
+TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+ZSHRC="${ORVIX_TEST_ZSHRC:-$REPO/zsh/.zshrc}"
 PLUGINS="$HOME/.tmux/plugins"
 
 need_tools tmux nvim zsh python3

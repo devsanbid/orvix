@@ -32,7 +32,7 @@ case "${video,,}" in
         ;;
 esac
 
-cache="${XDG_CACHE_HOME:-$HOME/.cache}/lyne/wallpaper-posters"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/orvix/wallpaper-posters"
 real="$(realpath "$video")"
 # v2: posters skip a black first frame (older ones are made again)
 key="$(printf 'v2|%s|%s' "$real" "$(stat -c '%s|%Y' "$real")" | sha1sum | cut -d' ' -f1)"

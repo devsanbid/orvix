@@ -7,8 +7,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-// LYNE_TEST_SHELL points the tests at another copy of the shell's config
-const SHELL = process.env.LYNE_TEST_SHELL || path.resolve(__dirname, "../../quickshell/.config/quickshell");
+// ORVIX_TEST_SHELL points the tests at another copy of the shell's config
+const SHELL = process.env.ORVIX_TEST_SHELL || path.resolve(__dirname, "../../quickshell/.config/quickshell");
 
 function load(relative) {
     const file = path.join(SHELL, relative);

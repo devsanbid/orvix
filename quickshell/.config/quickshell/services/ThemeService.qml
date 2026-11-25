@@ -27,14 +27,14 @@ Singleton {
 
     readonly property string themesDir: Quickshell.env("HOME") + "/.local/themes"
     readonly property string kittyThemePath: Quickshell.env("HOME") + "/.config/kitty/current-theme.conf"
-    // Read by the Neovim "lyne" colorscheme (nvim/.config/nvim/lua/lyne/)
-    readonly property string nvimPalettePath: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/lyne/nvim.json"
+    // Read by the Neovim "orvix" colorscheme (nvim/.config/nvim/lua/orvix/)
+    readonly property string nvimPalettePath: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/orvix/nvim.json"
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/.local/wallpapers"
 
     // GTK/Qt paths
     readonly property string gtkColorsPath3: Quickshell.env("HOME") + "/.config/gtk-3.0/colors.css"
     readonly property string gtkColorsPath4: Quickshell.env("HOME") + "/.config/gtk-4.0/colors.css"
-    readonly property string qtColorSchemePath: Quickshell.env("HOME") + "/.local/share/color-schemes/Lyne.colors"
+    readonly property string qtColorSchemePath: Quickshell.env("HOME") + "/.local/share/color-schemes/Orvix.colors"
     readonly property string matugenConfigPath: Paths.dots + "/.data/matugen/config.toml"
     readonly property string matugenCachePath: Quickshell.env("HOME") + "/.cache/matugen"
 
@@ -143,7 +143,7 @@ Singleton {
             root.themeMode = root.getState("theme.mode", "preset");
             root.colorScheme = root.getState("theme.scheme", "dark");
             // currentThemeName changes when the theme is applied, so a new
-            // name from outside (lyne theme set) counts as another theme
+            // name from outside (orvix theme set) counts as another theme
             const name = root.getState("theme.name", "tokyonight");
             if (root.isAutoMode) {
                 const wallpaper = root.getState("wallpaper.current", "");
@@ -420,9 +420,9 @@ Singleton {
             _hyprFadeFrom = null;
         }
 
-        let lua = "if lyne_border_fade then lyne_border_fade:set_enabled(false); lyne_border_fade = nil end ";
+        let lua = "if orvix_border_fade then orvix_border_fade:set_enabled(false); orvix_border_fade = nil end ";
         if (steps.length > 1) {
-            lua += "local steps = { " + steps.join(", ") + " } local i = 0 " + "lyne_border_fade = hl.timer(function() i = i + 1 hl.config(steps[i]) " + "if i >= #steps and lyne_border_fade then lyne_border_fade:set_enabled(false); lyne_border_fade = nil end end, " + "{ timeout = " + Math.round(_hyprFadeDuration / steps.length) + ", type = \"repeat\" })";
+            lua += "local steps = { " + steps.join(", ") + " } local i = 0 " + "orvix_border_fade = hl.timer(function() i = i + 1 hl.config(steps[i]) " + "if i >= #steps and orvix_border_fade then orvix_border_fade:set_enabled(false); orvix_border_fade = nil end end, " + "{ timeout = " + Math.round(_hyprFadeDuration / steps.length) + ", type = \"repeat\" })";
         } else {
             lua += "hl.config(" + _hyprLua(hyprColors) + ")";
         }
@@ -441,7 +441,7 @@ Singleton {
     }
 
 
-    // Writes the theme for the "lyne" colorscheme and reloads it in every
+    // Writes the theme for the "orvix" colorscheme and reloads it in every
     // running Neovim using it, through its server socket (a config of the
     // user's own may not have it)
     function _applyNeovim(pal, terminal) {
@@ -454,7 +454,7 @@ Singleton {
         const path = shellEscape(nvimPalettePath);
         const tmp = shellEscape(nvimPalettePath + ".tmp");
 
-        nvimProc.run(["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>if get(g:, \"colors_name\", \"\") ==# \"lyne\" | colorscheme lyne | endif<CR>' 2>/dev/null & " + "done; wait"]);
+        nvimProc.run(["bash", "-c", "mkdir -p \"$(dirname " + path + ")\" && cat > " + tmp + " << 'THEME_EOF'\n" + content + "\nTHEME_EOF\n" + "mv " + tmp + " " + path + " && " + "for sock in /run/user/$(id -u)/nvim.*.0; do " + "  [ -S \"$sock\" ] && nvim --server \"$sock\" --remote-send '<Cmd>if get(g:, \"colors_name\", \"\") ==# \"orvix\" | colorscheme orvix | endif<CR>' 2>/dev/null & " + "done; wait"]);
     }
 
     function _applyWallpaper(wallpaperFile) {
@@ -634,8 +634,8 @@ Singleton {
         }
 
         lines.push("[General]");
-        lines.push("ColorScheme=Lyne");
-        lines.push("Name=Lyne");
+        lines.push("ColorScheme=Orvix");
+        lines.push("Name=Orvix");
         lines.push("shadeSortColumn=true");
         lines.push("");
         lines.push("[KDE]");
@@ -654,22 +654,22 @@ Singleton {
         // qt6ct/qt5ct format. Official qt6ct cannot read the KDE file above.
         const qtct = ThemeGenerator.qtctScheme(pal);
         const home = Quickshell.env("HOME");
-        const qtct6 = home + "/.config/qt6ct/colors/Lyne.conf";
-        const qtct5 = home + "/.config/qt5ct/colors/Lyne.conf";
+        const qtct6 = home + "/.config/qt6ct/colors/Orvix.conf";
+        const qtct5 = home + "/.config/qt5ct/colors/Orvix.conf";
         const conf6 = home + "/.config/qt6ct/qt6ct.conf";
         const conf5 = home + "/.config/qt5ct/qt5ct.conf";
-        // KDE apps choose a scheme by name; writing Lyne.colors alone leaves
+        // KDE apps choose a scheme by name; writing Orvix.colors alone leaves
         // them on BreezeLight. Select it for KDE apps as well.
-        const applyKdeScheme = "if command -v plasma-apply-colorscheme >/dev/null 2>&1; then plasma-apply-colorscheme Lyne; elif command -v kwriteconfig6 >/dev/null 2>&1; then kwriteconfig6 --file kdeglobals --group General --key ColorScheme Lyne; fi";
+        const applyKdeScheme = "if command -v plasma-apply-colorscheme >/dev/null 2>&1; then plasma-apply-colorscheme Orvix; elif command -v kwriteconfig6 >/dev/null 2>&1; then kwriteconfig6 --file kdeglobals --group General --key ColorScheme Orvix; fi";
 
-        // qt6ct-kde (the theming package) understands Lyne.colors and tells
-        // KDE apps to use it. Plain qt6ct only understands Lyne.conf, and
+        // qt6ct-kde (the theming package) understands Orvix.colors and tells
+        // KDE apps to use it. Plain qt6ct only understands Orvix.conf, and
         // leaves every Qt window on the light palette when pointed at .colors.
         function pointAt(conf, scheme) {
-            return "if [ -f " + shellEscape(conf) + " ]; then " + "if grep -q '^color_scheme_path=' " + shellEscape(conf) + "; then sed -i " + shellEscape("s|^color_scheme_path=.*|color_scheme_path=" + scheme + "|") + " " + shellEscape(conf) + "; " + "else sed -i " + shellEscape("/^\\[Appearance\\]/a color_scheme_path=" + scheme) + " " + shellEscape(conf) + "; fi; " + "if grep -q '^custom_palette=' " + shellEscape(conf) + "; then sed -i 's|^custom_palette=.*|custom_palette=true|' " + shellEscape(conf) + "; fi; " + "touch " + shellEscape(conf) + "; fi";
+            return "if [ -f " + shellEscape(conf) + " ]; then " + "if grep -q '^color_scheme_path=' " + shellEscape(conf) + "; then sed -i " + shellEscape("s|^color_scheme_path=.*|color_scheme_path=" + scheme + "|") + " " + shellEscape(conf) + "; " + "else sed -i " + shellEscape("/^\\[Appearance\\]/a color_scheme_path=" + scheme) + " " + shellEscape(conf) + "; fi; " + "if grep -q '^custom_palette=' " + shellEscape(conf) + "; then sed -i 's|^custom_palette=.*|custom_palette=true|' " + shellEscape(conf) + "; fi; " + "touch " + shellEscape(conf) + "; fi"; // i18n-ignore
         }
 
-        qtProc.run(["bash", "-c", "mkdir -p " + shellEscape(home + "/.local/share/color-schemes") + " " + shellEscape(home + "/.config/qt6ct/colors") + " " + shellEscape(home + "/.config/qt5ct/colors") + " && " + "cat > " + shellEscape(qtColorSchemePath) + " << 'QT_EOF'\n" + content + "QT_EOF\n" + "cat > " + shellEscape(qtct6) + " << 'QTCT_EOF'\n" + qtct + "QTCT_EOF\n" + "cp " + shellEscape(qtct6) + " " + shellEscape(qtct5) + " && " + "if ldd /usr/lib/libqt6ct-common.so 2>/dev/null | grep -q KF6ColorScheme; then " + pointAt(conf6, "~/.local/share/color-schemes/Lyne.colors") + "; " + "else " + pointAt(conf6, "~/.config/qt6ct/colors/Lyne.conf") + "; fi; " + pointAt(conf5, "~/.config/qt5ct/colors/Lyne.conf") + " && " + applyKdeScheme]);
+        qtProc.run(["bash", "-c", "mkdir -p " + shellEscape(home + "/.local/share/color-schemes") + " " + shellEscape(home + "/.config/qt6ct/colors") + " " + shellEscape(home + "/.config/qt5ct/colors") + " && " + "cat > " + shellEscape(qtColorSchemePath) + " << 'QT_EOF'\n" + content + "QT_EOF\n" + "cat > " + shellEscape(qtct6) + " << 'QTCT_EOF'\n" + qtct + "QTCT_EOF\n" + "cp " + shellEscape(qtct6) + " " + shellEscape(qtct5) + " && " + "if ldd /usr/lib/libqt6ct-common.so 2>/dev/null | grep -q KF6ColorScheme; then " + pointAt(conf6, "~/.local/share/color-schemes/Orvix.colors") + "; " + "else " + pointAt(conf6, "~/.config/qt6ct/colors/Orvix.conf") + "; fi; " + pointAt(conf5, "~/.config/qt5ct/colors/Orvix.conf") + " && " + applyKdeScheme]);
     }
 
     function hexToRgb(hex: string): string {

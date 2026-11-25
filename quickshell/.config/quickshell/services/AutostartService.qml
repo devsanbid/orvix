@@ -10,11 +10,11 @@ import "autostart.js" as Lib
 // Your apps live in state.json (autostart.apps: [{ name, command, desktop,
 // delay, workspace, enabled }]) and reach Hyprland through
 // HyprlandSettingsService, which writes them to hypr/local/settings.lua as a
-// lyne_autostart() call (hypr/conf/autostart.lua). The essential programs of
-// conf/autostart.lua are read from $XDG_RUNTIME_DIR/lyne-autostart.json.
+// orvix_autostart() call (hypr/conf/autostart.lua). The essential programs of
+// conf/autostart.lua are read from $XDG_RUNTIME_DIR/orvix-autostart.json.
 // A hand-written hypr/local/autostart.lua (from before this page) keeps
 // running until it's imported: Hyprland reads it with a stand-in `hl`
-// (lyne_autostart_import) so the exact commands come out without running.
+// (orvix_autostart_import) so the exact commands come out without running.
 // XDG autostart entries (~/.config/autostart, /etc/xdg/autostart) are
 // started by systemd in uwsm sessions; they're listed with scripts/autostart.sh
 // and only switched on or off here
@@ -179,7 +179,7 @@ Singleton {
     FileView {
         id: systemFile
 
-        path: root.runtimeDir + "/lyne-autostart.json"
+        path: root.runtimeDir + "/orvix-autostart.json"
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
@@ -214,12 +214,12 @@ Singleton {
         }
     }
 
-    readonly property string _importOut: runtimeDir + "/lyne-autostart-import.json"
+    readonly property string _importOut: runtimeDir + "/orvix-autostart-import.json"
 
     function _preview() {
         if (previewProc.running)
             return;
-        const lua = "if lyne_autostart_import then lyne_autostart_import(" + JSON.stringify(legacyPath) + ", " + JSON.stringify(_importOut) + ") end";
+        const lua = "if orvix_autostart_import then orvix_autostart_import(" + JSON.stringify(legacyPath) + ", " + JSON.stringify(_importOut) + ") end";
         previewProc.command = ["sh", "-c", 'rm -f "$2"; hyprctl eval "$1" >/dev/null 2>&1; cat "$2" 2>/dev/null; rm -f "$2"', "sh", lua, _importOut];
         previewProc.running = true;
     }

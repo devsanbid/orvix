@@ -32,7 +32,7 @@ export QT_AUTO_SCREEN_SCALE_FACTOR=1
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 # KDE apps ignore qt6ct's palette and read this file. The shell rewrites it
 # in place when the theme changes, so the path does not.
-export KDE_COLOR_SCHEME_PATH="$HOME/.local/share/color-schemes/Lyne.colors"
+export KDE_COLOR_SCHEME_PATH="$HOME/.local/share/color-schemes/Orvix.colors"
 
 # ------------------------------------------------------------------------------
 # PATH
@@ -41,17 +41,17 @@ export KDE_COLOR_SCHEME_PATH="$HOME/.local/share/color-schemes/Lyne.colors"
 export PATH="$HOME/.local/bin:$PATH"
 
 # ------------------------------------------------------------------------------
-# lyne-dots
+# orvix
 # Where the repo really is (this file is a link into it), for the shell and
-# the scripts; ~/.lyne-dots when this file isn't linked
+# the scripts; ~/.orvix when this file isn't linked
 # ------------------------------------------------------------------------------
-_lyne_env="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/uwsm/env" 2>/dev/null)"
-case "$_lyne_env" in
-*/hyprland/.config/uwsm/env) LYNE_DOTS="${_lyne_env%/hyprland/.config/uwsm/env}" ;;
-*) LYNE_DOTS="$HOME/.lyne-dots" ;;
+_orvix_env="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/uwsm/env" 2>/dev/null)"
+case "$_orvix_env" in
+*/hyprland/.config/uwsm/env) ORVIX_DIR="${_orvix_env%/hyprland/.config/uwsm/env}" ;;
+*) ORVIX_DIR="$HOME/.orvix" ;;
 esac
-export LYNE_DOTS
-unset _lyne_env
+export ORVIX_DIR
+unset _orvix_env
 
 # Load local global hardware exports
 if [ -f "$HOME/.config/uwsm/env.d/global_hardware.sh" ]; then

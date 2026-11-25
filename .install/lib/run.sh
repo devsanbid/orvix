@@ -42,10 +42,10 @@ step_export() {
     printf '%s=%q\n' "$1" "$2" >>"$RUN_STATE"
 }
 
-# The log file (under ~/.cache/lyne) and the file steps share values in
+# The log file (under ~/.cache/orvix) and the file steps share values in
 run_log_init() {
     local stamp=$1
-    local dir="${XDG_CACHE_HOME:-$HOME/.cache}/lyne"
+    local dir="${XDG_CACHE_HOME:-$HOME/.cache}/orvix"
     mkdir -p "$dir"
     LOG_FILE="$dir/install-$stamp.log"
     RUN_STATE="$dir/.install-$stamp.state"
@@ -77,11 +77,11 @@ run_sudo_start() {
     # `makepkg -si`): the -k goes, the password was just checked. When it
     # was forgotten anyway (a suspend, a very long build) it asks run_steps
     # to get it again in the foreground, and waits
-    RUN_SUDO_DIR="$(mktemp -d "${TMPDIR:-/tmp}/lyne-sudo.XXXXXX")" || return 1
+    RUN_SUDO_DIR="$(mktemp -d "${TMPDIR:-/tmp}/orvix-sudo.XXXXXX")" || return 1
     RUN_SUDO_REQUEST="$RUN_SUDO_DIR/request"
     cat >"$RUN_SUDO_DIR/sudo" <<'EOF'
 #!/bin/bash
-# sudo for the lyne-dots install steps (.install/lib/run.sh)
+# sudo for the orvix install steps (.install/lib/run.sh)
 dir="$(dirname "$(realpath "$0")")"
 real="$(PATH="${PATH//$dir:/}" command -v sudo)"
 # -k (ignore the cached password) dropped when a command follows
@@ -347,9 +347,9 @@ _run_draw() {
 # system (sudo, pacman -S, yay, systemctl, stow...). Read-only commands
 # (pacman -Q, systemctl list-unit-files) still ask the real system. Files the
 # steps write land in the throwaway HOME, to be looked at afterwards.
-# LYNE_DRY_HOME reuses one; LYNE_DRY_DELAY sets the time per fake package;
-# LYNE_DRY_FRESH=1 acts as if no package were installed, LYNE_DRY_INSTALLED=
-# "name=version ..." as if only those were; LYNE_DRY_FAIL="cmd
+# ORVIX_DRY_HOME reuses one; ORVIX_DRY_DELAY sets the time per fake package;
+# ORVIX_DRY_FRESH=1 acts as if no package were installed, ORVIX_DRY_INSTALLED=
+# "name=version ..." as if only those were; ORVIX_DRY_FAIL="cmd
 # ..." makes those stand-ins fail (tests of the failure paths), "cmd:arg"
 # only when called with that argument (yay:bibata-cursor-theme).
 # ---------------------------------------------------------------------------
@@ -360,31 +360,31 @@ run_dry_setup() {
         log_error "Dry run: $1. Nothing was run."
         exit 1
     }
-    if [[ -z "${LYNE_DRY_HOME:-}" ]]; then
-        LYNE_DRY_HOME="$(mktemp -d "${TMPDIR:-/tmp}/lyne-install-dry.XXXXXX")" ||
+    if [[ -z "${ORVIX_DRY_HOME:-}" ]]; then
+        ORVIX_DRY_HOME="$(mktemp -d "${TMPDIR:-/tmp}/orvix-install-dry.XXXXXX")" ||
             _run_dry_fail "could not create a throwaway HOME"
     fi
-    mkdir -p "$LYNE_DRY_HOME" 2>/dev/null || _run_dry_fail "could not create $LYNE_DRY_HOME"
-    LYNE_DRY_HOME="$(cd "$LYNE_DRY_HOME" && pwd)"
-    [[ -n "$LYNE_DRY_HOME" && "$LYNE_DRY_HOME" != / && "$LYNE_DRY_HOME" != "$HOME" ]] ||
-        _run_dry_fail "LYNE_DRY_HOME must be a folder of its own"
-    local bin="$LYNE_DRY_HOME/.dry-run-bin"
+    mkdir -p "$ORVIX_DRY_HOME" 2>/dev/null || _run_dry_fail "could not create $ORVIX_DRY_HOME"
+    ORVIX_DRY_HOME="$(cd "$ORVIX_DRY_HOME" && pwd)"
+    [[ -n "$ORVIX_DRY_HOME" && "$ORVIX_DRY_HOME" != / && "$ORVIX_DRY_HOME" != "$HOME" ]] ||
+        _run_dry_fail "ORVIX_DRY_HOME must be a folder of its own"
+    local bin="$ORVIX_DRY_HOME/.dry-run-bin"
     mkdir -p "$bin" || _run_dry_fail "could not create $bin"
 
     cat >"$bin/dry-stub" <<'EOF'
 #!/bin/bash
-# lyne installer dry run: stands in for a command that changes the system
+# orvix installer dry run: stands in for a command that changes the system
 name="$(basename "$0")"
 bin="$(dirname "$(realpath "$0")")"
 real() { PATH="${PATH//$bin:/}" command "$@"; }
-delay="${LYNE_DRY_DELAY:-0.02}"
+delay="${ORVIX_DRY_DELAY:-0.02}"
 
-# LYNE_DRY_FRESH / LYNE_DRY_INSTALLED ("name=version ..."): a made-up
+# ORVIX_DRY_FRESH / ORVIX_DRY_INSTALLED ("name=version ..."): a made-up
 # package database instead of the real one (queries and -T read it)
-fake_db() { [[ -n "${LYNE_DRY_FRESH:-}${LYNE_DRY_INSTALLED:-}" ]]; }
+fake_db() { [[ -n "${ORVIX_DRY_FRESH:-}${ORVIX_DRY_INSTALLED:-}" ]]; }
 fake_version() {
     local entry
-    for entry in ${LYNE_DRY_INSTALLED:-}; do
+    for entry in ${ORVIX_DRY_INSTALLED:-}; do
         [[ "${entry%%=*}" == "$1" ]] && { echo "${entry#*=}"; return 0; }
     done
     return 1
@@ -401,7 +401,7 @@ fake_query() {
     [[ "$flags" == *s* ]] && search=1
     if ((search)) || (($# == 0)); then
         rc=1
-        for entry in ${LYNE_DRY_INSTALLED:-}; do
+        for entry in ${ORVIX_DRY_INSTALLED:-}; do
             name=${entry%%=*}
             if (($# == 0)) || [[ "$name" =~ $1 ]]; then
                 ((quiet)) && echo "$name" || echo "$name ${entry#*=}"
@@ -423,13 +423,13 @@ fake_query() {
 
 _dry_fails() {
     local arg
-    [[ " ${LYNE_DRY_FAIL:-} " == *" $name "* ]] && return 0
-    for arg in "$@"; do [[ " ${LYNE_DRY_FAIL:-} " == *" $name:$arg "* ]] && return 0; done
+    [[ " ${ORVIX_DRY_FAIL:-} " == *" $name "* ]] && return 0
+    for arg in "$@"; do [[ " ${ORVIX_DRY_FAIL:-} " == *" $name:$arg "* ]] && return 0; done
     return 1
 }
 if _dry_fails "$@"; then
     echo "[dry-run] $name $* (made to fail)"
-    echo "error: $name failed (LYNE_DRY_FAIL)" >&2
+    echo "error: $name failed (ORVIX_DRY_FAIL)" >&2
     exit 1
 fi
 
@@ -455,9 +455,9 @@ fake_install() {
 case "$name" in
 sudo)
     all="$*"
-    # LYNE_DRY_SUDO_TTL=<seconds>: a password cache that expires, asked on
+    # ORVIX_DRY_SUDO_TTL=<seconds>: a password cache that expires, asked on
     # the terminal like the real sudo (tests of the password asked again)
-    if [[ -n "${LYNE_DRY_SUDO_TTL:-}" ]]; then
+    if [[ -n "${ORVIX_DRY_SUDO_TTL:-}" ]]; then
         ts="$HOME/.dry-sudo-ts" now="$(date +%s)" nonint=0 reset=0
         for a in "$@"; do
             [[ "$a" == -* ]] || break
@@ -465,7 +465,7 @@ sudo)
             [[ "$a" == -k ]] && reset=1
         done
         # -k with a command ignores the cache (makepkg does that)
-        if ((reset)) || [[ ! -f "$ts" ]] || ((now - $(<"$ts") >= LYNE_DRY_SUDO_TTL)); then
+        if ((reset)) || [[ ! -f "$ts" ]] || ((now - $(<"$ts") >= ORVIX_DRY_SUDO_TTL)); then
             if ((nonint)); then
                 echo "sudo: a password is required" >&2
                 exit 1
@@ -512,7 +512,7 @@ pacman)
     ;;
 yay | paru)
     echo "[dry-run] $name $*"
-    [[ "${1:-}" == -S* ]] && LYNE_DRY_DELAY="$(awk "BEGIN { print $delay * 5 }")" fake_install "${@:2}"
+    [[ "${1:-}" == -S* ]] && ORVIX_DRY_DELAY="$(awk "BEGIN { print $delay * 5 }")" fake_install "${@:2}"
     ;;
 git)
     if [[ "${1:-}" == clone ]]; then
@@ -551,9 +551,9 @@ EOF
         ln -sf dry-stub "$bin/$cmd" || _run_dry_fail "could not create the $cmd stand-in"
     done
 
-    export LYNE_DRY_RUN=1 LYNE_DRY_HOME
+    export ORVIX_DRY_RUN=1 ORVIX_DRY_HOME
     # shellcheck disable=SC2031 # the PATH change at the step subshell is meant to stay there
-    export HOME="$LYNE_DRY_HOME" PATH="$bin:$PATH"
+    export HOME="$ORVIX_DRY_HOME" PATH="$bin:$PATH"
     hash -r
     [[ "$(command -v sudo)" == "$bin/sudo" ]] || _run_dry_fail "sudo doesn't resolve to its stand-in"
     # Only the throwaway HOME: nothing may follow these to the real one

@@ -1,5 +1,5 @@
 # Publishes bootstrap.sh on GitHub Pages as /install, the short install link:
-#   curl -fsSL https://caioax.github.io/lyne-dots/install | bash
+#   curl -fsSL https://caioax.github.io/orvix/install | bash
 # Pages is set to deploy from GitHub Actions (Settings › Pages › Source)
 name: pages
 

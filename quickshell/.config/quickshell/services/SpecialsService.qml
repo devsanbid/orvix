@@ -9,7 +9,7 @@ import qs.config
 // Special workspaces (WhatsApp, music, scratchpad...): toggleable hidden
 // workspaces, each with an app opened when shown empty. The list lives in
 // state.json (specials.list); HyprlandSettingsService writes it to
-// hypr/local/settings.lua as a lyne_specials() call (hypr/conf/specials.lua),
+// hypr/local/settings.lua as a orvix_specials() call (hypr/conf/specials.lua),
 // which sets the workspace rules, binds and login autostart. Keys set here
 // are the binds' defaults; Settings › Keybinds can still override them
 Singleton {
@@ -50,13 +50,13 @@ Singleton {
     readonly property var presets: [
         {
             // WhatsApp Web as a Chromium app with its own profile (the
-            // default; lyne whatsapp warns when chromium is missing)
+            // default; orvix whatsapp warns when chromium is missing)
             key: "whatsapp-web",
             label: "WhatsApp Web", // i18n-ignore
             category: I18n.tr("Chat"),
             name: "WhatsApp",
             icon: "\u{f05a3}",
-            command: "lyne whatsapp",
+            command: "orvix whatsapp",
             cls: "^(chrome-web\\.whatsapp\\.com__-Default)$",
             pkg: "chromium"
         },

@@ -112,7 +112,7 @@ test("fileContent runs in Lua and calls hl.monitor once per rule", { skip: !hasL
 hl = { monitor = function(t) calls[#calls + 1] = t end }
 ${M.fileContent(rules)}
 for _, t in ipairs(calls) do print(t.output, tostring(t.disabled), tostring(t.scale)) end
-print(lyne_monitors_file)`;
+print(orvix_monitors_file)`;
     const out = execFileSync("lua", ["-"], { input: stub, encoding: "utf8" }).trimEnd().split("\n");
     assert.deepEqual(out.slice(0, 3), ["\tnil\tauto", 'desc:Odd "name"\tnil\t1.5', "eDP-1\ttrue\tnil"]);
     assert.match(out[3], /^[0-9a-f]+$/);

@@ -16,7 +16,7 @@
 # Usage: tests/nvim/config.sh   (needs nvim, git, the plugins and Mason's
 # lua-language-server and stylua)
 #   CONFIG_DEBUG=1           print the health report and :messages
-#   LYNE_TEST_NVIM=<dir>     another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_NVIM=<dir>     another copy of nvim/.config/nvim (lib.sh)
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 

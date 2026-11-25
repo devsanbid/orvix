@@ -13,14 +13,14 @@ import "../../../components/"
 ColumnLayout {
     id: root
 
-    readonly property string repoUrl: "https://github.com/caioax/lyne-dots"
+    readonly property string repoUrl: "https://github.com/caioax/orvix"
     readonly property string dotsDir: Paths.dots
     readonly property int heroIconSize: Config.fontSizeIconLarge * 2
 
     // key -> value from infoProc
     property var info: ({})
 
-    // `lyne update status --json`, from UpdateService
+    // `orvix update status --json`, from UpdateService
     readonly property var git: UpdateService.status
     readonly property bool checking: UpdateService.checking
     readonly property int behind: UpdateService.behind
@@ -116,7 +116,7 @@ ColumnLayout {
     }
 
     function copyInfo() {
-        const lines = [`lyne-dots ${git.version || "(no release)"} · ${git.branch} @ ${git.commit} (${git.date})`];
+        const lines = [`orvix ${git.version || "(no release)"} · ${git.branch} @ ${git.commit} (${git.date})`];
         for (const row of systemRows)
             lines.push(`${row.label}: ${row.value ?? ""}`);
         Quickshell.execDetached(["wl-copy", lines.join("\n")]);
@@ -175,7 +175,7 @@ ColumnLayout {
                 radius: Config.radiusLarge
                 color: Qt.alpha(Config.accentColor, 0.15)
 
-                LyneLogo {
+                OrvixLogo {
                     anchors.centerIn: parent
                     height: Config.fontSizeIconLarge
                 }
@@ -187,7 +187,7 @@ ColumnLayout {
 
                 Text {
                     Layout.fillWidth: true
-                text: I18n.tr("Lyne")
+                text: I18n.tr("Orvix")
                     font.family: Config.font
                     font.pixelSize: Config.fontSizeIconSmall
                     font.bold: true
@@ -243,7 +243,7 @@ ColumnLayout {
             id: welcomeRow
 
             label: I18n.tr("Welcome screen")
-            description: I18n.tr("The first choices and the main shortcuts, as on the first login (also lyne welcome)")
+            description: I18n.tr("The first choices and the main shortcuts, as on the first login (also orvix welcome)")
 
             // md-hand_wave_outline
             ActionButton {
@@ -282,7 +282,7 @@ ColumnLayout {
             description: {
                 const g = root.git;
                 if (root.dirty > 0)
-                    return I18n.trn("%n uncommitted change in ~/.lyne-dots. Updating asks whether to stash or discard it", "%n uncommitted changes in ~/.lyne-dots. Updating asks whether to stash or discard them", root.dirty);
+                    return I18n.trn("%n uncommitted change in ~/.orvix. Updating asks whether to stash or discard it", "%n uncommitted changes in ~/.orvix. Updating asks whether to stash or discard them", root.dirty);
                 if (!root.followsChannel)
                     return I18n.tr("On the %1 branch: updates follow %2", g.branch, g.upstream);
                 if (root.channel === "stable" && !g.target)

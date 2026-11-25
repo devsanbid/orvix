@@ -5,18 +5,18 @@
 #   █▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█
 #
 #   Bootstrap: installs the latest release
-#   curl -fsSL https://caioax.github.io/lyne-dots/install | bash
+#   curl -fsSL https://caioax.github.io/orvix/install | bash
 #
 # =============================================================================
-# Clones the repo into ~/.lyne-dots, moves main back to the newest release tag
+# Clones the repo into ~/.orvix, moves main back to the newest release tag
 # (vMAJOR.MINOR.PATCH, what the stable channel follows) and runs that
-# release's install.sh. main keeps tracking origin's main, so lyne update
+# release's install.sh. main keeps tracking origin's main, so orvix update
 # works from there on either channel. Arguments go to install.sh
-# (`| bash -s -- --dry-run`). LYNE_BOOTSTRAP_REPO clones another repo
+# (`| bash -s -- --dry-run`). ORVIX_BOOTSTRAP_REPO clones another repo
 # =============================================================================
 
-REPO_URL="${LYNE_BOOTSTRAP_REPO:-https://github.com/caioax/lyne-dots.git}"
-DOTS_DIR="$HOME/.lyne-dots"
+REPO_URL="${ORVIX_BOOTSTRAP_REPO:-https://github.com/caioax/orvix.git}"
+DOTS_DIR="$HOME/.orvix"
 TAG_RE='^v[0-9]+\.[0-9]+\.[0-9]+$'
 
 step() { echo -e "\e[1;34m:: $1\e[0m"; }
@@ -28,22 +28,22 @@ fail() {
 # In a function called on the last line: a download cut short runs nothing
 main() {
     if [[ -e "$DOTS_DIR" || -L "$DOTS_DIR" ]]; then
-        fail "$DOTS_DIR already exists. If lyne-dots is installed, \`lyne update\` updates it; otherwise move that folder away and run this again"
+        fail "$DOTS_DIR already exists. If orvix is installed, \`orvix update\` updates it; otherwise move that folder away and run this again"
     fi
 
     if ! command -v git &>/dev/null; then
-        command -v pacman &>/dev/null || fail "lyne-dots is for Arch Linux: pacman not found"
+        command -v pacman &>/dev/null || fail "orvix is for Arch Linux: pacman not found"
         step "Installing git..."
         sudo pacman -S --needed --noconfirm git || fail "couldn't install git"
     fi
 
-    step "Cloning lyne-dots..."
+    step "Cloning orvix..."
     git clone --branch main "$REPO_URL" "$DOTS_DIR" || fail "couldn't clone $REPO_URL"
 
     local tag
     tag="$(git -C "$DOTS_DIR" tag --merged origin/main --list 'v*' --sort=-v:refname | grep -E -m1 "$TAG_RE")"
     if [[ -n "$tag" ]]; then
-        step "Installing lyne-dots $tag (the latest release)..."
+        step "Installing orvix $tag (the latest release)..."
         git -C "$DOTS_DIR" reset --quiet --hard "$tag" || fail "couldn't check out $tag"
     else
         step "No release yet: installing the tip of main..."

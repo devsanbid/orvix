@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Monitor rules for Settings › Hyprland › Monitors (MonitorsService) and
-# `lyne monitors`.
+# `orvix monitors`.
 #
 #   monitors.sh write <content>        validate with Hyprland, install
 #                                      ~/.config/hypr/local/monitors.lua atomically,
@@ -15,19 +15,19 @@
 # A trial is the new rules sent with `hyprctl eval` (not saved): a config
 # reload brings the saved file back, so reverting is a reload.
 #
-# LYNE_HYPR_DIR and LYNE_HYPR_INSTANCE point the tests at a nested Hyprland.
+# ORVIX_HYPR_DIR and ORVIX_HYPR_INSTANCE point the tests at a nested Hyprland.
 
 set -u
 
-HYPR_DIR="${LYNE_HYPR_DIR:-$HOME/.config/hypr}"
+HYPR_DIR="${ORVIX_HYPR_DIR:-$HOME/.config/hypr}"
 # In local/ (hyprland.lua loads every local/*.lua), not tracked by git
 TARGET="$HYPR_DIR/local/monitors.lua"
 RUNTIME="${XDG_RUNTIME_DIR:-/tmp}"
-MARK="$RUNTIME/lyne-monitors-trial"
+MARK="$RUNTIME/orvix-monitors-trial"
 
 hypr() {
-    if [[ -n "${LYNE_HYPR_INSTANCE:-}" ]]; then
-        hyprctl -i "$LYNE_HYPR_INSTANCE" "$@"
+    if [[ -n "${ORVIX_HYPR_INSTANCE:-}" ]]; then
+        hyprctl -i "$ORVIX_HYPR_INSTANCE" "$@"
     else
         hyprctl "$@"
     fi
@@ -41,26 +41,26 @@ lua_string() {
 # (hyprctl eval only answers "ok")
 hypr_lua() {
     local result
-    result="$(mktemp "$RUNTIME/lyne-monitors-XXXXXX")"
+    result="$(mktemp "$RUNTIME/orvix-monitors-XXXXXX")"
     hypr eval "local out = $(lua_string "$result"); $1" >/dev/null 2>&1
     cat "$result" 2>/dev/null
     rm -f "$result"
 }
 
-# The hash in the last line of the file (lyne_monitors_file = "...")
+# The hash in the last line of the file (orvix_monitors_file = "...")
 file_hash() {
-    sed -nE 's/^lyne_monitors_file = "([^"]*)".*/\1/p' "$1" | tail -n 1
+    sed -nE 's/^orvix_monitors_file = "([^"]*)".*/\1/p' "$1" | tail -n 1
 }
 
 loaded() {
-    hypr_lua 'local f = io.open(out, "w"); f:write(tostring(lyne_monitors_file or "")); f:close()'
+    hypr_lua 'local f = io.open(out, "w"); f:write(tostring(orvix_monitors_file or "")); f:close()'
 }
 
 write() {
     local content="$1" check
     # Saving ends a trial: its watcher must not revert what's kept
     rm -f "$MARK"
-    check="$(mktemp "$RUNTIME/lyne-monitors-check-XXXXXX.lua")"
+    check="$(mktemp "$RUNTIME/orvix-monitors-check-XXXXXX.lua")"
     printf '%s' "$content" >"$check"
 
     # Run it the way Hyprland will, with hl.monitor checking each call, in a

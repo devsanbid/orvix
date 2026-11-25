@@ -50,7 +50,7 @@ Singleton {
     }
 
     // Emitted on the first load and when state.json changes outside the shell
-    // (e.g. lyne CLI); `keys` are the top-level keys that changed (all of
+    // (e.g. orvix CLI); `keys` are the top-level keys that changed (all of
     // them on the first load)
     signal stateLoaded(var keys)
 
@@ -203,7 +203,7 @@ Singleton {
             // pending save writes the result. The echo of our own save
             // changes no key, so _apply does nothing with it (comparing with
             // the last text we wrote also ignored an external edit that
-            // brought the file back to it: lyne theme set A, B, then A)
+            // brought the file back to it: orvix theme set A, B, then A)
             root._apply(text());
         }
         onLoadFailed: error => {

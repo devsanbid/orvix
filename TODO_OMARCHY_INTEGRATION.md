@@ -1,6 +1,6 @@
 # Orvix × Omarchy Integration Plan
 
-> Working name: **Orvix** (renamed from Lyne-Dots). This file tracks the work to
+> Working name: **Orvix** (renamed from Orvix). This file tracks the work to
 > make Orvix a first-class companion to Omarchy instead of a parallel desktop.
 >
 > Status legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked
@@ -36,23 +36,23 @@
 - [ ] Add `orvix doctor` / Settings health checks for missing dependencies.
 - [ ] Confirm `install.sh` refuses to run on a non-Arch system with a clear message.
 
-## Phase 1 — Rename Lyne-Dots → Orvix (full internal rename)
+## Phase 1 — Rename Orvix → Orvix (full internal rename)
 
 Chosen by the user: **full internal rename**, with a one-release compatibility
 shim so a live install does not break mid-session.
 
-- [ ] CLI `lyne` → `orvix`; `~/.local/bin/lyne` becomes a deprecated shim.
-- [ ] Env vars `LYNE_*` → `ORVIX_*` (keep `LYNE_*` reads as fallback for one release).
-- [ ] Repo dir `~/.lyne-dots` → `~/.orvix` via `orvix migrate`; keep
-      `~/.lyne-dots` as a symlink to the new path.
-- [ ] State keys, runtime JSON filenames (`lyne-keybinds.json`,
-      `lyne-autostart.json`, …) → `orvix-*`, with fallback reads.
-- [ ] QML/JS identifiers, theme IDs (`Lyne.colors` → `Orvix.colors`), Neovim
+- [ ] CLI `orvix` → `orvix`; `~/.local/bin/orvix` becomes a deprecated shim.
+- [ ] Env vars `ORVIX_*` → `ORVIX_*` (keep `ORVIX_*` reads as fallback for one release).
+- [ ] Repo dir `~/.orvix` → `~/.orvix` via `orvix migrate`; keep
+      `~/.orvix` as a symlink to the new path.
+- [ ] State keys, runtime JSON filenames (`orvix-keybinds.json`,
+      `orvix-autostart.json`, …) → `orvix-*`, with fallback reads.
+- [ ] QML/JS identifiers, theme IDs (`Orvix.colors` → `Orvix.colors`), Neovim
       colorscheme, generated files.
 - [ ] Wallpapers, assets, docs, About page, repo URLs, install URL.
 - [ ] Migration test: run on a copy of the current tree, verify symlinks and
       `state.json` survive.
-- [ ] Keep `lyne` CLI working for one release; print a deprecation notice.
+- [ ] Keep `orvix` CLI working for one release; print a deprecation notice.
 
 ## Phase 2 — Omarchy detection & coexistence (P0)
 
@@ -146,5 +146,5 @@ Current overview: clock + weather | month | player + resources (three columns).
   until the user provides a remote.
 - **Marketplace:** skipped by user decision; `plugins.omarchy.org` is for
   `omarchy-shell` plugins only.
-- **Live directory move:** `~/.lyne-dots` → `~/.orvix` is staged behind
+- **Live directory move:** `~/.orvix` → `~/.orvix` is staged behind
   `orvix migrate`; the old path stays as a symlink.

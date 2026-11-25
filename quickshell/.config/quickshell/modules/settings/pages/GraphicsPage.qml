@@ -8,7 +8,7 @@ import "../../../components/"
 
 // The GPUs, which one renders Hyprland (AQ_DRM_DEVICES, through
 // hypr/local/gpus.lua: applies at the next login), their udev links and the
-// NVIDIA driver (GpuService, lyne gpu / lyne nvidia)
+// NVIDIA driver (GpuService, orvix gpu / orvix nvidia)
 ColumnLayout {
     id: root
 
@@ -213,7 +213,7 @@ ColumnLayout {
                 visible: !GpuService.linksReady || GpuService.duplicates.length > 0
                 icon: "\u{f0339}"
                 text: GpuService.rules === "missing" ? I18n.tr("Set up") : I18n.tr("Update")
-                onClicked: GpuService.inTerminal("lyne gpu links")
+                onClicked: GpuService.inTerminal("orvix gpu links")
             }
         }
 
@@ -225,7 +225,7 @@ ColumnLayout {
         }
     }
 
-    // What lyne nvidia status says
+    // What orvix nvidia status says
     SettingsGroup {
         title: I18n.tr("NVIDIA driver")
         visible: GpuService.nvidia !== null
@@ -253,7 +253,7 @@ ColumnLayout {
                 visible: nv !== null && (nv.action === "install" || nv.action === "replace" || (nv.action === "ok" && nv.changes))
                 icon: nv?.action === "ok" ? "\u{f05b7}" : "\u{f01da}"
                 text: nv?.action === "install" ? I18n.tr("Install") : nv?.action === "replace" ? I18n.tr("Switch") : I18n.tr("Fix")
-                onClicked: GpuService.inTerminal("lyne nvidia install")
+                onClicked: GpuService.inTerminal("orvix nvidia install")
             }
         }
 

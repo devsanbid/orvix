@@ -64,7 +64,7 @@ LIVE_WL="$WAYLAND_DISPLAY"
 
 LIVE_STATE="$HOME/.config/quickshell/state.json"
 live_state_sum="$(sha1sum "$LIVE_STATE" 2>/dev/null)"
-LIVE_WS_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/lyne/workspace-monitors.lua"
+LIVE_WS_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/orvix/workspace-monitors.lua"
 live_ws_state_sum="$(sha1sum "$LIVE_WS_STATE" 2>/dev/null)"
 repo_status="$(git -C "$REPO" status --porcelain)"
 
@@ -108,7 +108,7 @@ trap 'exit 130' INT TERM
 build_sandbox() {
     local item cfg="$SB/cfg" home="$SB/home"
     mkdir -p "$SB/run" "$SB/bin" "$cfg/scripts" "$home/.config" "$home/.local/themes" \
-        "$home/.lyne-dots/quickshell/.config" "$home/.lyne-dots/.data" "$home/Pictures"
+        "$home/.orvix/quickshell/.config" "$home/.orvix/.data" "$home/Pictures"
     chmod 700 "$SB/run"
 
     # The shell as it is, except: its own state.json, a stand-in for the
@@ -154,17 +154,17 @@ EOF
         "$REPO/.data/quickshell/defaults.json" >"$cfg/state.json"
 
     # HOME as an install leaves it: the config linked, themes and their
-    # wallpapers copied, ~/.lyne-dots seen through links (no .git: nothing
+    # wallpapers copied, ~/.orvix seen through links (no .git: nothing
     # may write into the repo's)
     ln -s "$cfg" "$home/.config/quickshell"
     for item in "$REPO"/* "$REPO"/.[!.]*; do
         case "${item##*/}" in
         .git | .data | quickshell) ;;
-        *) ln -s "$item" "$home/.lyne-dots/" ;;
+        *) ln -s "$item" "$home/.orvix/" ;;
         esac
     done
-    for item in "$REPO"/.data/*; do ln -s "$item" "$home/.lyne-dots/.data/"; done
-    ln -s "$cfg" "$home/.lyne-dots/quickshell/.config/quickshell"
+    for item in "$REPO"/.data/*; do ln -s "$item" "$home/.orvix/.data/"; done
+    ln -s "$cfg" "$home/.orvix/quickshell/.config/quickshell"
     cp "$REPO"/.data/themes/*.json "$home/.local/themes/"
     # What stow links on an install and the shell writes to: copies here
     local pkg
@@ -188,7 +188,7 @@ EOF
     for dir in "$REPO"/.data/wallpapers/themes/*/; do
         theme="$(basename "$dir")"
         mkdir -p "$home/.local/wallpapers/themes/$theme"
-        cp "$dir"lyne-*-contour.jpg "$home/.local/wallpapers/themes/$theme/" 2>/dev/null
+        cp "$dir"orvix-*-contour.jpg "$home/.local/wallpapers/themes/$theme/" 2>/dev/null
     done
 
     local t
@@ -293,7 +293,7 @@ EOF
     cat >>"$SB/hyprland.lua" <<EOF
 dofile("$WORKSPACES")
 dofile("$SPECIALS")
-lyne_specials({
+orvix_specials({
     { id = "smoke-empty", name = "Smoke empty", command = "touch $SB/launched-smoke-empty", class = "", keys = "", move_keys = "" },
     { id = "smoke-busy", name = "Smoke busy", command = "touch $SB/launched-smoke-busy", class = "^(smoke-busy)$", keys = "", move_keys = "" },
 })
@@ -302,12 +302,12 @@ EOF
 #!/bin/bash
 echo \$\$ >"$SB/nest.pid"
 unset HYPRLAND_INSTANCE_SIGNATURE DISPLAY XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME
-export WAYLAND_DISPLAY="$LIVE_WL" XDG_RUNTIME_DIR="$SB/run" HOME="$SB/home" LYNE_LID_STATE_FILE="$SB/lid-state"
+export WAYLAND_DISPLAY="$LIVE_WL" XDG_RUNTIME_DIR="$SB/run" HOME="$SB/home" ORVIX_LID_STATE_FILE="$SB/lid-state"
 exec Hyprland -c "$SB/hyprland.lua" >"$SB/hyprland.log" 2>&1
 EOF
     chmod +x "$SB/nest.sh"
     # Through your Hyprland, so it lands hidden and unfocused
-    hyprctl dispatch "hl.dsp.exec_cmd('$SB/nest.sh', { workspace = 'special:lyne-smoke silent' })" >/dev/null ||
+    hyprctl dispatch "hl.dsp.exec_cmd('$SB/nest.sh', { workspace = 'special:orvix-smoke silent' })" >/dev/null ||
         fail_early "couldn't start the nested Hyprland"
     local sock=""
     for _ in {1..100}; do
@@ -345,7 +345,7 @@ EOF
             QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=qt6ct QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
             XCURSOR_THEME="$(jq -r .cursor.theme "$SB/cfg/state.json")" XCURSOR_SIZE="$(jq -r .cursor.size "$SB/cfg/state.json")" \
             QT_FORCE_STDERR_LOGGING=1 \
-            LYNE_SDDM_DIR="$SB/sddm" LYNE_DOTS="$SB/home/.lyne-dots" \
+            ORVIX_SDDM_DIR="$SB/sddm" ORVIX_DIR="$SB/home/.orvix" \
             /usr/bin/setsid dbus-run-session --config-file="$SB/session.conf" -- qs -p "$SB/cfg/shell.qml"
     ) >"$SB/qs.log" 2>&1 &
     for _ in {1..300}; do
@@ -468,7 +468,7 @@ workspace_step() {
     local monitor want=$((WS_START + $2))
     monitor="$(nested monitors -j | jq -r '.[0].name')"
     [[ "$(active_id)" == "$want" ]] && return 0
-    nested dispatch "lyne_workspace_step($1, \"$monitor\")" | grep -qx ok || return 1
+    nested dispatch "orvix_workspace_step($1, \"$monitor\")" | grep -qx ok || return 1
     [[ "$(active_id)" == "$want" ]]
 }
 
@@ -710,7 +710,7 @@ EOF
     check "cursor › env quoting" cursor_quote_ok
     check "cursor › applied" grep -q "gsettings set org.gnome.desktop.interface cursor-theme Adwaita" "$SB/calls.log"
     check "cursor › default theme" grep -qx "Inherits=Adwaita" "$SB/home/.icons/default/index.theme"
-    check "cursor › previews" test -s "$SB/home/.cache/lyne/cursors/Adwaita/default-32.png"
+    check "cursor › previews" test -s "$SB/home/.cache/orvix/cursors/Adwaita/default-32.png"
     check "cursor › settings.lua" grep -qF 'hl.env("XCURSOR_SIZE", "32", true)' "$SB/home/.config/hypr/local/settings.lua"
     # A theme copied into the user's folder: listed, removable, removed
     mkdir -p "$SB/home/.local/share/icons/Smoke-Cursor/cursors"
@@ -753,7 +753,7 @@ EOF
     # After qt6ct's reload: KIconLoader told, the icon URLs changed
     sleep 2
     check "icons › KDE apps told" grep -q "dbus-send .*org.kde.KIconLoader.iconChanged" "$SB/calls.log"
-    check "icons › new icon urls" ev_is "image://icon/folder?path=lyne-icons-1" 'IconService.url("folder", "")'
+    check "icons › new icon urls" ev_is "image://icon/folder?path=orvix-icons-1" 'IconService.url("folder", "")'
     check "icons › light variant" ev_is Smoke-Icons-light 'IconService.variantOf(IconService.current, false)'
     step "icons › back to the default" ev 'StateService.set("icons.theme", StateService.getDefault("icons.theme", "")); "ok"'
     # The family is the user's: removable, and removed with its versions

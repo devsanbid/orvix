@@ -13,7 +13,7 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    readonly property string exportPath: Quickshell.env("XDG_RUNTIME_DIR") + "/lyne-workspaces.json"
+    readonly property string exportPath: Quickshell.env("XDG_RUNTIME_DIR") + "/orvix-workspaces.json"
 
     property int block: 100
     property int max: 99
@@ -55,16 +55,16 @@ Singleton {
         const other = index + direction;
         if (index < 0 || other < 0 || index >= monitors.length || other >= monitors.length)
             return;
-        _eval("lyne_workspaces_swap(" + monitors[index].slot + ", " + monitors[other].slot + ")");
+        _eval("orvix_workspaces_swap(" + monitors[index].slot + ", " + monitors[other].slot + ")");
     }
 
     // Only disconnected monitors (the Lua side refuses connected ones)
     function forget(slot: int) {
-        _eval("lyne_workspaces_forget(" + slot + ")");
+        _eval("orvix_workspaces_forget(" + slot + ")");
     }
 
     function _eval(code: string) {
-        evalProc.command = ["hyprctl", "eval", "if lyne_workspaces_swap then " + code + " end"];
+        evalProc.command = ["hyprctl", "eval", "if orvix_workspaces_swap then " + code + " end"];
         evalProc.running = true;
     }
 

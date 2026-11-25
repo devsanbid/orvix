@@ -1,13 +1,13 @@
 #!/usr/bin/env bats
-# lib/cursor.sh and `lyne cursor`: cursor themes in fake icon directories
+# lib/cursor.sh and `orvix cursor`: cursor themes in fake icon directories
 
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     USER_ICONS="$HOME/.local/share/icons"
     SYSTEM_ICONS="$BATS_TEST_TMPDIR/usr/share/icons"
-    export LYNE_ICON_DIRS="$USER_ICONS:$HOME/.icons:$SYSTEM_ICONS"
+    export ORVIX_ICON_DIRS="$USER_ICONS:$HOME/.icons:$SYSTEM_ICONS"
     theme "$SYSTEM_ICONS/Bibata-Modern-Classic" name=Bibata-Modern-Classic
     theme "$SYSTEM_ICONS/breeze_cursors" name="Breeze Dark"
     theme "$SYSTEM_ICONS/Adwaita" name=Adwaita file=default
@@ -41,8 +41,8 @@ theme() {
     return 0
 }
 
-cursor() { in_lyne cursor -- "$1"; }
-lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
+cursor() { in_orvix cursor -- "$1"; }
+orvix() { "$REPO/local/.local/bin/orvix" "$@"; }
 
 @test "themes: xcursor folders by name, the user's copy wins, the rest left out" {
     theme "$USER_ICONS/Bibata-Modern-Classic" name="Bibata Mine"
@@ -64,10 +64,10 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
 }
 
 @test "themes: missing icon directories and none at all" {
-    export LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope:$SYSTEM_ICONS"
+    export ORVIX_ICON_DIRS="$BATS_TEST_TMPDIR/nope:$SYSTEM_ICONS"
     run cursor 'cursor_themes | cut -f1'
     assert_output "$(printf '%s\n' Adwaita Bibata-Modern-Classic breeze_cursors)"
-    export LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope"
+    export ORVIX_ICON_DIRS="$BATS_TEST_TMPDIR/nope"
     run cursor 'cursor_themes; cursor_json'
     assert_success
     assert_output "[]"
@@ -81,10 +81,10 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
 }
 
 @test "dirs: the user's, ~/.icons, then XDG_DATA_DIRS, without repeats" {
-    unset LYNE_ICON_DIRS XDG_DATA_DIRS
+    unset ORVIX_ICON_DIRS XDG_DATA_DIRS
     run cursor cursor_dirs
     assert_output "$(printf '%s\n' "$HOME/.local/share/icons" "$HOME/.icons" /usr/local/share/icons /usr/share/icons)"
-    run env XDG_DATA_HOME="$HOME/data" XDG_DATA_DIRS="/opt/share/:$HOME/data::/usr/share" bash -c "$(declare -f in_lyne); LIB='$LIB' REPO='$REPO' in_lyne cursor -- cursor_dirs"
+    run env XDG_DATA_HOME="$HOME/data" XDG_DATA_DIRS="/opt/share/:$HOME/data::/usr/share" bash -c "$(declare -f in_orvix); LIB='$LIB' REPO='$REPO' in_orvix cursor -- cursor_dirs"
     assert_output "$(printf '%s\n' "$HOME/data/icons" "$HOME/.icons" /opt/share/icons /usr/share/icons)"
 }
 
@@ -166,40 +166,40 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     assert_output Inherits=Adwaita
 }
 
-@test "lyne cursor set/size: applied and saved; unknown themes saved nowhere" {
+@test "orvix cursor set/size: applied and saved; unknown themes saved nowhere" {
     fake_dots
-    run lyne cursor set breeze_cursors 48
+    run orvix cursor set breeze_cursors 48
     assert_success
     assert_output "Cursor: breeze_cursors, size 48"
     run jq -c .cursor "$STATE"
     assert_output '{"theme":"breeze_cursors","size":48}'
-    run lyne cursor size 32
+    run orvix cursor size 32
     assert_success
     run jq -c .cursor "$STATE"
     assert_output '{"theme":"breeze_cursors","size":32}'
-    run lyne cursor set Nope
+    run orvix cursor set Nope
     assert_failure
-    run lyne cursor size 1000
+    run orvix cursor size 1000
     assert_failure
     run jq -c .cursor "$STATE"
     assert_output '{"theme":"breeze_cursors","size":32}'
     grep -q "Inherits=breeze_cursors" "$HOME/.icons/default/index.theme"
 }
 
-@test "lyne cursor status: the saved theme, else defaults.json; missing ones flagged" {
+@test "orvix cursor status: the saved theme, else defaults.json; missing ones flagged" {
     fake_dots
     jq 'del(.cursor)' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
-    run lyne cursor
+    run orvix cursor
     assert_success
     assert_line "Theme: Bibata-Modern-Classic, size 24"
     assert_line --regexp "^  ● Bibata-Modern-Classic +.*/usr/share/icons/Bibata-Modern-Classic$"
     assert_line --regexp "^  ○ Adwaita "
     refute_output --partial "not installed"
     jq '.cursor = {theme: "Gone", size: 32}' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
-    run lyne cursor
+    run orvix cursor
     assert_line "Theme: Gone, size 32"
     assert_line --partial "not installed"
-    run lyne cursor apply
+    run orvix cursor apply
     assert_failure
 }
 
@@ -213,7 +213,7 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     run sh -c '. "$1"; echo "$XCURSOR_THEME $XCURSOR_SIZE"' _ "$env"
     assert_output "Bibata-Modern-Classic 24"
     rm "$STATE"
-    run sh -c '. "$1"; echo "$XCURSOR_THEME $XCURSOR_SIZE ${_lyne_value-unset}"' _ "$env"
+    run sh -c '. "$1"; echo "$XCURSOR_THEME $XCURSOR_SIZE ${_orvix_value-unset}"' _ "$env"
     assert_output "Bibata-Modern-Classic 24 unset"
 }
 
@@ -254,8 +254,8 @@ print(w, h, ",".join(map(str, raw[1:5])))
 PY
 }
 
-# LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
-preview() { python3 "${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/cursor-preview.py" "$@"; }
+# ORVIX_TEST_SHELL: a copy of the shell (to sabotage the script)
+preview() { python3 "${ORVIX_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/cursor-preview.py" "$@"; }
 
 @test "previews: closest size, straight alpha, fallback names" {
     local t="$USER_ICONS/Mine"
@@ -340,7 +340,7 @@ pack() {
     assert_line "One	1"
     assert_line "Two	1"
     run ls -A "$USER_ICONS"
-    refute_output --partial .lyne-install
+    refute_output --partial .orvix-install
 }
 
 @test "install: a theme at the archive's top, a folder, links that leave the theme" {
@@ -396,7 +396,7 @@ pack() {
     assert_failure 2
     [[ ! -e "$HOME/.local/cursors" && ! -e "$HOME/cursors" ]]
     run ls -A "$USER_ICONS"
-    refute_output --partial .lyne-install
+    refute_output --partial .orvix-install
 }
 
 @test "remove: the user's themes only" {
@@ -415,21 +415,21 @@ pack() {
     assert_failure 2
 }
 
-@test "lyne cursor install/remove: never the theme in use" {
+@test "orvix cursor install/remove: never the theme in use" {
     fake_dots
     local src="$BATS_TEST_TMPDIR/src"
     theme "$src/Mine"
     pack "$BATS_TEST_TMPDIR/mine.tar.gz" "$src" Mine
-    run lyne cursor install "$BATS_TEST_TMPDIR/mine.tar.gz" "$BATS_TEST_TMPDIR/nope.zip"
+    run orvix cursor install "$BATS_TEST_TMPDIR/mine.tar.gz" "$BATS_TEST_TMPDIR/nope.zip"
     assert_failure
     assert_line "installed Mine"
-    lyne cursor set Mine
-    run lyne cursor remove Mine
+    orvix cursor set Mine
+    run orvix cursor remove Mine
     assert_failure
     assert_output --partial "in use"
     [[ -d "$USER_ICONS/Mine" ]]
-    lyne cursor set Adwaita
-    run lyne cursor remove Mine
+    orvix cursor set Adwaita
+    run orvix cursor remove Mine
     assert_success
     assert_output "Removed Mine"
 }

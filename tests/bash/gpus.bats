@@ -4,14 +4,14 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     SYS="$BATS_TEST_TMPDIR/sys"
-    export LYNE_SYSFS="$SYS" LYNE_PCI_IDS="$FIXTURES/pci.ids"
+    export ORVIX_SYSFS="$SYS" ORVIX_PCI_IDS="$FIXTURES/pci.ids"
 }
 
 # One line per GPU with the fields the tests compare, then the totals
 detect() {
-    in_lyne gpus -- '
+    in_orvix gpus -- '
         gpu_detect
         for ((i = 0; i < GPU_COUNT; i++)); do
             echo "$i ${GPU_PCI[i]} ${GPU_VENDOR[i]} ${GPU_KIND[i]} arch=${GPU_ARCH[i]} family=${GPU_FAMILY[i]} chip=${GPU_CHIP[i]} name=${GPU_NAME[i]}"
@@ -27,7 +27,7 @@ detect() {
     assert_line "0 0000:00:02.0 intel integrated arch= family= chip=CoffeeLake-H GT2 name=UHD Graphics 630"
     assert_line "1 0000:01:00.0 nvidia dedicated arch=turing family=open chip=TU117M name=GeForce GTX 1650 Mobile / Max-Q"
     assert_line "count=2 hybrid=1 internal=0 nvidia=1"
-    run in_lyne gpus -- 'gpu_detect; gpu_summary; gpu_setup_label; gpu_connected 0; echo; gpu_kind_label 1'
+    run in_orvix gpus -- 'gpu_detect; gpu_summary; gpu_setup_label; gpu_connected 0; echo; gpu_kind_label 1'
     assert_line "Intel UHD Graphics 630 + NVIDIA GeForce GTX 1650 Mobile / Max-Q (hybrid)"
     assert_line "hybrid: the built-in screen is on the Intel GPU"
     assert_line "eDP-1"
@@ -41,7 +41,7 @@ detect() {
         fx_gpu "$SYS" "0000:0$i:00.0" "10de:$id"
         i=$((i + 1))
     done
-    run in_lyne gpus -- 'gpu_detect; for ((i = 0; i < GPU_COUNT; i++)); do echo "${GPU_IDS[i]} ${GPU_ARCH[i]} ${GPU_FAMILY[i]}"; done'
+    run in_orvix gpus -- 'gpu_detect; for ((i = 0; i < GPU_COUNT; i++)); do echo "${GPU_IDS[i]} ${GPU_ARCH[i]} ${GPU_FAMILY[i]}"; done'
     assert_success
     assert_line "10de:1004 kepler 470xx"
     assert_line "10de:13c2 maxwell 580xx"
@@ -69,7 +69,7 @@ detect() {
     fx_gpu "$SYS" 0000:03:00.0 1002:73ff
     fx_gpu "$SYS" 0000:07:00.0 1002:9999 vram=536870912
     fx_gpu "$SYS" 0000:08:00.0 1002:9998 vram=8589934592
-    run in_lyne gpus -- 'gpu_detect; for ((i = 0; i < GPU_COUNT; i++)); do echo "${GPU_IDS[i]} ${GPU_KIND[i]} ${GPU_NAME[i]}"; done'
+    run in_orvix gpus -- 'gpu_detect; for ((i = 0; i < GPU_COUNT; i++)); do echo "${GPU_IDS[i]} ${GPU_KIND[i]} ${GPU_NAME[i]}"; done'
     assert_line "1002:15bf integrated Phoenix1"
     assert_line "1002:1638 integrated Radeon Vega Series / Radeon Vega Mobile Series"
     assert_line "1002:73ff dedicated Radeon RX 6600/6600 XT/6600M"
@@ -84,7 +84,7 @@ detect() {
     fx_gpu "$SYS" 0000:00:01.0 1af4:1050
     fx_gpu "$SYS" 0000:02:00.0 1a03:2000 class=0x038000
     fx_gpu "$SYS" 0000:00:1f.3 8086:a348 class=0x040300
-    run in_lyne gpus -- 'gpu_detect; for ((i = 0; i < GPU_COUNT; i++)); do echo "${GPU_BRAND[i]}|${GPU_KIND[i]}|${GPU_NAME[i]}"; done; echo "count=$GPU_COUNT hybrid=$GPU_HYBRID"'
+    run in_orvix gpus -- 'gpu_detect; for ((i = 0; i < GPU_COUNT; i++)); do echo "${GPU_BRAND[i]}|${GPU_KIND[i]}|${GPU_NAME[i]}"; done; echo "count=$GPU_COUNT hybrid=$GPU_HYBRID"'
     assert_line --index 0 "PCI 1a03|dedicated|ASPEED Graphics Family"
     assert_line --index 1 "Virtual|virtual|Virtio 1.0 GPU"
     assert_line "count=2 hybrid=0"
@@ -103,7 +103,7 @@ detect() {
 }
 
 @test "without pci.ids: placeholder names, NVIDIA generation from the id" {
-    export LYNE_PCI_IDS="$BATS_TEST_TMPDIR/none"
+    export ORVIX_PCI_IDS="$BATS_TEST_TMPDIR/none"
     fx_gpu "$SYS" 0000:01:00.0 10de:1f9d
     run detect
     assert_success
@@ -112,7 +112,7 @@ detect() {
 
 @test "no GPU at all" {
     mkdir -p "$SYS/bus/pci/devices"
-    run in_lyne gpus -- 'gpu_detect; gpu_setup_label; gpu_summary; gpu_json'
+    run in_orvix gpus -- 'gpu_detect; gpu_setup_label; gpu_summary; gpu_json'
     assert_success
     assert_line "no graphics card found"
     assert_line "none found"
@@ -122,7 +122,7 @@ detect() {
 @test "gpu_json is valid JSON with every field" {
     fx_gpu "$SYS" 0000:01:00.0 10de:1f9d driver=nvidia card=card0 outputs="HDMI-A-1:connected DP-1:disconnected" boot_vga=1
     fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="eDP-1:connected"
-    run in_lyne gpus -- 'gpu_detect; gpu_json'
+    run in_orvix gpus -- 'gpu_detect; gpu_json'
     assert_success
     run jq -c '[.hybrid, .internal, (.gpus | length), .gpus[1].name, .gpus[1].family, .gpus[1].bootVga, .gpus[1].outputs]' <<<"$output"
     assert_output '[true,0,2,"GeForce GTX 1650 Mobile / Max-Q","open",true,[{"name":"DP-1","connected":false},{"name":"HDMI-A-1","connected":true}]]'
@@ -130,7 +130,7 @@ detect() {
 
 @test "gpu_status lists the outputs and the driver note" {
     fx_gpu "$SYS" 0000:01:00.0 10de:1c03 driver=nouveau card=card0 outputs="DP-1:connected HDMI-A-1:disconnected"
-    run in_lyne gpus -- 'gpu_detect; gpu_status'
+    run in_orvix gpus -- 'gpu_detect; gpu_status'
     assert_success
     assert_line "Graphics: one GPU"
     assert_line --partial "dedicated, Pascal (GP106) · 0000:01:00.0 · 10de:1c03 · driver nouveau · card0"
@@ -140,8 +140,8 @@ detect() {
 
 @test "runs on this machine's sysfs" {
     [[ -d /sys/bus/pci/devices ]] || skip "no /sys/bus/pci"
-    unset LYNE_SYSFS LYNE_PCI_IDS
-    run in_lyne gpus -- 'gpu_detect; gpu_json'
+    unset ORVIX_SYSFS ORVIX_PCI_IDS
+    run in_orvix gpus -- 'gpu_detect; gpu_json'
     assert_success
     jq -e '.gpus | type == "array"' <<<"$output"
 }

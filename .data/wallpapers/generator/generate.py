@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Default lyne-dots wallpapers, generated from the theme presets.
+"""Default orvix wallpapers, generated from the theme presets.
 
 Every theme in .data/themes/*.json gets one scene, contour, drawn from its
-palette: a big lyne-dots logo wrapped in contour lines, with the wordmark
-(same geometry as .data/assets/logo/lyne-dots-tight.svg and the shell's
-LyneLogo: dot = accent, line = the accent's hue at 0.57 saturation / 0.9
+palette: a big orvix logo wrapped in contour lines, with the wordmark
+(same geometry as .data/assets/logo/orvix-tight.svg and the shell's
+OrvixLogo: dot = accent, line = the accent's hue at 0.57 saturation / 0.9
 lightness). It is the theme's default wallpaper.
 
-Output: .data/wallpapers/themes/<theme>/lyne-<theme>-contour.jpg
+Output: .data/wallpapers/themes/<theme>/orvix-<theme>-contour.jpg
 
 Pipeline: the logo rings are written as SVG and rasterized by librsvg
 (antialiased); the background and the glow are computed in float32 with
@@ -31,7 +31,7 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = os.path.dirname(os.path.realpath(__file__))
 DATA = os.path.dirname(os.path.dirname(HERE))
 THEMES_DIR = os.path.join(DATA, "themes")
-LOGO_SVG = os.path.join(DATA, "assets/logo/lyne-dots-tight.svg")
+LOGO_SVG = os.path.join(DATA, "assets/logo/orvix-tight.svg")
 FONT = os.path.join(HERE, "fonts/Quicksand-500.ttf")
 # Minimum OKLab lightness gap between the logo and what is behind it
 LOGO_CONTRAST = 0.2
@@ -102,7 +102,7 @@ def ramp(stops, t):
 
 
 def logo_line_color(dot):
-    """LyneLogo.qml: the line is the dot's hue at 0.57 saturation / 0.9 lightness"""
+    """OrvixLogo.qml: the line is the dot's hue at 0.57 saturation / 0.9 lightness"""
     h, l, s = colorsys.rgb_to_hls(*dot)
     return np.array(colorsys.hls_to_rgb(h, l * 0.9, s * 0.57), np.float32)
 
@@ -166,7 +166,7 @@ def logo_body(line, dot, sw_extra=0.0, r_extra=0.0):
 
 
 def put_wordmark(img, parts, cx, top, size, spacing):
-    """'lyne-dots' letter-spaced, drawn 2x and downsampled for clean edges"""
+    """'orvix' letter-spaced, drawn 2x and downsampled for clean edges"""
     H, W = img.shape[:2]
     ss = 2
     font = ImageFont.truetype(FONT, int(round(size * ss)))
@@ -223,7 +223,7 @@ def scene_contour(c, W, H):
     img = screen(img, dot, np.exp(-d / 0.12) * (0.25 if not light else 0.12))
     # wordmark bottom left, clear of the rings
     word = mix(c["text"], line, 0.25) if not light else c["text"]
-    return put_wordmark(img, [("lyne", word), ("-dots", line)], W * 0.2, H * 0.84, 40 * S, 9 * S)
+    return put_wordmark(img, [("orvix", word), ("-dots", line)], W * 0.2, H * 0.84, 40 * S, 9 * S)
 
 
 # ---------------------------------------------------------------- main
@@ -249,7 +249,7 @@ def main():
     else:
         ids = a.themes.split(",") if a.themes else sorted(p[:-5] for p in os.listdir(THEMES_DIR) if p.endswith(".json"))
         themes = [(t, os.path.join(THEMES_DIR, t + ".json")) for t in ids]
-    jobs = [(path, W, H, os.path.join(a.out, t, f"lyne-{t}-contour.jpg")) for t, path in themes]
+    jobs = [(path, W, H, os.path.join(a.out, t, f"orvix-{t}-contour.jpg")) for t, path in themes]
     with ProcessPoolExecutor(a.jobs) as ex:
         for out in ex.map(render, jobs):
             print(os.path.relpath(out))

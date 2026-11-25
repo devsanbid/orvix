@@ -38,8 +38,8 @@ speed="$3"
 here="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 run="${XDG_RUNTIME_DIR:-/tmp}"
 # mpv's IPC socket; it also names our mpvpaper among any others
-sock="$run/lyne-wallpaper-video.sock"
-frame="$run/lyne-wallpaper-frame.jpg"
+sock="$run/orvix-wallpaper-video.sock"
+frame="$run/orvix-wallpaper-frame.jpg"
 
 state="$HOME/.config/quickshell/state.json"
 if [[ -z "$type" || -z "$speed" ]] && [[ -f "$state" ]] && command -v jq >/dev/null; then
@@ -116,7 +116,7 @@ sync_owe() {
 }
 
 # The shell and the boot script may both set one: one change at a time
-exec 9>"$run/lyne-wallpaper.lock"
+exec 9>"$run/orvix-wallpaper.lock"
 flock -w 15 9
 
 if ! is_video "$path"; then

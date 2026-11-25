@@ -2,10 +2,10 @@ return {
     "nvim-lualine/lualine.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
-        -- Colors come from the "lyne" colorscheme palette, rebuilt on every
+        -- Colors come from the "orvix" colorscheme palette, rebuilt on every
         -- theme change (ColorScheme below)
         local function setup()
-            local p = require("lyne").palette()
+            local p = require("orvix").palette()
 
             local custom_theme = {
                 normal = {
@@ -83,7 +83,7 @@ return {
 
         setup()
         vim.api.nvim_create_autocmd("ColorScheme", {
-            group = vim.api.nvim_create_augroup("lyne_lualine", { clear = true }),
+            group = vim.api.nvim_create_augroup("orvix_lualine", { clear = true }),
             callback = setup,
         })
     end,

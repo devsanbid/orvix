@@ -21,7 +21,7 @@
 #   fitting:<the copy in DEST><TAB><the source's poster>
 #   progress:<the copy in DEST><TAB><0-99>
 # then added:, or failed:/cancelled: with the copy's path. A line with the
-# copy's path in the file $LYNE_ADD_CANCEL stops its scaling. A video ffprobe
+# copy's path in the file $ORVIX_ADD_CANCEL stops its scaling. A video ffprobe
 # can't read is left out with failed:<PATH's file>.
 
 set -uo pipefail
@@ -82,7 +82,7 @@ fit_size() {
 
 # Tag the scaled copy carries: the source's checksum
 source_tag() {
-    echo "lyne-source:$(sha1sum -- "$1" | cut -d' ' -f1)"
+    echo "orvix-source:$(sha1sum -- "$1" | cut -d' ' -f1)"
 }
 
 copy_tag() {
@@ -102,7 +102,7 @@ scale() {
         -movflags +faststart -metadata "comment=$tag" "$tmp")
     ffmpeg_pid=$!
     while IFS= read -r -u "$fd" line; do
-        if [[ -n "${LYNE_ADD_CANCEL:-}" && -f "$LYNE_ADD_CANCEL" ]] && grep -qxF -- "$target" "$LYNE_ADD_CANCEL"; then
+        if [[ -n "${ORVIX_ADD_CANCEL:-}" && -f "$ORVIX_ADD_CANCEL" ]] && grep -qxF -- "$target" "$ORVIX_ADD_CANCEL"; then
             kill "$ffmpeg_pid" 2>/dev/null
             cancelled=1
             break

@@ -12,9 +12,9 @@
 #
 # Usage: tests/nvim/nav.sh   (needs tmux, nvim, python3 and the plugins)
 #   NAV_DEBUG=1                print the checkhealth report
-#   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
-#   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
-#   LYNE_TEST_KITTY_CONF=<file> another copy of kitty/.config/kitty/kitty.conf
+#   ORVIX_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   ORVIX_TEST_KITTY_CONF=<file> another copy of kitty/.config/kitty/kitty.conf
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -22,7 +22,7 @@ set -uo pipefail
 
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
 
 need_tools tmux nvim python3
 
@@ -181,7 +181,7 @@ check "Ctrl+/ from inside the terminal hides it" 0 "$(terms)"
 # kitty sends Ctrl+Shift+h/j/k/l and Ctrl+Alt+Shift+h/l as CSI u
 # (kitty.conf), which tmux reads apart from Ctrl+h/l: the bytes kitty.conf
 # sends, fed to tmux like a terminal does
-KITTY_CONF="${LYNE_TEST_KITTY_CONF:-$REPO/kitty/.config/kitty/kitty.conf}"
+KITTY_CONF="${ORVIX_TEST_KITTY_CONF:-$REPO/kitty/.config/kitty/kitty.conf}"
 sends() { sed -n "s/^map $1 send_text all //p" "$KITTY_CONF"; }
 check "kitty sends Ctrl+Alt+Shift+h and l" 2 "$( { sends ctrl+alt+shift+h; sends ctrl+alt+shift+l; } | grep -c .)"
 T new-window -t t: -n B sh

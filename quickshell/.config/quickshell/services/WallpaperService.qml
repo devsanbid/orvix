@@ -45,7 +45,7 @@ Singleton {
     readonly property string themesConfigDir: Quickshell.env("HOME") + "/.local/themes"
 
     readonly property string generatorPath: Paths.dots + "/.data/wallpapers/generator/generate.py"
-    // Theme whose lyne-dots wallpaper is being rendered ("" when idle)
+    // Theme whose orvix wallpaper is being rendered ("" when idle)
     property string generatingFor: ""
     // Last error of the generator, per theme
     property var generateErrors: ({})
@@ -67,7 +67,7 @@ Singleton {
     // --fit): the copy's path -> { poster (the source's), progress 0-100 }.
     // Settings shows a tile for each until the list has the copy
     property var fitting: ({})
-    readonly property string _cancelFile: Quickshell.env("XDG_RUNTIME_DIR") + "/lyne-wallpapers-add.cancel"
+    readonly property string _cancelFile: Quickshell.env("XDG_RUNTIME_DIR") + "/orvix-wallpapers-add.cancel"
     readonly property string _addScript: Qt.resolvedUrl("../scripts/wallpapers-add.sh").toString().replace("file://", "")
 
     // Wallpapers are images or videos (mp4, webm, mkv; wallpaper-set.sh plays
@@ -713,7 +713,7 @@ Singleton {
     // (wallpaper-set.sh): the saved path stays
     Process {
         id: getCurrentProc
-        command: ["sh", "-c", "real=$(realpath \"$1\" 2>/dev/null); awww query | sed -n 's/.*image: //p' | head -n 1 | " + "while IFS= read -r p; do case \"$p\" in \"$real\"/*) p=\"$1/${p#\"$real\"/}\";; " + "*/lyne/wallpaper-posters/* | */lyne-wallpaper-frame.jpg) continue;; esac; printf '%s\\n' \"$p\"; done", "sh", root.wallpaperDir]
+        command: ["sh", "-c", "real=$(realpath \"$1\" 2>/dev/null); awww query | sed -n 's/.*image: //p' | head -n 1 | " + "while IFS= read -r p; do case \"$p\" in \"$real\"/*) p=\"$1/${p#\"$real\"/}\";; " + "*/orvix/wallpaper-posters/* | */orvix-wallpaper-frame.jpg) continue;; esac; printf '%s\\n' \"$p\"; done", "sh", root.wallpaperDir]
         stdout: SplitParser {
             onRead: data => {
                 const path = data.trim();
@@ -756,14 +756,14 @@ Singleton {
                 exit 0
             fi
             mapfile -t paths <<<"$picked"
-            rm -f "$LYNE_ADD_CANCEL"
+            rm -f "$ORVIX_ADD_CANCEL"
             "$1" --fit "$8" "${root.wallpaperDir}" "\${paths[@]}"
-            rm -f "$LYNE_ADD_CANCEL"
+            rm -f "$ORVIX_ADD_CANCEL"
             echo "done"
         `, "bash", root._addScript, folder ? "folder" : "files", I18n.tr("Add wallpapers"), I18n.tr("Add a folder of wallpapers"), I18n.tr("Images and videos"), I18n.tr("Wallpaper"), I18n.tr("Install zenity to add wallpapers"), root.largestScreenPixels()]
         // Where cancelFit asks the script to stop a scaling
         environment: ({
-                LYNE_ADD_CANCEL: root._cancelFile
+                ORVIX_ADD_CANCEL: root._cancelFile
             })
         stdout: SplitParser {
             onRead: data => {
@@ -878,8 +878,8 @@ Singleton {
             const theme = root.generatingFor;
             const ok = exitCode === 0;
             if (ok) {
-                console.log("[Wallpaper] Generated the lyne-dots wallpaper of", theme);
-                const contour = root.themeWallpaperDir + "/" + theme + "/lyne-" + theme + "-contour.jpg";
+                console.log("[Wallpaper] Generated the orvix wallpaper of", theme);
+                const contour = root.themeWallpaperDir + "/" + theme + "/orvix-" + theme + "-contour.jpg";
                 const current = root.themeWallpaperPath(theme);
                 if (_makeActive || current === "")
                     root.setThemeWallpaper(contour, theme);
@@ -892,7 +892,7 @@ Singleton {
                 const errors = Object.assign({}, root.generateErrors);
                 // A missing module is the usual cause: name the package
                 // English, shown with I18n.translate (the generator's own output as it is)
-                errors[theme] = _error.includes("No module named") ? I18n.noop("Missing Python modules: run lyne update (python-numpy, python-pillow)") : _error.includes("rsvg-convert") ? I18n.noop("rsvg-convert not found: run lyne update (librsvg)") : (_error || I18n.noop("The generator failed"));
+                errors[theme] = _error.includes("No module named") ? I18n.noop("Missing Python modules: run orvix update (python-numpy, python-pillow)") : _error.includes("rsvg-convert") ? I18n.noop("rsvg-convert not found: run orvix update (librsvg)") : (_error || I18n.noop("The generator failed"));
                 root.generateErrors = errors;
             }
             root.generatingFor = "";

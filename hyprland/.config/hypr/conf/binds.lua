@@ -4,14 +4,14 @@
 
 -- Keybinds declared with bind() get an id, a group and a description, so
 -- the Quickshell settings window can list them and change their keys:
---   * the catalog (defaults) is exported to $XDG_RUNTIME_DIR/lyne-keybinds.json
---   * local/settings.lua (generated) calls lyne_rebind() for changed keys
+--   * the catalog (defaults) is exported to $XDG_RUNTIME_DIR/orvix-keybinds.json
+--   * local/settings.lua (generated) calls orvix_rebind() for changed keys
 -- Plain hl.bind() still works for binds that shouldn't show up there.
 
 local M = {}
 
 -- Rebuilt on every config (re)load
-LYNE_BINDS = { list = {}, by_id = {} }
+ORVIX_BINDS = { list = {}, by_id = {} }
 
 -- A modifier alone ("SUPER + SUPER_L": tap Super) is bound on release:
 -- Hyprland then runs it only when no other key was pressed meanwhile, so
@@ -37,14 +37,14 @@ end
 -- Inside a release bind Hyprland sends global shortcuts as "released" only,
 -- and Quickshell acts on "pressed": the dispatcher runs a moment later,
 -- outside the bind, where a global is a normal press
-LYNE_LONE_TIMER = nil
+ORVIX_LONE_TIMER = nil
 local function dispatcher_for(dispatcher, keys)
     if not lone_modifier(keys) then
         return dispatcher
     end
     return function()
         -- Kept referenced until it fires
-        LYNE_LONE_TIMER = hl.timer(function()
+        ORVIX_LONE_TIMER = hl.timer(function()
             if type(dispatcher) == "function" then
                 dispatcher()
             else
@@ -73,8 +73,8 @@ function M.bind(id, group, description, keys, dispatcher, opts)
         dispatcher = dispatcher,
         opts = opts,
     }
-    LYNE_BINDS.by_id[id] = entry
-    table.insert(LYNE_BINDS.list, entry)
+    ORVIX_BINDS.by_id[id] = entry
+    table.insert(ORVIX_BINDS.list, entry)
 
     -- No default keys: listed in Settings, bound once keys are set
     if keys ~= "" then
@@ -101,8 +101,8 @@ local function normalize(keys)
 end
 
 -- Moves a bind to other keys ("" disables it). Called by local/settings.lua
-function lyne_rebind(id, keys)
-    local entry = LYNE_BINDS.by_id[id]
+function orvix_rebind(id, keys)
+    local entry = ORVIX_BINDS.by_id[id]
     if not entry then
         return
     end
@@ -114,7 +114,7 @@ function lyne_rebind(id, keys)
         -- that share them (two actions on one combo)
         hl.unbind(old)
         local combo = normalize(old)
-        for _, other in ipairs(LYNE_BINDS.list) do
+        for _, other in ipairs(ORVIX_BINDS.list) do
             if other ~= entry and other.keys ~= "" and normalize(other.keys) == combo then
                 hl.bind(other.keys, dispatcher_for(other.dispatcher, other.keys), opts_for(other.opts, other.keys))
             end
@@ -126,7 +126,7 @@ function lyne_rebind(id, keys)
 end
 
 -- Navigation keys preset (conf/bind_presets.lua): new default keys for the
--- binds it lists. Called by local/settings.lua before its lyne_rebind()
+-- binds it lists. Called by local/settings.lua before its orvix_rebind()
 -- calls, so the keys changed in Settings stay on top of it
 local function load_presets()
     local ok, presets = pcall(require, "conf/bind_presets")
@@ -137,7 +137,7 @@ local function load_presets()
     return presets
 end
 
-function lyne_bind_preset(name)
+function orvix_bind_preset(name)
     local preset = load_presets()[name]
     if not preset then
         return
@@ -149,10 +149,10 @@ function lyne_bind_preset(name)
     end
     table.sort(ids)
     for _, id in ipairs(ids) do
-        local entry = LYNE_BINDS.by_id[id]
+        local entry = ORVIX_BINDS.by_id[id]
         if entry then
             entry.default = preset[id]
-            lyne_rebind(id, preset[id])
+            orvix_rebind(id, preset[id])
         end
     end
     M.export()
@@ -173,7 +173,7 @@ function M.export()
         end
     end
     local items = {}
-    for _, b in ipairs(LYNE_BINDS.list) do
+    for _, b in ipairs(ORVIX_BINDS.list) do
         table.insert(items, string.format(
             '{"id":%s,"group":%s,"description":%s,"keys":%s,"preset":%s}',
             json_string(b.id), json_string(b.group), json_string(b.description), json_string(b.default),
@@ -181,7 +181,7 @@ function M.export()
     end
 
     local dir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
-    local file = io.open(dir .. "/lyne-keybinds.json", "w")
+    local file = io.open(dir .. "/orvix-keybinds.json", "w")
     if file then
         file:write("[" .. table.concat(items, ",") .. "]\n")
         file:close()
@@ -191,7 +191,7 @@ end
 -- Empty submap Quickshell enters while recording a shortcut, so the keys
 -- reach the settings window instead of triggering binds. A submap needs at
 -- least one bind to exist; this one is just a way out
-hl.define_submap("lyne_capture", function()
+hl.define_submap("orvix_capture", function()
     hl.bind("CTRL + ALT + SHIFT + F24", hl.dsp.submap("reset"))
 end)
 

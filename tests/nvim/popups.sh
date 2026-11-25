@@ -7,7 +7,7 @@
 #   showing it again brings back the same terminal; exit in it closes the
 #   popup (no other session shown inside)
 # - prefix + P lists the sessions (not the scratch one) and the project
-#   folders (fake ones: LYNE_PROJECT_ROOTS and LYNE_DOTS point into the
+#   folders (fake ones: ORVIX_PROJECT_ROOTS and ORVIX_DIR point into the
 #   sandbox; a folder that isn't a project lists the projects inside it, three
 #   levels down at most, not in node_modules; inside a project only a .root
 #   makes another one, within the same three levels); a folder starts its session there and switches to it, a
@@ -21,8 +21,8 @@
 #   to the one used last (detach-on-destroy off)
 #
 # Usage: tests/nvim/popups.sh   (needs tmux, nvim, python3 and the plugins)
-#   LYNE_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
-#   LYNE_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   ORVIX_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -30,7 +30,7 @@ set -uo pipefail
 
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-TMUX_CONF="${LYNE_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
 
 need_tools tmux nvim python3
 
@@ -54,7 +54,7 @@ sed -e '/^if "test ! -d ~\/.tmux\/plugins\/tpm"/,+1d' -e "\|^run '~/.tmux/plugin
 grep -q "tpm" <(grep -v '^\s*#' "$SB/tmux.conf" | grep -v '@plugin') && fail_early "tmux.conf still runs TPM after stripping it"
 
 # Stand-ins first in the panes' and popups' PATH
-mkdir -p "$SB/bin" "$SB/work" "$SB/projects/alpha" "$SB/projects/beta.app" "$SB/.lyne-dots"
+mkdir -p "$SB/bin" "$SB/work" "$SB/projects/alpha" "$SB/projects/beta.app" "$SB/.orvix"
 # A project with one inside it, and a group of projects: one, sub/two (3
 # levels down), sub/deep/far (4: too deep) and one in node_modules
 G="$SB/projects/group"
@@ -74,7 +74,7 @@ exec sleep 60
 EOF
 chmod +x "$SB/bin/lazygit"
 
-env PATH="$SB/bin:$PATH" SHELL=/bin/sh LYNE_PROJECT_ROOTS="$SB/projects" LYNE_DOTS="$SB/.lyne-dots" \
+env PATH="$SB/bin:$PATH" SHELL=/bin/sh ORVIX_PROJECT_ROOTS="$SB/projects" ORVIX_DIR="$SB/.orvix" \
     XDG_CONFIG_HOME="$SB/config" XDG_DATA_HOME="$SB/data" XDG_STATE_HOME="$SB/state" \
     XDG_CACHE_HOME="$SB/cache" XDG_RUNTIME_DIR="$SB/run" \
     tmux -S "$SOCK" -f "$SB/tmux.conf" new-session -d -s t -x 160 -y 40 -c "$SB/work" || fail_early "tmux didn't start"
@@ -159,9 +159,9 @@ wait_for 15 popup_up && wait_for 15 prompt
 check "prefix + P opens the list" TelescopePrompt "$(pv '&filetype')"
 listed() { [[ "$(results)" == 9 ]]; }
 wait_for 5 listed
-check "it lists the session t and the folders alpha, beta.app, game, part, one, lib, two, lyne-dots (not scratch)" 9 "$(results)"
+check "it lists the session t and the folders alpha, beta.app, game, part, one, lib, two, orvix (not scratch)" 9 "$(results)"
 check "folders: a group gives its projects, a project only the inner ones with a .root" \
-    "alpha beta.app game game/part group/one group/one/lib group/sub/two .lyne-dots" \
+    "alpha beta.app game game/part group/one group/one/lib group/sub/two .orvix" \
     "$(pv 'luaeval("table.concat(vim.tbl_map(function(d) return (d:gsub(\"^'"$SB"'/projects/\", \"\"):gsub(\"^'"$SB"'/\", \"\")) end, require(\"config.projects\").folders()), \" \")")')"
 
 type_keys b e t a Enter
@@ -199,7 +199,7 @@ check "a second Escape closes the popup" yes "$(popup_gone && echo yes || echo n
 
 # Hiding a folder, showing the hidden ones, bringing one back; closing a
 # session after a y/n
-HIDDEN="$SB/state/nvim/lyne-projects-hidden.json"
+HIDDEN="$SB/state/nvim/orvix-projects-hidden.json"
 open_list() {
     key "$CLIENT" P
     wait_for 15 popup_up && wait_for 15 prompt

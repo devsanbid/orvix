@@ -61,11 +61,11 @@ hl.window_rule({
     center = true,
 })
 
--- Terminals the shell opens for lyne commands (lyne update, sudo installs):
+-- Terminals the shell opens for orvix commands (orvix update, sudo installs):
 -- default-apps.sh term --float gives them this class
 hl.window_rule({
-    name  = "lyne-terminal-float",
-    match = { class = "^(lyne\\.terminal)$" },
+    name  = "orvix-terminal-float",
+    match = { class = "^(orvix\\.terminal)$" },
 
     float  = true,
     center = true,

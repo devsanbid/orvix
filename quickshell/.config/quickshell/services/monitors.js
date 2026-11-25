@@ -9,7 +9,7 @@
 // was last seen on. The generated ~/.config/hypr/monitors.lua holds one
 // hl.monitor() per rule after a catch-all for monitors without one.
 
-var HEADER = "-- Monitors: managed by lyne (Settings › Hyprland › Monitors)";
+var HEADER = "-- Monitors: managed by orvix (Settings › Hyprland › Monitors)";
 var CATCH_ALL = 'hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })';
 var MIN_SCALE = 0.25;
 var MAX_SCALE = 4;
@@ -205,7 +205,7 @@ function ruleToLua(rule, explicit) {
 }
 
 // Short hash of the rules, written as a global at the end of the file so
-// `lyne monitors` and the service can tell the file really ran
+// `orvix monitors` and the service can tell the file really ran
 function hash(text) {
     var h = 5381;
     for (var i = 0; i < text.length; i++)
@@ -223,7 +223,7 @@ function fileContent(rules) {
         "-- the monitor to any port; later rules win over the catch-all",
         "",
         CATCH_ALL
-    ].concat(lines).concat(["", "lyne_monitors_file = " + _luaString(hash(body)), ""]).join("\n");
+    ].concat(lines).concat(["", "orvix_monitors_file = " + _luaString(hash(body)), ""]).join("\n");
 }
 
 function isManaged(text) {

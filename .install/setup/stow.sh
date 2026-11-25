@@ -8,10 +8,10 @@
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 source "$DOTFILES_DIR/.install/lib/log.sh"
-# lyne_state_set (the packages linked are kept in state.json)
-declare -F lyne_state_set >/dev/null || source "$DOTFILES_DIR/.data/lyne-cli/lib/state.sh"
+# orvix_state_set (the packages linked are kept in state.json)
+declare -F orvix_state_set >/dev/null || source "$DOTFILES_DIR/.data/orvix-cli/lib/state.sh"
 # config_defaults_seed (the config files kept out of git)
-source "$DOTFILES_DIR/.data/lyne-cli/lib/config-defaults.sh"
+source "$DOTFILES_DIR/.data/orvix-cli/lib/config-defaults.sh"
 
 # =============================================================================
 # Packages to stow
@@ -30,7 +30,7 @@ STOW_DIRS=(
     "theming"       # Qt5/Qt6/GTK theme configuration
 )
 
-# Linked on every install: the shell itself and the lyne CLI
+# Linked on every install: the shell itself and the orvix CLI
 STOW_ALWAYS=(hyprland quickshell local)
 
 # The packages that come with an installer category (none for the others)
@@ -67,8 +67,8 @@ stow_packages() {
 # =============================================================================
 # Packages linked
 # =============================================================================
-# The installer keeps them in state.json (.system.stow), so lyne update, the
-# migrations and lyne link leave the others alone
+# The installer keeps them in state.json (.system.stow), so orvix update, the
+# migrations and orvix link leave the others alone
 
 # The packages HOME reaches through links into the dotfiles today: one of
 # their files is the repo's (one per line)
@@ -89,7 +89,7 @@ stow_linked_packages() {
 # gets the ones linked today (stow_linked_packages)
 stow_recorded_packages() {
     local list
-    list="$(jq -r '.system.stow | if type == "array" then .[] else "-" end' "$(lyne_state_file)" 2>/dev/null)" ||
+    list="$(jq -r '.system.stow | if type == "array" then .[] else "-" end' "$(orvix_state_file)" 2>/dev/null)" ||
         list="-"
     if [[ "$list" == "-" ]]; then
         stow_linked_packages
@@ -111,7 +111,7 @@ stow_is_linked() {
 
 # stow_record PACKAGE...: keeps them as the packages linked
 stow_record() {
-    lyne_state_set '.system.stow = $ARGS.positional' --args "$@"
+    orvix_state_set '.system.stow = $ARGS.positional' --args "$@"
 }
 
 # What --stow-only links again: the packages recorded, and always the shell's
@@ -221,7 +221,7 @@ stow_existing_targets() {
 backup_existing_targets() {
     log_info "Checking existing targets..."
 
-    local BACKUP_DIR="${LYNE_BACKUP_DIR:-$HOME/.lyne-dots-backup/$(date +%Y%m%d-%H%M%S)}"
+    local BACKUP_DIR="${ORVIX_BACKUP_DIR:-$HOME/.orvix-backup/$(date +%Y%m%d-%H%M%S)}"
     local dir target targets moved=0
     for dir in "$@"; do
         read -ra targets <<<"$(get_stow_targets "$dir")"
@@ -264,7 +264,7 @@ execute_stow() {
     # The config files each machine keeps for itself (out of git): from the
     # repo's defaults when missing, so the links have them to reach
     local path
-    if [[ -n "${LYNE_DRY_RUN:-}" ]]; then
+    if [[ -n "${ORVIX_DRY_RUN:-}" ]]; then
         for path in "${CONFIG_DEFAULT_FILES[@]}"; do
             [[ -e "$DOTFILES_DIR/$path" || -L "$DOTFILES_DIR/$path" ]] ||
                 echo "[dry-run] create $path from .data/config-defaults"
@@ -293,7 +293,7 @@ execute_stow() {
 }
 
 # =============================================================================
-# Linking and unlinking later (lyne link, lyne unlink)
+# Linking and unlinking later (orvix link, orvix unlink)
 # =============================================================================
 # stow_package_group PACKAGE: "always", or the installer category it comes with
 stow_package_group() {
@@ -331,7 +331,7 @@ stow_backup_of() {
             echo "$dir/$1"
             return
         fi
-    done < <(find "$HOME/.lyne-dots-backup" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
+    done < <(find "$HOME/.orvix-backup" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
 }
 
 # stow_unlink PACKAGE...: their links go, the newest backup of each target

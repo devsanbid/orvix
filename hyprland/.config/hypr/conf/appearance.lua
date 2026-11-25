@@ -93,7 +93,7 @@ hl.animation({ leaf = "border",  enabled = true, speed = 4, bezier = "standard" 
 -- shows the blur through, a jagged light fringe with xray. Quickshell keeps
 -- the threshold just below its background opacity by calling this again
 -- (same-name rules replace each other); 0.45 is below any opacity it allows
-function lyne_set_blur_ignore_alpha(ignore_alpha)
+function orvix_set_blur_ignore_alpha(ignore_alpha)
     hl.layer_rule({
         name  = "modules",
         match = { namespace = "qs_modules" },
@@ -128,7 +128,7 @@ function lyne_set_blur_ignore_alpha(ignore_alpha)
     })
 end
 
-lyne_set_blur_ignore_alpha(0.45)
+orvix_set_blur_ignore_alpha(0.45)
 
 hl.layer_rule({
     name  = "power",

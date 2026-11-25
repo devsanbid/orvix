@@ -19,7 +19,7 @@ import "xkb.js" as Lib
 // names = every interface it shows up as) and written by
 // HyprlandSettingsService as hl.device() lines. A hand-written
 // hypr/local/extra_input.lua keeps working until it's imported: Hyprland reads
-// it with a stand-in `hl` (lyne_keyboard_import in conf/input.lua)
+// it with a stand-in `hl` (orvix_keyboard_import in conf/input.lua)
 Singleton {
     id: root
 
@@ -435,7 +435,7 @@ Singleton {
     property var legacy: null
     readonly property bool legacyImportable: legacy !== null && legacy.ok === true && legacy.other === 0
     property bool importing: false
-    readonly property string _importOut: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/lyne-keyboard-import.json"
+    readonly property string _importOut: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/orvix-keyboard-import.json"
 
     // Called by the page when it opens (new or renamed files aren't watched)
     function refreshLegacy() {
@@ -462,7 +462,7 @@ Singleton {
     function _preview() {
         if (previewProc.running)
             return;
-        const lua = "if lyne_keyboard_import then lyne_keyboard_import(" + JSON.stringify(legacyPath) + ", " + JSON.stringify(_importOut) + ", " + JSON.stringify(lstFile.path) + ") end";
+        const lua = "if orvix_keyboard_import then orvix_keyboard_import(" + JSON.stringify(legacyPath) + ", " + JSON.stringify(_importOut) + ", " + JSON.stringify(lstFile.path) + ") end";
         previewProc.command = ["sh", "-c", 'rm -f "$2"; hyprctl eval "$1" >/dev/null 2>&1; cat "$2" 2>/dev/null; rm -f "$2"', "sh", lua, _importOut];
         previewProc.running = true;
     }

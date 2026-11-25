@@ -1,6 +1,6 @@
 .pragma library
 
-// Builds a complete lyne-dots theme (palette, terminal, hyprland) from a few
+// Builds a complete orvix theme (palette, terminal, hyprland) from a few
 // choices. Colors are placed in OKLCH, with lightness targets taken from the
 // bundled presets, and mapped back into sRGB by lowering the chroma.
 //

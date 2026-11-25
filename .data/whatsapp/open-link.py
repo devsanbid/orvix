@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Native messaging host of the WhatsApp Web extension (lyne whatsapp):
+# Native messaging host of the WhatsApp Web extension (orvix whatsapp):
 # reads {"url": ...} from Chromium and opens it in the default browser.
 
 import json

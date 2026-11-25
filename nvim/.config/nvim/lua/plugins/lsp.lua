@@ -128,7 +128,7 @@ return {
             -- QML: qmlls comes with Qt (qt6-declarative, a dependency of
             -- Quickshell), not Mason, and Arch names it qmlls6. It finds
             -- Quickshell's modules through the .qmlls.ini Quickshell fills in
-            -- next to shell.qml (lyne-dots creates the empty file), so that
+            -- next to shell.qml (orvix creates the empty file), so that
             -- folder is the project
             if vim.fn.executable("qmlls6") == 1 then
                 vim.lsp.config("qmlls", {

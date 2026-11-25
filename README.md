@@ -5,16 +5,16 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/logo-dark.svg">
-  <img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/logo-light.svg" alt="lyne-dots" width="150">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/caioax/orvix/media/readme/logo-dark.svg">
+  <img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/logo-light.svg" alt="orvix" width="150">
 </picture>
 
-# lyne-dots
+# orvix
 
 **A Hyprland desktop for Arch Linux, with a Quickshell shell you set up from its own Settings app.**<br>
 One theme follows the bar, terminal, editor, GTK/Qt apps, Hyprland and Zen Browser.
 
-[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/lyne-dots?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/lyne-dots?style=flat-square&color=9ece6a)](https://github.com/caioax/lyne-dots/commits) [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-f7768e?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/caioax)
+[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)](https://archlinux.org) [![Hyprland](https://img.shields.io/badge/Hyprland-0.56-58E1FF?style=flat-square&logo=hyprland&logoColor=white)](https://hypr.land) [![Quickshell](https://img.shields.io/badge/Quickshell-QML-7aa2f7?style=flat-square)](https://quickshell.org) [![License](https://img.shields.io/github/license/caioax/orvix?style=flat-square&color=bb9af7)](LICENSE) [![Last commit](https://img.shields.io/github/last-commit/caioax/orvix?style=flat-square&color=9ece6a)](https://github.com/caioax/orvix/commits) [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-f7768e?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/caioax)
 
 </div>
 
@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/63b3c7d6-250e-4c3f-8eb5-343068b08e5a
 <div align="center">
 
 ```bash
-curl -fsSL https://caioax.github.io/lyne-dots/install | bash
+curl -fsSL https://caioax.github.io/orvix/install | bash
 ```
 
 [Highlights](#highlights) · [Gallery](#gallery) · [Themes](#themes) · [Install](#install) · [Update](#update) · [Reference](#reference) · [Credits](#credits)
@@ -69,7 +69,7 @@ Drag monitors on a map with a keep-or-revert timer, give each monitor its own wo
 <td valign="top">
 
 **A guided installer and a CLI**<br>
-Every question first, then an unattended install with a progress bar. `lyne update` pulls, syncs your settings and runs migrations.
+Every question first, then an unattended install with a progress bar. `orvix update` pulls, syncs your settings and runs migrations.
 
 </td>
 </tr>
@@ -79,72 +79,72 @@ Every question first, then an unattended install with a progress bar. `lyne upda
 
 <table>
 <tr>
-<td width="50%"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/desktop.webp" alt="Desktop"></td>
-<td width="50%"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/launcher.webp" alt="Launcher"></td>
+<td width="50%"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/desktop.webp" alt="Desktop"></td>
+<td width="50%"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/launcher.webp" alt="Launcher"></td>
 </tr>
 <tr>
 <td align="center"><sub>Desktop: kitty, Neovim and fastfetch in Tokyo Night</sub></td>
 <td align="center"><sub>Launcher: apps, actions (<code>&gt;</code>) and a calculator (<code>=</code>)</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard.webp" alt="Dashboard overview"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard-media.webp" alt="Dashboard media"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard.webp" alt="Dashboard overview"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard-media.webp" alt="Dashboard media"></td>
 </tr>
 <tr>
 <td align="center"><sub>Dashboard: clock, weather, calendar with holidays, resources, player</sub></td>
 <td align="center"><sub>Media tab: cava ring, synced lyrics, a dancing GIF</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard-system.webp" alt="Dashboard system"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/dashboard-weather.webp" alt="Dashboard weather"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard-system.webp" alt="Dashboard system"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/dashboard-weather.webp" alt="Dashboard weather"></td>
 </tr>
 <tr>
 <td align="center"><sub>System tab: CPU, GPU, memory, storage and network</sub></td>
 <td align="center"><sub>Weather tab: next 24 hours and 7 days (Open-Meteo)</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/quick-settings.webp" alt="Quick Settings"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/notifications.webp" alt="Notifications"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/quick-settings.webp" alt="Quick Settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/notifications.webp" alt="Notifications"></td>
 </tr>
 <tr>
 <td align="center"><sub>Quick Settings: toggles, audio and notification history</sub></td>
 <td align="center"><sub>Notifications with actions and inline replies</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/clipboard.webp" alt="Clipboard"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/screenshot.webp" alt="Screenshot tool"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/clipboard.webp" alt="Clipboard"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/screenshot.webp" alt="Screenshot tool"></td>
 </tr>
 <tr>
 <td align="center"><sub>Clipboard history with image thumbnails and color swatches</sub></td>
 <td align="center"><sub>Screenshots: region, window or screen; edit, copy text (OCR)</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/color-picker.webp" alt="Color picker"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/lock.webp" alt="Lock screen"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/color-picker.webp" alt="Color picker"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/lock.webp" alt="Lock screen"></td>
 </tr>
 <tr>
 <td align="center"><sub>Color picker with a magnifier and hex / rgb / hsl</sub></td>
 <td align="center"><sub>Lock screen with the player and power buttons</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/power.webp" alt="Power menu"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-osd.webp" alt="OSD settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/power.webp" alt="Power menu"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-osd.webp" alt="OSD settings"></td>
 </tr>
 <tr>
 <td align="center"><sub>Power menu with a key for each action</sub></td>
 <td align="center"><sub>OSD styles, previewed in Settings</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-theme.webp" alt="Theme settings"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-creator.webp" alt="Theme creator"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-theme.webp" alt="Theme settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-creator.webp" alt="Theme creator"></td>
 </tr>
 <tr>
 <td align="center"><sub>Settings › Theme: presets, Material You, light or dark</sub></td>
 <td align="center"><sub>Theme creator with an OKLCH picker and a live preview</sub></td>
 </tr>
 <tr>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-bar.webp" alt="Bar settings"></td>
-<td><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/settings-wallpaper.webp" alt="Wallpaper settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-bar.webp" alt="Bar settings"></td>
+<td><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/settings-wallpaper.webp" alt="Wallpaper settings"></td>
 </tr>
 <tr>
 <td align="center"><sub>Bar templates: docked, docked corners, floating, islands</sub></td>
@@ -154,26 +154,26 @@ Every question first, then an unattended install with a progress bar. `lyne upda
 
 ## Themes
 
-Switch from Settings › Theme, the Quick Settings palette button or `lyne theme set <name>`. Each theme brings its own generated wallpaper.
+Switch from Settings › Theme, the Quick Settings palette button or `orvix theme set <name>`. Each theme brings its own generated wallpaper.
 
 <table>
 <tr>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/tokyonight.webp" alt="Tokyo Night"><br><sub>Tokyo Night</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/catppuccin-mocha.webp" alt="Catppuccin Mocha"><br><sub>Catppuccin Mocha</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/dracula.webp" alt="Dracula"><br><sub>Dracula</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/gruvbox.webp" alt="Gruvbox Dark"><br><sub>Gruvbox Dark</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/tokyonight.webp" alt="Tokyo Night"><br><sub>Tokyo Night</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/catppuccin-mocha.webp" alt="Catppuccin Mocha"><br><sub>Catppuccin Mocha</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/dracula.webp" alt="Dracula"><br><sub>Dracula</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/gruvbox.webp" alt="Gruvbox Dark"><br><sub>Gruvbox Dark</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/nord.webp" alt="Nord"><br><sub>Nord</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/rose-pine.webp" alt="Rose Pine"><br><sub>Rose Pine</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/tokyonight-light.webp" alt="Tokyo Night Day"><br><sub>Tokyo Night Day</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/catppuccin-latte.webp" alt="Catppuccin Latte"><br><sub>Catppuccin Latte</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/nord.webp" alt="Nord"><br><sub>Nord</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/rose-pine.webp" alt="Rose Pine"><br><sub>Rose Pine</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/tokyonight-light.webp" alt="Tokyo Night Day"><br><sub>Tokyo Night Day</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/catppuccin-latte.webp" alt="Catppuccin Latte"><br><sub>Catppuccin Latte</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/gruvbox-light.webp" alt="Gruvbox Light"><br><sub>Gruvbox Light</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/nord-light.webp" alt="Nord Light"><br><sub>Nord Light</sub></td>
-<td align="center"><img src="https://raw.githubusercontent.com/caioax/lyne-dots/media/readme/themes/rose-pine-dawn.webp" alt="Rose Pine Dawn"><br><sub>Rose Pine Dawn</sub></td>
-<td align="center" valign="middle"><b>+ Material You</b><br><sub>colors from your wallpaper<br>(<code>lyne theme auto</code>)</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/gruvbox-light.webp" alt="Gruvbox Light"><br><sub>Gruvbox Light</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/nord-light.webp" alt="Nord Light"><br><sub>Nord Light</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/caioax/orvix/media/readme/themes/rose-pine-dawn.webp" alt="Rose Pine Dawn"><br><sub>Rose Pine Dawn</sub></td>
+<td align="center" valign="middle"><b>+ Material You</b><br><sub>colors from your wallpaper<br>(<code>orvix theme auto</code>)</sub></td>
 </tr>
 </table>
 
@@ -184,25 +184,25 @@ A theme sets the colors of:
 | Quickshell | Every panel, with a color fade on switches |
 | Hyprland | Active and inactive borders, shadow (faded too) |
 | kitty | Terminal palette, cursor, tabs |
-| Neovim | The `lyne` colorscheme, sent to running instances |
+| Neovim | The `orvix` colorscheme, sent to running instances |
 | GTK / Qt / KDE apps | Colors and light or dark variant |
-| Zen Browser | Toolbars, tabs and menus (`lyne zen enable`) |
+| Zen Browser | Toolbars, tabs and menus (`orvix zen enable`) |
 | Wallpaper | The theme's wallpaper (optional) |
 
 Keeping your own kitty or Neovim config (installed without the terminal or editor category)? The shell still writes the colors for them:
 
 - **kitty:** add `include current-theme.conf` to your `~/.config/kitty/kitty.conf`.
-- **Neovim:** copy `nvim/.config/nvim/colors/lyne.lua` and `nvim/.config/nvim/lua/lyne/` into your config and use `colorscheme lyne`; open instances using it follow theme switches.
+- **Neovim:** copy `nvim/.config/nvim/colors/orvix.lua` and `nvim/.config/nvim/lua/orvix/` into your config and use `colorscheme orvix`; open instances using it follow theme switches.
 
 ## Install
 
 **Requirements:** Arch Linux (or a close derivative), a user with `sudo`, and an internet connection.
 
 ```bash
-curl -fsSL https://caioax.github.io/lyne-dots/install | bash
+curl -fsSL https://caioax.github.io/orvix/install | bash
 ```
 
-It clones the repo into `~/.lyne-dots` (installing `git` if needed) at the latest [release](https://github.com/caioax/lyne-dots/releases), the Stable channel's version, and starts the installer. Prefer to read it first? [`bootstrap.sh`](bootstrap.sh) is short.
+It clones the repo into `~/.orvix` (installing `git` if needed) at the latest [release](https://github.com/caioax/orvix/releases), the Stable channel's version, and starts the installer. Prefer to read it first? [`bootstrap.sh`](bootstrap.sh) is short.
 
 The installer asks everything first:
 
@@ -210,7 +210,7 @@ The installer asks everything first:
 2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx, optionally 32-bit) and its environment. Which GPU renders stays automatic (Settings › Graphics changes it).
 3. **Reboot** when done, then a review screen with the packages to link and every file of yours that will be replaced.
 
-After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files it replaces go to `~/.lyne-dots-backup/<date>/`; the full log is in `~/.cache/lyne/install-<date>.log`. Changed your mind later? `lyne link nvim` links a package (your files to the backup first) and `lyne unlink nvim` brings yours back.
+After the sudo password (asked once, kept alive), it installs without further questions, with a progress bar and the latest output. Files it replaces go to `~/.orvix-backup/<date>/`; the full log is in `~/.cache/orvix/install-<date>.log`. Changed your mind later? `orvix link nvim` links a package (your files to the backup first) and `orvix unlink nvim` brings yours back.
 
 <details>
 <summary><b>Installer options</b></summary>
@@ -220,7 +220,7 @@ After the sudo password (asked once, kept alive), it installs without further qu
 | `--dry-run` | Change nothing: a throwaway HOME and stand-ins for sudo, pacman, yay... |
 | `--answers FILE` | Unattended: answers as `id=value` lines (`categories=`, `nvidia=`, `gpu_order=`, `reboot=`) |
 | `--packages NAME` | Install one category (`--packages nvidia` installs or fixes the driver) |
-| `--stow-only` | Only link the dotfiles again: the packages linked before (`lyne link` adds others) |
+| `--stow-only` | Only link the dotfiles again: the packages linked before (`orvix link` adds others) |
 | `--setup-only` | Only create the local Hyprland files |
 
 More in [.install/README.md](.install/README.md).
@@ -230,47 +230,47 @@ More in [.install/README.md](.install/README.md).
 ## Update
 
 ```bash
-lyne update
+orvix update
 ```
 
 Updates the dotfiles, adds new settings to your `state.json` without touching the ones you changed, runs pending migrations (new packages, moved files) and reloads Quickshell. Settings › System › About shows when an update is available and runs it for you.
 
-Two channels, picked in Settings › System › About or with `lyne update channel`:
+Two channels, picked in Settings › System › About or with `orvix update channel`:
 
-- **Stable** (default): the newest [release](https://github.com/caioax/lyne-dots/releases).
+- **Stable** (default): the newest [release](https://github.com/caioax/orvix/releases).
 - **Latest**: every change as soon as it lands on `main`.
 
 Switching back to Stable never goes back in time: you stay where you are until the next release.
 
 > [!NOTE]
-> Changes you made inside `~/.lyne-dots` are listed first, and you choose to stash them (`git stash pop` brings them back), discard them or cancel. Keep personal changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
+> Changes you made inside `~/.orvix` are listed first, and you choose to stash them (`git stash pop` brings them back), discard them or cancel. Keep personal changes in `~/.config/hypr/local/` or in Settings, which are not tracked.
 
 ## Reference
 
 <details>
-<summary><b>lyne CLI</b></summary>
+<summary><b>orvix CLI</b></summary>
 
-`lyne` is installed to `~/.local/bin`. Run `lyne <command> --help` for subcommands.
+`orvix` is installed to `~/.local/bin`. Run `orvix <command> --help` for subcommands.
 
 | Command | Description |
 | --- | --- |
-| `lyne theme` | Show the theme; `list`, `set <name>`, `auto` (Material You), `scheme dark\|light` |
-| `lyne update` | Update to the channel's version, sync `state.json`, run migrations, reload Quickshell; `status`, `channel stable\|latest` |
-| `lyne reload` | Restart Quickshell |
-| `lyne state` | Edit `state.json`; `sync`, `rebuild` |
-| `lyne migrate` | `list`, `run`, `done` for migrations |
-| `lyne link` | Each dotfiles package, linked or not; `lyne link <package>` links one the install left out |
-| `lyne unlink` | Removes a package's links and brings back your files from the backup |
-| `lyne monitors` | Monitor rules from Settings; revert a trial or reset them |
-| `lyne workspaces` | Each monitor's workspace blocks |
-| `lyne keyboard` | Layouts, options and per-keyboard layouts |
-| `lyne autostart` | What starts at login |
-| `lyne gpu` | GPUs found; `order`, `links` |
-| `lyne nvidia` | NVIDIA driver status; `install` installs or fixes it |
-| `lyne zen` | Zen Browser profiles that follow the theme |
-| `lyne whatsapp` | Open WhatsApp Web (the app of the WhatsApp special) |
-| `lyne welcome` | Open the welcome screen again |
-| `lyne git` | Run git in the dotfiles repository |
+| `orvix theme` | Show the theme; `list`, `set <name>`, `auto` (Material You), `scheme dark\|light` |
+| `orvix update` | Update to the channel's version, sync `state.json`, run migrations, reload Quickshell; `status`, `channel stable\|latest` |
+| `orvix reload` | Restart Quickshell |
+| `orvix state` | Edit `state.json`; `sync`, `rebuild` |
+| `orvix migrate` | `list`, `run`, `done` for migrations |
+| `orvix link` | Each dotfiles package, linked or not; `orvix link <package>` links one the install left out |
+| `orvix unlink` | Removes a package's links and brings back your files from the backup |
+| `orvix monitors` | Monitor rules from Settings; revert a trial or reset them |
+| `orvix workspaces` | Each monitor's workspace blocks |
+| `orvix keyboard` | Layouts, options and per-keyboard layouts |
+| `orvix autostart` | What starts at login |
+| `orvix gpu` | GPUs found; `order`, `links` |
+| `orvix nvidia` | NVIDIA driver status; `install` installs or fixes it |
+| `orvix zen` | Zen Browser profiles that follow the theme |
+| `orvix whatsapp` | Open WhatsApp Web (the app of the WhatsApp special) |
+| `orvix welcome` | Open the welcome screen again |
+| `orvix git` | Run git in the dotfiles repository |
 
 </details>
 
@@ -374,7 +374,7 @@ Every bind below can be changed or turned off in Settings › Hyprland › Keybi
 <details>
 <summary><b>Repository layout</b></summary>
 
-Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package linked into `$HOME`: `quickshell/`, `hyprland/` and `local/` always, the others with their installer category (`lyne link` shows which are linked). The repo doesn't have to stay at `~/.lyne-dots`: the `lyne` command, the session and the shell follow where it really is.
+Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) package linked into `$HOME`: `quickshell/`, `hyprland/` and `local/` always, the others with their installer category (`orvix link` shows which are linked). The repo doesn't have to stay at `~/.orvix`: the `orvix` command, the session and the shell follow where it really is.
 
 | Folder | Contents |
 | --- | --- |
@@ -383,7 +383,7 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 | `kitty/`, `zsh/`, `tmux/`, `nvim/` | Terminal, shell (Oh My Zsh + Powerlevel10k), multiplexer, editor |
 | `theming/`, `kde/` | GTK 3/4, Qt 5/6 and KDE color settings |
 | `fastfetch/` | System info |
-| `local/` | Scripts, the `lyne` command, themes and wallpapers (`~/.local/`) |
+| `local/` | Scripts, the `orvix` command, themes and wallpapers (`~/.local/`) |
 | `.install/` | Installer libraries, package lists and setup |
 | `.data/` | Default themes, wallpapers and their generator, state defaults, CLI commands and migrations |
 
@@ -392,7 +392,7 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 <details>
 <summary><b>Customization</b></summary>
 
-- **Settings first.** Almost everything is in Settings (<kbd>Super</kbd> + <kbd>I</kbd>). Its values live in `~/.config/quickshell/state.json`; `lyne state` opens it.
+- **Settings first.** Almost everything is in Settings (<kbd>Super</kbd> + <kbd>I</kbd>). Its values live in `~/.config/quickshell/state.json`; `orvix state` opens it.
 - **Language**: English or Português (Brasil), in Settings › Profile & Region (Automatic follows your system). Dates and numbers follow it.
 - **Machine-specific Hyprland files** live in `~/.config/hypr/local/` (not tracked). Settings writes `settings.lua`, `monitors.lua` and `gpus.lua` there; any other `.lua` file you add is loaded too.
 - **Themes** are JSON files in `~/.local/themes/`. Create one in Settings › Theme › New theme, or copy a file from `.data/themes/`.
@@ -425,7 +425,7 @@ Partial translations work (untranslated strings show in English). [i18n/README.m
 
 ## Support
 
-If lyne-dots is useful to you, you can support it on [GitHub Sponsors](https://github.com/sponsors/caioax) or [Ko-fi](https://ko-fi.com/caioax).
+If orvix is useful to you, you can support it on [GitHub Sponsors](https://github.com/sponsors/caioax) or [Ko-fi](https://ko-fi.com/caioax).
 
 ## License
 

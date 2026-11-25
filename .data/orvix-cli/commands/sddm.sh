@@ -1,0 +1,70 @@
+# orvix sddm - The login screen (lyne-sddm) following the shell theme
+
+local subcmd="${1:-status}"
+
+source "$DOTS_DIR/.data/orvix-cli/lib/sddm.sh"
+
+case "$subcmd" in
+    -h|--help)
+        echo "Usage: orvix sddm [status|apply|install]"
+        echo ""
+        echo "With the lyne-sddm theme installed, the login screen follows the shell:"
+        echo "its palette, background opacity, wallpaper and profile picture are copied"
+        echo "to $SDDM_DIR (the greeter can't read your home), which lyne-sddm creates,"
+        echo "with the layout chosen in Settings > Theme > Login screen. The shell syncs"
+        echo "on every change; it shows on the next login. With the sync off there, what"
+        echo "lyne-sddm --preset/--layout/... wrote is left alone."
+        echo ""
+        echo "Subcommands:"
+        echo "  status   Whether the theme is installed, selected and synced (default)"
+        echo "  apply    Sync now (with the option off: back to the theme's defaults,"
+        echo "           unless lyne-sddm wrote the file)"
+        echo "  install  Build and install the lyne-sddm theme (makepkg, asks for sudo),"
+        echo "           select it and sync; again later to update it. The update"
+        echo "           channel picks the version: stable = its newest release, latest"
+        echo "           = its main branch (orvix update offers new ones)"
+        ;;
+    status)
+        sddm_problem || return 0
+        local sync mode conf="$SDDM_DIR/theme.conf.user" f
+        sync=$(_sddm_option sync .sddm.sync)
+        mode=$(sddm_mode)
+        echo "  Theme     $SDDM_THEME"
+        echo "  Selected  $(sddm_active && echo yes || echo "no (run lyne-sddm to select it)")"
+        echo "  Files     $SDDM_DIR"
+        echo "  Sync      $([[ "$sync" == "false" ]] && echo off || echo on)"
+        case "$mode" in
+            synced) echo "  Mode      synced by orvix" ;;
+            manual) echo "  Mode      manual (chosen with lyne-sddm)" ;;
+            *) echo "  Mode      theme defaults" ;;
+        esac
+        if [[ "$mode" != default ]]; then
+            echo "  Layout    $(sed -n 's/^layout=//p' "$conf" | tail -n1 | grep . || echo center)"
+            echo "  Written   $(date -r "$conf" '+%Y-%m-%d %H:%M')"
+            for f in "$SDDM_DIR"/wallpaper.* "$SDDM_AVATAR"; do
+                [[ -f "$f" ]] && echo "            ${f#"$SDDM_DIR"/}"
+            done
+        fi
+        ;;
+    install)
+        source "$DOTS_DIR/.data/orvix-cli/lib/channel.sh"
+        local channel
+        channel=$(channel_get) || return 1
+        sddm_install "$channel" || { echo "orvix sddm: the install stopped (see above)" >&2; return 1; }
+        local dm
+        dm=$(sddm_dm)
+        if [[ "$dm" != sddm ]]; then
+            echo "Note: the display manager is ${dm:-none}, not SDDM: the theme shows once SDDM starts at boot"
+        fi
+        sddm_problem || return 1
+        sddm_apply && echo "Login screen installed and synced (shows on the next login)"
+        ;;
+    apply)
+        sddm_problem || return 1
+        sddm_apply && echo "Login screen synced (shows on the next login)"
+        ;;
+    *)
+        echo "orvix sddm: unknown subcommand '$subcmd' (see orvix sddm --help)"
+        return 1
+        ;;
+esac

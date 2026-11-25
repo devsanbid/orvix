@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Io
 
 // What's new: the notes of the releases an update brought, from the release
-// tags (`lyne update notes`). lyne update's notification opens it through
+// tags (`orvix update notes`). orvix update's notification opens it through
 // `qs ipc call whatsnew open <commit before the update>`; Settings › About
 // opens the current release's
 Singleton {
@@ -17,7 +17,7 @@ Singleton {
     // [{version, date, notes}], newest first, only those with notes
     property var releases: []
 
-    readonly property string releasesUrl: "https://github.com/caioax/lyne-dots/releases"
+    readonly property string releasesUrl: "https://github.com/caioax/orvix/releases"
 
     // since: the commit before the update; "" = the current release alone
     function open(since: string) {
@@ -26,7 +26,7 @@ Singleton {
         loading = true;
         releases = [];
         visible = true;
-        notesProc.command = ["lyne", "update", "notes", "--json"].concat(since !== "" ? ["--since", since] : []);
+        notesProc.command = ["orvix", "update", "notes", "--json"].concat(since !== "" ? ["--since", since] : []);
         notesProc.running = true;
     }
 

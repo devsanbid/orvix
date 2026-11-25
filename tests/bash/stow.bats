@@ -6,8 +6,8 @@
 load helpers
 
 setup() {
-    lyne_setup
-    STOW_SH="${LYNE_TEST_STOW:-$REPO/.install/setup/stow.sh}"
+    orvix_setup
+    STOW_SH="${ORVIX_TEST_STOW:-$REPO/.install/setup/stow.sh}"
 }
 
 # in_stow CODE: runs CODE with stow.sh sourced
@@ -56,11 +56,11 @@ in_stow() {
 
 @test "local's targets include the files of ~/.local/bin, not the folder" {
     mkdir -p "$HOME/.local/bin"
-    echo mine >"$HOME/.local/bin/lyne"
+    echo mine >"$HOME/.local/bin/orvix"
     echo other >"$HOME/.local/bin/someone-elses"
     run in_stow 'stow_existing_targets local'
     assert_success
-    assert_line "$HOME/.local/bin/lyne"
+    assert_line "$HOME/.local/bin/orvix"
     refute_line --partial "someone-elses"
     refute_line "$HOME/.local/bin"
 }
@@ -69,13 +69,13 @@ in_stow() {
     echo mine >"$HOME/.zshrc"
     mkdir -p "$HOME/.config/nvim"
     echo mine >"$HOME/.config/nvim/init.lua"
-    export LYNE_BACKUP_DIR="$BATS_TEST_TMPDIR/backup"
+    export ORVIX_BACKUP_DIR="$BATS_TEST_TMPDIR/backup"
     run in_stow 'backup_existing_targets zsh'
     assert_success
-    [ -f "$LYNE_BACKUP_DIR/.zshrc" ]
+    [ -f "$ORVIX_BACKUP_DIR/.zshrc" ]
     [ ! -e "$HOME/.zshrc" ]
     [ -f "$HOME/.config/nvim/init.lua" ]
-    [ ! -e "$LYNE_BACKUP_DIR/.config/nvim" ]
+    [ ! -e "$ORVIX_BACKUP_DIR/.config/nvim" ]
 }
 
 @test "execute_stow: one stow call per package given" {
@@ -97,7 +97,7 @@ stowed_home() {
     echo mine >"$HOME/.config/kitty/kitty.conf"
     ln -s "$REPO/nvim/.config/nvim" "$HOME/.config/nvim"
     ln -s "$REPO/zsh/.zshrc" "$HOME/.zshrc"
-    ln -s "$REPO/local/.local/bin/lyne" "$HOME/.local/bin/lyne"
+    ln -s "$REPO/local/.local/bin/orvix" "$HOME/.local/bin/orvix"
 }
 
 @test "stow_linked_packages: the packages HOME reaches through links" {
@@ -109,35 +109,35 @@ stowed_home() {
 
 @test "stow_recorded_packages: the record, or what's linked when there is none" {
     stowed_home
-    export LYNE_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
+    export ORVIX_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
     # No state.json, then a null record: what's linked
     run in_stow 'stow_recorded_packages'
     assert_output "$(printf '%s\n' nvim zsh local)"
-    echo '{"system": {"stow": null}}' >"$LYNE_STATE_FILE"
+    echo '{"system": {"stow": null}}' >"$ORVIX_STATE_FILE"
     run in_stow 'stow_recorded_packages'
     assert_output "$(printf '%s\n' nvim zsh local)"
     # A record wins, even an empty one
-    echo '{"system": {"stow": ["hyprland", "kitty"]}}' >"$LYNE_STATE_FILE"
+    echo '{"system": {"stow": ["hyprland", "kitty"]}}' >"$ORVIX_STATE_FILE"
     run in_stow 'stow_recorded_packages'
     assert_output "$(printf '%s\n' hyprland kitty)"
     run in_stow 'stow_is_linked kitty'
     assert_success
     run in_stow 'stow_is_linked nvim'
     assert_failure
-    echo '{"system": {"stow": []}}' >"$LYNE_STATE_FILE"
+    echo '{"system": {"stow": []}}' >"$ORVIX_STATE_FILE"
     run in_stow 'stow_recorded_packages'
     assert_output ""
 }
 
 @test "stow_record and stow_default_packages: the record plus the shell's" {
-    export LYNE_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
-    echo '{"system": {"stow": null, "editor": "nvim"}}' >"$LYNE_STATE_FILE"
+    export ORVIX_STATE_FILE="$BATS_TEST_TMPDIR/state.json"
+    echo '{"system": {"stow": null, "editor": "nvim"}}' >"$ORVIX_STATE_FILE"
     run in_stow 'stow_record nvim local'
     assert_success
-    assert_equal "$(jq -c .system "$LYNE_STATE_FILE")" '{"stow":["nvim","local"],"editor":"nvim"}'
+    assert_equal "$(jq -c .system "$ORVIX_STATE_FILE")" '{"stow":["nvim","local"],"editor":"nvim"}'
     run in_stow 'stow_default_packages'
     assert_output "$(printf '%s\n' hyprland quickshell nvim local)"
-    echo '{"system": {"stow": []}}' >"$LYNE_STATE_FILE"
+    echo '{"system": {"stow": []}}' >"$ORVIX_STATE_FILE"
     run in_stow 'stow_default_packages'
     assert_output "$(printf '%s\n' hyprland quickshell local)"
 }

@@ -466,7 +466,7 @@ FloatingWindow {
                         radius: Config.radiusLarge
                         color: Qt.alpha(Config.accentColor, 0.15)
 
-                        LyneLogo {
+                        OrvixLogo {
                             anchors.centerIn: parent
                             height: Config.fontSizeNormal
                         }

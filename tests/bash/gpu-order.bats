@@ -4,13 +4,13 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     SYS="$BATS_TEST_TMPDIR/sys"
-    export LYNE_SYSFS="$SYS" LYNE_PCI_IDS="$FIXTURES/pci.ids"
-    export LYNE_UDEV_DIR="$BATS_TEST_TMPDIR/udev" LYNE_HYPR_DIR="$HOME/.config/hypr"
-    export LYNE_STATE_FILE="$HOME/state.json"
-    mkdir -p "$LYNE_UDEV_DIR"
-    echo '{"gpus": {"order": []}, "other": 1}' >"$LYNE_STATE_FILE"
+    export ORVIX_SYSFS="$SYS" ORVIX_PCI_IDS="$FIXTURES/pci.ids"
+    export ORVIX_UDEV_DIR="$BATS_TEST_TMPDIR/udev" ORVIX_HYPR_DIR="$HOME/.config/hypr"
+    export ORVIX_STATE_FILE="$HOME/state.json"
+    mkdir -p "$ORVIX_UDEV_DIR"
+    echo '{"gpus": {"order": []}, "other": 1}' >"$ORVIX_STATE_FILE"
 }
 
 hybrid() {
@@ -18,7 +18,7 @@ hybrid() {
     fx_gpu "$SYS" 0000:00:02.0 8086:3e9b driver=i915 card=card1 outputs="eDP-1:connected"
 }
 
-order() { in_lyne gpus gpu-order -- "gpu_detect; gpu_links; $1"; }
+order() { in_orvix gpus gpu-order -- "gpu_detect; gpu_links; $1"; }
 
 @test "links: vendor and kind, -2 on repeats, none for virtual GPUs" {
     fx_gpu "$SYS" 0000:00:02.0 8086:3e9b
@@ -54,7 +54,7 @@ order() { in_lyne gpus gpu-order -- "gpu_detect; gpu_links; $1"; }
     assert_line 'KERNEL=="card*", KERNELS=="0000:01:00.0", SUBSYSTEM=="drm", SUBSYSTEMS=="pci", SYMLINK+="dri/nvidia-dgpu"'
     run order 'gpu_rules_install'
     assert_success
-    assert_equal "$(grep -c SYMLINK "$LYNE_UDEV_DIR/90-lyne-gpus.rules")" 2
+    assert_equal "$(grep -c SYMLINK "$ORVIX_UDEV_DIR/90-orvix-gpus.rules")" 2
     run cat "$STUB_LOG"
     assert_line "udevadm control --reload"
     assert_line "udevadm trigger --subsystem-match=drm"
@@ -68,21 +68,21 @@ order() { in_lyne gpus gpu-order -- "gpu_detect; gpu_links; $1"; }
 
 @test "duplicates: hand-made files with only our links (continuations joined)" {
     hybrid
-    cat >"$LYNE_UDEV_DIR/80-mine.rules" <<'EOF'
+    cat >"$ORVIX_UDEV_DIR/80-mine.rules" <<'EOF'
 # set up by hand, like the wiki
 KERNEL=="card*", \
     KERNELS=="0000:01:00.0", \
     SUBSYSTEM=="drm", SUBSYSTEMS=="pci", SYMLINK+="dri/nvidia-dgpu"
 EOF
-    cat >"$LYNE_UDEV_DIR/81-more.rules" <<'EOF'
+    cat >"$ORVIX_UDEV_DIR/81-more.rules" <<'EOF'
 KERNEL=="card*", KERNELS=="0000:00:02.0", SUBSYSTEM=="drm", SYMLINK+="dri/intel-igpu"
 ACTION=="add", SUBSYSTEM=="usb", RUN+="/bin/true"
 EOF
-    echo 'KERNEL=="card*", KERNELS=="0000:00:02.0", SYMLINK+="dri/igpu"' >"$LYNE_UDEV_DIR/82-other-name.rules"
-    echo '# only comments' >"$LYNE_UDEV_DIR/83-empty.rules"
+    echo 'KERNEL=="card*", KERNELS=="0000:00:02.0", SYMLINK+="dri/igpu"' >"$ORVIX_UDEV_DIR/82-other-name.rules"
+    echo '# only comments' >"$ORVIX_UDEV_DIR/83-empty.rules"
     run order 'gpu_rules_install >/dev/null; gpu_rules_duplicates'
     assert_success
-    assert_output "$LYNE_UDEV_DIR/80-mine.rules"
+    assert_output "$ORVIX_UDEV_DIR/80-mine.rules"
 }
 
 @test "resolve: presets, explicit addresses, errors on stderr only" {
@@ -139,7 +139,7 @@ hl = {
 }
 $popen
 $1
-print("file=" .. lyne_gpus_file)
+print("file=" .. orvix_gpus_file)
 EOF
 }
 
@@ -267,21 +267,21 @@ IG=/dev/dri/intel-igpu
     run order 'gpu_order_write 0000:01:00.0 0000:00:02.0 && gpu_order_saved | xargs'
     assert_success
     assert_output "0000:01:00.0 0000:00:02.0"
-    assert [ -f "$LYNE_HYPR_DIR/local/gpus.lua" ]
-    run ls -A "$LYNE_HYPR_DIR/local"
+    assert [ -f "$ORVIX_HYPR_DIR/local/gpus.lua" ]
+    run ls -A "$ORVIX_HYPR_DIR/local"
     assert_output "gpus.lua"
-    run ls -A "$LYNE_HYPR_DIR"
+    run ls -A "$ORVIX_HYPR_DIR"
     assert_output "local"
-    assert_equal "$(jq -c . "$LYNE_STATE_FILE")" '{"gpus":{"order":["0000:01:00.0","0000:00:02.0"]},"other":1}'
+    assert_equal "$(jq -c . "$ORVIX_STATE_FILE")" '{"gpus":{"order":["0000:01:00.0","0000:00:02.0"]},"other":1}'
     run order 'gpu_order_write && gpu_order_saved'
     assert_output ""
-    grep -q 'lyne_gpus_file = "automatic"' "$LYNE_HYPR_DIR/local/gpus.lua"
+    grep -q 'orvix_gpus_file = "automatic"' "$ORVIX_HYPR_DIR/local/gpus.lua"
 }
 
 @test "running order and explicit list from this session's Hyprland log" {
     hybrid
-    export LYNE_HYPR_LOG="$BATS_TEST_TMPDIR/hyprland.log"
-    cat >"$LYNE_HYPR_LOG" <<'EOF'
+    export ORVIX_HYPR_LOG="$BATS_TEST_TMPDIR/hyprland.log"
+    cat >"$ORVIX_HYPR_LOG" <<'EOF'
 [LOG] drm: Explicit device list /dev/dri/card1:/dev/dri/card0
 [LOG] drm: Starting backend for /dev/dri/card1
 [LOG] drm: Starting backend for /dev/dri/card0
@@ -290,7 +290,7 @@ EOF
     run order 'gpu_running_order | xargs; gpu_running_explicit && echo explicit'
     assert_line "0000:00:02.0 0000:01:00.0"
     assert_line explicit
-    unset LYNE_HYPR_LOG
+    unset ORVIX_HYPR_LOG
     run order 'gpu_running_order; gpu_running_explicit || echo none'
     assert_output none
 }

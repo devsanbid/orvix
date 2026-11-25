@@ -4,8 +4,8 @@
 
 -- Toggleable app workspaces (WhatsApp, music, scratchpad...). The list is
 -- edited in Settings > Hyprland > Special workspaces: local/settings.lua
--- (generated) calls lyne_specials() with it. Without that file the defaults
--- below are used (hyprland.lua calls lyne_specials_fallback()).
+-- (generated) calls orvix_specials() with it. Without that file the defaults
+-- below are used (hyprland.lua calls orvix_specials_fallback()).
 --
 -- Each special:
 --   id         workspace name (special:<id>) and bind ids special-<id> / move-to-<id>
@@ -27,18 +27,18 @@ end
 
 local defaults = {
     -- WhatsApp Web as a Chromium app with its own profile
-    { id = "whatsapp", name = "WhatsApp",   command = "lyne whatsapp", class = "^(chrome-web\\.whatsapp\\.com__-Default)$", keys = "SUPER + W", move_keys = "SUPER + SHIFT + W", autostart = false },
+    { id = "whatsapp", name = "WhatsApp",   command = "orvix whatsapp", class = "^(chrome-web\\.whatsapp\\.com__-Default)$", keys = "SUPER + W", move_keys = "SUPER + SHIFT + W", autostart = false },
     { id = "music",    name = "Music",      command = "spotify", class = "^([Ss]potify)$",            keys = "SUPER + M", move_keys = "SUPER + SHIFT + M", autostart = false },
 }
 
 -- Seconds the autostarted apps wait for the notification server
 local NOTIFICATIONS_TIMEOUT = 30
 
--- Set once lyne_specials() ran in this config load
-LYNE_SPECIALS_APPLIED = false
+-- Set once orvix_specials() ran in this config load
+ORVIX_SPECIALS_APPLIED = false
 
-function lyne_specials(list)
-    LYNE_SPECIALS_APPLIED = true
+function orvix_specials(list)
+    ORVIX_SPECIALS_APPLIED = true
     local autostart = {}
     local launch = {}
 
@@ -51,7 +51,7 @@ function lyne_specials(list)
         end
         if (spec.class or "") ~= "" then
             hl.window_rule({
-                name  = "lyne-special-" .. spec.id,
+                name  = "orvix-special-" .. spec.id,
                 match = { class = spec.class },
 
                 workspace = workspace .. " silent",
@@ -98,8 +98,8 @@ function lyne_specials(list)
     end
 end
 
-function lyne_specials_fallback()
-    if not LYNE_SPECIALS_APPLIED then
-        lyne_specials(defaults)
+function orvix_specials_fallback()
+    if not ORVIX_SPECIALS_APPLIED then
+        orvix_specials(defaults)
     end
 end

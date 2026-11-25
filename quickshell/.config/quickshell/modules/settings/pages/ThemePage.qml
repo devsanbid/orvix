@@ -24,7 +24,7 @@ ColumnLayout {
     readonly property bool onGrid: detail === "" && !creating
 
     // lyne-sddm layout ids: the known ones are translated, a newer one shows
-    // its own name until lyne-dots learns it
+    // its own name until orvix learns it
     function sddmLayoutLabel(id) {
         switch (id) {
         case "center":

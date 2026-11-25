@@ -18,7 +18,7 @@ ColumnLayout {
     spacing: Config.spacing * 3
 
     // Sized by height (a Layout overrides `height` with the implicit one)
-    LyneLogo {
+    OrvixLogo {
         Layout.alignment: Qt.AlignHCenter
         Layout.bottomMargin: Config.spacing
         Layout.preferredHeight: Config.fontSizeIconLarge * 3
@@ -32,7 +32,7 @@ ColumnLayout {
         Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: I18n.tr("Welcome to lyne-dots")
+            text: I18n.tr("Welcome to orvix")
             wrapMode: Text.WordWrap
             font.family: Config.font
             font.pixelSize: Config.fontSizeIconLarge

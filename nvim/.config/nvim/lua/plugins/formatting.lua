@@ -49,7 +49,7 @@ return {
                     shfmt = {
                         prepend_args = { "-i", "4" },
                     },
-                    -- A project's stylua.toml (lyne-dots has one) wins; 4
+                    -- A project's stylua.toml (orvix has one) wins; 4
                     -- spaces only for Lua outside any
                     stylua = {
                         prepend_args = function(_, ctx)

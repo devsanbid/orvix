@@ -5,7 +5,7 @@
 # A frame is built line by line (ui_add) and drawn at once (ui_flush) over
 # the previous one, so redraws don't flicker. The Linux console (TERM=linux,
 # where a fresh Arch install usually runs) has no braille or check marks in
-# its font: it gets an ASCII set. LYNE_ASCII=1 forces it.
+# its font: it gets an ASCII set. ORVIX_ASCII=1 forces it.
 # Usage: source this file
 # =============================================================================
 
@@ -16,7 +16,7 @@ UI_ACTIVE=0
 ui_setup() {
     local charmap
     charmap="$(locale charmap 2>/dev/null)"
-    if [[ "${LYNE_ASCII:-}" == 1 || "$TERM" == linux || "$charmap" != UTF-8 ]]; then
+    if [[ "${ORVIX_ASCII:-}" == 1 || "$TERM" == linux || "$charmap" != UTF-8 ]]; then
         G_CURSOR=">" G_ON="[x]" G_OFF="[ ]" G_RADIO_ON="(*)" G_RADIO_OFF="( )"
         G_OK="+" G_FAIL="x" G_WARN="!" G_SKIP="-" G_TODO=" " G_DOT="-"
         G_FULL="#" G_EMPTY="-" G_PIPE="|" G_RULE="-" G_ELLIPSIS="..." G_UPDOWN="up/down"
@@ -106,7 +106,7 @@ ui_flush() {
 ui_banner() {
     UI_LINES+=("")
     ui_add "$C_ACCENT█   █▄█ █▄ █ █▀▀ ▄▄ █▀▄ █▀█ ▀█▀ █▀$C_RESET"
-    ui_add "$C_ACCENT█▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█$C_RESET   ${C_DIM}installer${LYNE_DRY_RUN:+ (dry run)}$C_RESET"
+    ui_add "$C_ACCENT█▄▄  █  █ ▀█ ██▄    █▄▀ █▄█  █  ▄█$C_RESET   ${C_DIM}installer${ORVIX_DRY_RUN:+ (dry run)}$C_RESET"
     UI_LINES+=("")
 }
 

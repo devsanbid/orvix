@@ -7,7 +7,7 @@
 # in CSS and QML, and <leader>uc turns the preview off and on.
 #
 # Usage: tests/nvim/colors.sh   (needs nvim and the plugins)
-#   LYNE_TEST_NVIM=<dir>     another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_NVIM=<dir>     another copy of nvim/.config/nvim (lib.sh)
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 

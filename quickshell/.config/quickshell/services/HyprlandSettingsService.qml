@@ -69,12 +69,12 @@ Singleton {
         let out = appsLua + specialsLua + workspacesLua + autostartLua + keyboardsLua;
         // The preset changes the default keys, the overrides go on top
         if (bindPreset !== "vim")
-            out += "\n-- Navigation keys (lyne_bind_preset is defined in conf/binds.lua)\nif lyne_bind_preset then\n    lyne_bind_preset(" + _luaString(bindPreset) + ")\nend\n";
+            out += "\n-- Navigation keys (orvix_bind_preset is defined in conf/binds.lua)\nif orvix_bind_preset then\n    orvix_bind_preset(" + _luaString(bindPreset) + ")\nend\n";
         if (bindOverrides.length > 0) {
-            out += "\n-- Keybinds changed in Settings (lyne_rebind is defined in conf/binds.lua)\n";
-            out += "if lyne_rebind then\n";
+            out += "\n-- Keybinds changed in Settings (orvix_rebind is defined in conf/binds.lua)\n";
+            out += "if orvix_rebind then\n";
             for (const o of bindOverrides)
-                out += "    lyne_rebind(" + _luaString(o.id) + ", " + _luaString(o.keys) + ")\n";
+                out += "    orvix_rebind(" + _luaString(o.id) + ", " + _luaString(o.keys) + ")\n";
             out += "end\n";
         }
         const custom = customBinds.filter(c => c.keys !== "" && c.command !== "");
@@ -89,14 +89,14 @@ Singleton {
     // Apps opened by the Apps binds (AppsService), read when a bind is pressed
     readonly property string appsLua: {
         const apps = AppsService.slots.filter(s => s.luaKey !== "").map(s => s.luaKey + " = " + _luaString(AppsService.commandFor(s.key)));
-        return "\n-- Default apps (lyne_apps is defined in conf/keybinds.lua)\nif lyne_apps then\n    lyne_apps({ " + apps.join(", ") + " })\nend\n"; // i18n-ignore
+        return "\n-- Default apps (orvix_apps is defined in conf/keybinds.lua)\nif orvix_apps then\n    orvix_apps({ " + apps.join(", ") + " })\nend\n"; // i18n-ignore
     }
 
     // Special workspaces (SpecialsService), always written so the file
     // replaces the defaults of hypr/conf/specials.lua
     readonly property string specialsLua: {
-        let out = "\n-- Special workspaces (lyne_specials is defined in conf/specials.lua)\n";
-        out += "if lyne_specials then\n    lyne_specials({\n";
+        let out = "\n-- Special workspaces (orvix_specials is defined in conf/specials.lua)\n";
+        out += "if orvix_specials then\n    orvix_specials({\n";
         for (const s of SpecialsService.list) {
             const fields = [["id", s.id], ["name", s.name], ["command", s.command ?? ""], ["class", s["class"] ?? ""], ["keys", s.keys ?? ""], ["move_keys", s.moveKeys ?? ""]];
             out += "        { " + fields.map(f => f[0] + " = " + _luaString(f[1])).join(", ") + ", autostart = " + (s.autostart === true) + " },\n";
@@ -112,15 +112,15 @@ Singleton {
         const skip = StateService.get("workspaces.skipEmpty", false) === true;
         const wrap = StateService.get("workspaces.wrap", false) === true;
         const lidOff = StateService.get("workspaces.lidOff", true) !== false;
-        return "\n-- Workspaces per monitor (lyne_workspaces is defined in conf/workspaces.lua)\nif lyne_workspaces then\n    lyne_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + ", lid_off = " + lidOff + " })\nend\n"; // i18n-ignore
+        return "\n-- Workspaces per monitor (orvix_workspaces is defined in conf/workspaces.lua)\nif orvix_workspaces then\n    orvix_workspaces({ skip_empty = " + skip + ", wrap = " + wrap + ", lid_off = " + lidOff + " })\nend\n"; // i18n-ignore
     }
 
     // Your apps started at login (Settings › System › Autostart,
     // AutostartService), always written so removing the last one sticks
     readonly property string autostartLua: {
         const apps = StateService.get("autostart.apps", StateService.getDefault("autostart.apps", []));
-        let out = "\n-- Apps started at login (lyne_autostart is defined in conf/autostart.lua)\n";
-        out += "if lyne_autostart then\n    lyne_autostart({\n";
+        let out = "\n-- Apps started at login (orvix_autostart is defined in conf/autostart.lua)\n";
+        out += "if orvix_autostart then\n    orvix_autostart({\n";
         for (const a of apps) {
             const delay = Math.max(0, Math.round(Number(a.delay) || 0));
             out += "        { name = " + _luaString(a.name ?? "") + ", command = " + _luaString(a.command ?? "") + ", delay = " + delay + ", workspace = " + _luaString(a.workspace ?? "") + ", enabled = " + (a.enabled !== false) + " },\n";
@@ -181,7 +181,7 @@ Singleton {
     // Last `hyprctl eval` error, shown by the settings pages
     property string error: ""
 
-    // Blur threshold of the Quickshell layers (lyne_set_blur_ignore_alpha in
+    // Blur threshold of the Quickshell layers (orvix_set_blur_ignore_alpha in
     // conf/appearance.lua), just below the background opacity: a lower one
     // lets the blur show through the antialiased edges of rounded panels as
     // a jagged light fringe. Only in memory, so it's sent again after every
@@ -278,7 +278,7 @@ Singleton {
 
     function applyBlur() {
         const value = blurIgnoreAlpha.toFixed(2);
-        blurProc.command = ["hyprctl", "eval", "if lyne_set_blur_ignore_alpha then lyne_set_blur_ignore_alpha(" + value + ") end"];
+        blurProc.command = ["hyprctl", "eval", "if orvix_set_blur_ignore_alpha then orvix_set_blur_ignore_alpha(" + value + ") end"];
         blurProc.running = true;
     }
 

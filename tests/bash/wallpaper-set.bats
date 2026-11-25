@@ -7,9 +7,9 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     SCRIPT="$REPO/quickshell/.config/quickshell/scripts/wallpaper-set.sh"
-    VIDEO="${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-video.sh"
+    VIDEO="${ORVIX_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-video.sh"
     BOOT="$REPO/local/.local/scripts/Wallpaper/wallpaper-boot.sh"
     STATE="$HOME/.config/quickshell/state.json"
     WALL="$HOME/.local/wallpapers/a.jpg"
@@ -67,8 +67,8 @@ EOF
     # The socket, lock and frame: never the session's
     export XDG_RUNTIME_DIR="$BATS_TEST_TMPDIR/run"
     mkdir -p "$XDG_RUNTIME_DIR"
-    SOCK="$XDG_RUNTIME_DIR/lyne-wallpaper-video.sock"
-    FRAME="$XDG_RUNTIME_DIR/lyne-wallpaper-frame.jpg"
+    SOCK="$XDG_RUNTIME_DIR/orvix-wallpaper-video.sock"
+    FRAME="$XDG_RUNTIME_DIR/orvix-wallpaper-frame.jpg"
     VID="$HOME/.local/wallpapers/clip.mp4"
     printf 'video' >"$VID"
 }
@@ -84,8 +84,8 @@ players() {
 
 # The poster wallpaper-poster.sh made for $1
 poster_of() {
-    # LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
-    "${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-poster.sh" "$1"
+    # ORVIX_TEST_SHELL: a copy of the shell (to sabotage the script)
+    "${ORVIX_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-poster.sh" "$1"
 }
 
 # Waits for the detached mpvpaper's socket
@@ -294,7 +294,7 @@ EOF2
     frames_brightness "0:0 1:5 2:40 3:90"
     assert_equal "$(cat "$(poster_of "$VID")")" 2
     assert_equal "$(grep -c '^ffmpeg' "$STUB_LOG")" 3
-    run ls -A "$HOME/.cache/lyne/wallpaper-posters"
+    run ls -A "$HOME/.cache/orvix/wallpaper-posters"
     assert_equal "$(grep -c . <<<"$output")" 1
 }
 

@@ -8,16 +8,16 @@
 --
 -- A block belongs to the monitor itself (its description, so changing
 -- ports or positions keeps it) and is remembered in
--- ~/.local/state/lyne/workspace-monitors.lua, also while the monitor is
+-- ~/.local/state/orvix/workspace-monitors.lua, also while the monitor is
 -- disconnected: its workspaces move to another monitor meanwhile and the
 -- workspace rules below bring them back when it's connected again.
 -- New monitors get the first free block (left to right at login).
 --
 -- Settings > Hyprland > Workspaces reorders and forgets monitors (the
--- lyne_workspaces_* functions below), sets how next/previous behave and
+-- orvix_workspaces_* functions below), sets how next/previous behave and
 -- whether closing the laptop lid turns its screen off while another monitor
--- is connected (local/settings.lua calls lyne_workspaces()). Quickshell reads the blocks
--- from $XDG_RUNTIME_DIR/lyne-workspaces.json.
+-- is connected (local/settings.lua calls orvix_workspaces()). Quickshell reads the blocks
+-- from $XDG_RUNTIME_DIR/orvix-workspaces.json.
 
 local M = {}
 
@@ -28,9 +28,9 @@ M.BLOCK = 100 -- ids per monitor
 M.MAX = 99    -- workspaces per monitor
 
 local HOME = os.getenv("HOME") or ""
-local STATE_DIR = (os.getenv("XDG_STATE_HOME") or (HOME .. "/.local/state")) .. "/lyne"
+local STATE_DIR = (os.getenv("XDG_STATE_HOME") or (HOME .. "/.local/state")) .. "/orvix"
 local STATE_FILE = STATE_DIR .. "/workspace-monitors.lua"
-local EXPORT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-workspaces.json"
+local EXPORT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/orvix-workspaces.json"
 
 -- Known monitors: { slot = 0.., desc = "...", name = "HDMI-A-1", twin }.
 -- `desc` is empty for entries only known by port (migrated from the old
@@ -40,11 +40,11 @@ local EXPORT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-workspace
 local known = {}
 
 -- Next/previous: only stop at workspaces with windows, and go around past
--- the ends; lid_off: see LAPTOP LID. Set by lyne_workspaces() from
+-- the ends; lid_off: see LAPTOP LID. Set by orvix_workspaces() from
 -- local/settings.lua
 M.options = { skip_empty = false, wrap = false, lid_off = true }
 
-function lyne_workspaces(options)
+function orvix_workspaces(options)
     for key, value in pairs(options or {}) do
         M.options[key] = value
     end
@@ -456,8 +456,8 @@ function M.move_step(direction)
 end
 
 -- Dispatcher for Quickshell's bar (mouse wheel over a monitor's strip):
--- `hyprctl dispatch 'lyne_workspace_step(1, "eDP-1")'`
-function lyne_workspace_step(direction, monitor_name)
+-- `hyprctl dispatch 'orvix_workspace_step(1, "eDP-1")'`
+function orvix_workspace_step(direction, monitor_name)
     local target = M.step_target(direction, hl.get_monitor(monitor_name))
     if target then
         return hl.dsp.focus({ workspace = target })
@@ -492,7 +492,7 @@ end
 
 -- Swaps the blocks of two slots (either may be free), renumbering the
 -- open workspaces through a spare block so no id is taken midway
-function lyne_workspaces_swap(slot_a, slot_b)
+function orvix_workspaces_swap(slot_a, slot_b)
     if slot_a == slot_b or slot_a < 0 or slot_b < 0 then
         return
     end
@@ -534,7 +534,7 @@ end
 
 -- Forgets a disconnected monitor: its slot is free for the next new one
 -- (not a laptop screen the lid turned off)
-function lyne_workspaces_forget(slot)
+function orvix_workspaces_forget(slot)
     for i, entry in ipairs(known) do
         if entry.slot == slot and not M.lid_off_outputs[entry.name] then
             for _, monitor in ipairs(hl.get_monitors()) do
@@ -564,10 +564,10 @@ local function is_internal(name)
     return name:match("^eDP") or name:match("^LVDS") or name:match("^DSI")
 end
 
--- LYNE_LID_STATE_FILE points the tests at a fake lid. Without an ACPI lid
+-- ORVIX_LID_STATE_FILE points the tests at a fake lid. Without an ACPI lid
 -- file, the state the lid switch last reported is used (saved below)
-local LID_EVENT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-lid-state"
-local LID_FILES = { os.getenv("LYNE_LID_STATE_FILE") or "/proc/acpi/button/lid/LID0/state",
+local LID_EVENT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/orvix-lid-state"
+local LID_FILES = { os.getenv("ORVIX_LID_STATE_FILE") or "/proc/acpi/button/lid/LID0/state",
     "/proc/acpi/button/lid/LID/state", "/proc/acpi/button/lid/LID1/state",
     "/proc/acpi/button/lid/LID2/state", LID_EVENT_FILE }
 
@@ -626,7 +626,7 @@ end
 -- it never flashes on). `turned_off` tells whether this config did
 local turned_off = false
 
-function lyne_lid_rules()
+function orvix_lid_rules()
     if lid_turns_off() then
         for _, name in ipairs(internal_outputs()) do
             hl.monitor({ output = name, disabled = true })
@@ -638,7 +638,7 @@ function lyne_lid_rules()
 end
 
 -- "<time of the last lid reload> <reloads within a minute>"
-local RELOAD_MARK = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/lyne-lid-reload"
+local RELOAD_MARK = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/orvix-lid-reload"
 local retry_pending = false
 
 -- Reloads when the lid (or a monitor coming or going) changed whether the

@@ -1,5 +1,5 @@
 # The parts of tests/run.sh that need no desktop: the shell's JavaScript
-# libraries (node), the lyne CLI, migrations and installer (bats) and
+# libraries (node), the orvix CLI, migrations and installer (bats) and
 # shellcheck. The qml and smoke sections need Quickshell and a Hyprland
 # session: run them locally (tests/run.sh).
 name: tests

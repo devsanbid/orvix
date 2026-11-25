@@ -1,4 +1,4 @@
-# Translating lyne-dots
+# Translating orvix
 
 The shell (bar, Settings, Quick Settings, launcher, notifications, lock
 screen…) is written in English, and every string it shows goes through
@@ -20,7 +20,7 @@ first page of the Welcome screen). "Automatic" follows `LANGUAGE`,
 You need `node` (the tools are plain Node.js, no packages).
 
 ```sh
-cd ~/.lyne-dots
+cd ~/.orvix
 node tools/i18n.js add de "Deutsch"   # code like de or pt_BR, and its own name
 ```
 
@@ -47,7 +47,7 @@ node tools/i18n.js stats     # translated share per language
 To see it, pick the language in Settings, or force it for one run:
 
 ```sh
-LYNE_I18N=de qs -p ~/.config/quickshell/shell.qml
+ORVIX_I18N=de qs -p ~/.config/quickshell/shell.qml
 ```
 
 The shell reloads the file when it changes, so edits show up live.
@@ -76,7 +76,7 @@ The shell reloads the file when it changes, so edits show up live.
 
 ## The pseudo-language
 
-`LYNE_I18N=pseudo` shows every string accented, about 40% longer and in
+`ORVIX_I18N=pseudo` shows every string accented, about 40% longer and in
 brackets (`[Šéţţîñĝš ~~~]`): English left in the UI, labels that get cut,
 and sentences glued from pieces stand out at once.
 

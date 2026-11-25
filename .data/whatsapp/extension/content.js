@@ -28,6 +28,6 @@ document.addEventListener("click", onClick, true);
 document.addEventListener("auxclick", onClick, true);
 
 window.addEventListener("message", event => {
-    if (event.source === window && typeof event.data?.lyneOpenLink === "string" && external(event.data.lyneOpenLink))
-        chrome.runtime.sendMessage({ url: event.data.lyneOpenLink });
+    if (event.source === window && typeof event.data?.orvixOpenLink === "string" && external(event.data.orvixOpenLink))
+        chrome.runtime.sendMessage({ url: event.data.orvixOpenLink });
 });

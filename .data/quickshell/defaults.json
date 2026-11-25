@@ -68,7 +68,7 @@
         "showNotifications": true,
         "launcher": {
             "style": "logo",
-            "icon": "lyne",
+            "icon": "orvix",
             "animate": true,
             "rightClick": "actions",
             "middleClick": "clipboard"
@@ -258,7 +258,7 @@
                 "name": "WhatsApp",
                 "icon": "󰖣",
                 "color": "success",
-                "command": "lyne whatsapp",
+                "command": "orvix whatsapp",
                 "class": "^(chrome-web\\.whatsapp\\.com__-Default)$",
                 "keys": "SUPER + W",
                 "moveKeys": "SUPER + SHIFT + W",

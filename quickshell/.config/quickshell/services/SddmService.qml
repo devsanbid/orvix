@@ -6,11 +6,11 @@ import Quickshell
 import Quickshell.Io
 
 // The login screen (lyne-sddm) following the shell, for Settings › Theme ›
-// Login screen. Copies the applied palette (~/.cache/lyne/nvim.json, which
+// Login screen. Copies the applied palette (~/.cache/orvix/nvim.json, which
 // ThemeService reports through paletteWritten()), the background opacity,
 // the wallpaper, the profile picture and the chosen layout (sddm.layout)
 // into /var/lib/lyne-sddm, which
-// lyne-sddm creates (scripts/sddm.sh, from lyne's sddm.sh lib; also `lyne
+// lyne-sddm creates (scripts/sddm.sh, from orvix's sddm.sh lib; also `orvix
 // sddm`). Changes are gathered for a moment, so a theme switch that also
 // brings a wallpaper is one sync; files are only rewritten when they change.
 // Shows on the next login. Option in state.json: sddm.sync (off: the theme's
@@ -132,7 +132,7 @@ Singleton {
     function _run() {
         // The values as they are now (state.json is saved a moment later)
         applyProc.environment = {
-            LYNE_SDDM_OPTIONS: JSON.stringify({
+            ORVIX_SDDM_OPTIONS: JSON.stringify({
                 sync: sync,
                 layout: layout,
                 opacity: opacity,

@@ -116,11 +116,11 @@ Sessions are saved per folder (and git branch) once a file is open: when you qui
 
 ## One Neovim per project
 
-The first Neovim opened in a project is that project's: the project is the nearest folder with `project.godot`, a `*.sln`, `.git` or `.root` (else the file's folder); `touch .root` makes a folder without git a project. Another `nvim` there, with files or without, hands them to it and quits; in tmux you land on its pane, whatever window or session it's in. `:ProjectInstance` shows which one this is. `nvim -R`, `nvim -d`, text from a pipe, git's files (commit messages) and temp files (`crontab -e`, the shell's `Ctrl+V`) always get a Neovim of their own, and so does `LYNE_NVIM_SOLO=1 nvim` and the tmux popups.
+The first Neovim opened in a project is that project's: the project is the nearest folder with `project.godot`, a `*.sln`, `.git` or `.root` (else the file's folder); `touch .root` makes a folder without git a project. Another `nvim` there, with files or without, hands them to it and quits; in tmux you land on its pane, whatever window or session it's in. `:ProjectInstance` shows which one this is. `nvim -R`, `nvim -d`, text from a pipe, git's files (commit messages) and temp files (`crontab -e`, the shell's `Ctrl+V`) always get a Neovim of their own, and so does `ORVIX_NVIM_SOLO=1 nvim` and the tmux popups.
 
-From outside: `lyne nvim open [--project <folder>] <file> [line [column]]` opens the file there and shows it (tmux's pane, the terminal's window). With no Neovim in the project it starts one in the project's tmux session, starting tmux (and what tmux-continuum brings back) or a terminal when needed. `lyne nvim list` shows the ones running.
+From outside: `orvix nvim open [--project <folder>] <file> [line [column]]` opens the file there and shows it (tmux's pane, the terminal's window). With no Neovim in the project it starts one in the project's tmux session, starting tmux (and what tmux-continuum brings back) or a terminal when needed. `orvix nvim list` shows the ones running.
 
-**Godot (C#):** Editor Settings › Dotnet › Editor: External Editor `Custom`, Custom Exec Path `lyne`, Custom Exec Path Args `nvim open --project {project} {file} {line} {col}`. Text Editor › External stays off (that's for GDScript).
+**Godot (C#):** Editor Settings › Dotnet › Editor: External Editor `Custom`, Custom Exec Path `orvix`, Custom Exec Path Args `nvim open --project {project} {file} {line} {col}`. Text Editor › External stays off (that's for GDScript).
 
 Roslyn formats C# on save the C# way, with the braces on a line of their own. For `if (x) {` (and `} else {`), put this in the project's `.editorconfig` (Godot makes one with `root = true`, so one in your home folder isn't read):
 
@@ -134,9 +134,9 @@ csharp_new_line_before_finally = false
 
 ## Change the config
 
-- **Folders:** `lua/config` (options, keys, the shortcut search), `lua/plugins` (one file per plugin), `lua/lyne` (the colorscheme, which follows the shell's theme).
+- **Folders:** `lua/config` (options, keys, the shortcut search), `lua/plugins` (one file per plugin), `lua/orvix` (the colorscheme, which follows the shell's theme).
 - **A plugin:** a file in `lua/plugins/` returning its spec; lazy.nvim installs it the next time Neovim starts. `:Lazy` shows updates.
 - **A language:** `:Mason` to install the server or formatter, then add it to `ensure_installed` in `lua/plugins/lsp.lua` (servers) or the formatter to `lua/plugins/formatting.lua`.
-- **QML (Quickshell):** the server is qmlls from Qt (`qmlls6`), not Mason. It finds Quickshell's modules (`qs.config`, `qs.services`) through the `.qmlls.ini` next to `shell.qml`, which lyne-dots creates empty and Quickshell fills each time it starts. For a Quickshell config of your own: `touch .qmlls.ini` next to its `shell.qml`, start it once, and don't give its folders a `qmldir` (Quickshell writes them; qmlls doesn't see hand-written ones).
+- **QML (Quickshell):** the server is qmlls from Qt (`qmlls6`), not Mason. It finds Quickshell's modules (`qs.config`, `qs.services`) through the `.qmlls.ini` next to `shell.qml`, which orvix creates empty and Quickshell fills each time it starts. For a Quickshell config of your own: `touch .qmlls.ini` next to its `shell.qml`, start it once, and don't give its folders a `qmldir` (Quickshell writes them; qmlls doesn't see hand-written ones).
 - **A key:** give it a `desc`; which-key and the search show it.
-- **Lua style:** a save formats with stylua and the project's `stylua.toml` (lyne-dots: 4 spaces, Hyprland's hand-aligned Lua left out by `.styluaignore`); Lua outside any project gets 4 spaces.
+- **Lua style:** a save formats with stylua and the project's `stylua.toml` (orvix: 4 spaces, Hyprland's hand-aligned Lua left out by `.styluaignore`); Lua outside any project gets 4 spaces.

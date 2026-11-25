@@ -153,10 +153,10 @@ Singleton {
     readonly property bool barShowWeather: !barCenterClock && getState("bar.showWeather", false)
     // The bell in the bar's right side, opening the notification history
     readonly property bool barShowNotifications: getState("bar.showNotifications", true)
-    // Launcher button: style "logo", "pill" or "compact"; icon "lyne" (the
-    // lyne-dots logo) or "distro" (Nerd Font glyph from /etc/os-release)
+    // Launcher button: style "logo", "pill" or "compact"; icon "orvix" (the
+    // orvix logo) or "distro" (Nerd Font glyph from /etc/os-release)
     readonly property string barLauncherStyle: getState("bar.launcher.style", "logo")
-    readonly property string barLauncherIcon: getState("bar.launcher.icon", "lyne")
+    readonly property string barLauncherIcon: getState("bar.launcher.icon", "orvix")
     // The dot hops on hover and grows while the launcher is open
     readonly property bool barLauncherAnimate: getState("bar.launcher.animate", true)
     // Right/middle click: "none", "actions", "clipboard", "settings" or "power"

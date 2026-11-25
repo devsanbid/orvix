@@ -7,7 +7,7 @@ import Quickshell.Io
 
 // Welcome screen: a few first choices, step by step. The installer sets
 // welcome.pending in the state.json it creates, so it opens on the first
-// login; closing it in any way clears it. Reopen with `lyne welcome` or
+// login; closing it in any way clears it. Reopen with `orvix welcome` or
 // Settings › About
 Singleton {
     id: root

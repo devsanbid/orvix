@@ -370,7 +370,7 @@ ColumnLayout {
             readonly property bool oldPlace: Lib.isManaged(MonitorsService.legacyText)
 
             label: MonitorsService.fileText !== "" ? I18n.tr("local/monitors.lua was written by hand") : oldPlace ? I18n.tr("monitors.lua is in the old place") : I18n.tr("Monitors set up by nwg-displays")
-            description: MonitorsService.fileText !== "" ? I18n.tr("Its settings show here, and the first Apply rewrites it") : oldPlace ? I18n.tr("lyne update moves ~/.config/hypr/monitors.lua to hypr/local/, and so does the next Apply here") : I18n.tr("Hyprland reads ~/.config/hypr/monitors.lua until the first Apply here, which saves the settings to hypr/local/monitors.lua")
+            description: MonitorsService.fileText !== "" ? I18n.tr("Its settings show here, and the first Apply rewrites it") : oldPlace ? I18n.tr("orvix update moves ~/.config/hypr/monitors.lua to hypr/local/, and so does the next Apply here") : I18n.tr("Hyprland reads ~/.config/hypr/monitors.lua until the first Apply here, which saves the settings to hypr/local/monitors.lua")
         }
     }
 

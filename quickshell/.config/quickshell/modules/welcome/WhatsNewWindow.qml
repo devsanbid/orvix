@@ -74,7 +74,7 @@ FloatingWindow {
                         if (root.releases.length === 0)
                             return I18n.tr("This release has no notes");
                         if (root.releases.length === 1)
-                            return I18n.tr("In lyne-dots %1", root.releases[0].version);
+                            return I18n.tr("In orvix %1", root.releases[0].version);
                         return I18n.trn("%n release, %1 to %2", "%n releases, %1 to %2", root.releases.length, root.releases[root.releases.length - 1].version, root.releases[0].version);
                     }
                 }

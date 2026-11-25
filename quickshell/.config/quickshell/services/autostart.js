@@ -6,7 +6,7 @@
 // the system file with the same name, and an entry is skipped when it's
 // Hidden, has X-systemd-skip, or its OnlyShowIn / NotShowIn leave the
 // current desktop out. Turning a system entry off writes a small user file
-// with Hidden=true and X-Lyne-Override=true (removed to turn it back on).
+// with Hidden=true and X-Orvix-Override=true (removed to turn it back on).
 
 // Keys of the [Desktop Entry] group; localized keys (Name[pt]) are ignored
 function parseDesktop(text) {
@@ -100,7 +100,7 @@ function entries(user, system, desktops) {
     return Object.keys(byId).sort().map(id => {
         const e = byId[id];
         const keys = e.user ?? e.system;
-        const override = e.user !== undefined && _bool(e.user["X-Lyne-Override"]);
+        const override = e.user !== undefined && _bool(e.user["X-Orvix-Override"]);
         // What it would run: our override only hides the system file
         const shown = override && e.system ? e.system : keys;
         const enabled = !_bool(keys.Hidden);

@@ -15,4 +15,4 @@ hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("NVD_BACKEND", "direct")
 
 -- Which GPU renders Hyprland (AQ_DRM_DEVICES) is set in local/gpus.lua:
--- lyne gpu order
+-- orvix gpu order

@@ -5,7 +5,7 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     # The real layout: ~/.config/quickshell links into the repo
     CFG="$DOTS_DIR/quickshell/.config/quickshell"
     mkdir -p "$CFG" "$DOTS_DIR/.data/quickshell" "$HOME/.config"
@@ -20,7 +20,7 @@ inode() { stat -c %i "$STATE"; }
 @test "set: one jq filter, written through the symlink by a rename" {
     local before
     before="$(inode)"
-    run in_lyne -- 'lyne_state_set ".theme.name = \$n | .n += 1" --arg n tokyonight'
+    run in_orvix -- 'orvix_state_set ".theme.name = \$n | .n += 1" --arg n tokyonight'
     assert_success
     assert_equal "$(jq -c . "$STATE")" '{"theme":{"name":"tokyonight"},"n":2}'
     assert [ "$(inode)" != "$before" ]
@@ -33,7 +33,7 @@ inode() { stat -c %i "$STATE"; }
     jq . "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
     local before
     before="$(inode)"
-    run in_lyne -- 'lyne_state_set ".n = 1"'
+    run in_orvix -- 'orvix_state_set ".n = 1"'
     assert_success
     assert_equal "$(inode)" "$before"
 }
@@ -41,11 +41,11 @@ inode() { stat -c %i "$STATE"; }
 @test "set: a jq error or a missing file changes nothing and fails" {
     local before
     before="$(inode)"
-    run in_lyne -- 'lyne_state_set ".n = (" 2>/dev/null'
+    run in_orvix -- 'orvix_state_set ".n = (" 2>/dev/null'
     assert_failure
     assert_equal "$(inode)" "$before"
     assert_equal "$(jq -c . "$STATE")" '{"theme":{"name":"nord"},"n":1}'
-    run in_lyne -- 'LYNE_STATE_FILE=$HOME/none.json lyne_state_set ".n = 2"'
+    run in_orvix -- 'ORVIX_STATE_FILE=$HOME/none.json orvix_state_set ".n = 2"'
     assert_failure
     refute [ -e "$HOME/none.json" ]
 }
@@ -53,16 +53,16 @@ inode() { stat -c %i "$STATE"; }
 @test "replace: keeps the permissions; empty input keeps the file" {
     # Not mktemp's 600: the copy must take the original's mode
     chmod 640 "$STATE"
-    run in_lyne -- 'echo "{\"x\": 1}" | lyne_state_replace'
+    run in_orvix -- 'echo "{\"x\": 1}" | orvix_state_replace'
     assert_success
     assert_equal "$(cat "$STATE")" '{"x": 1}'
     assert_equal "$(stat -c %a "$STATE")" 640
-    run in_lyne -- 'lyne_state_replace </dev/null'
+    run in_orvix -- 'orvix_state_replace </dev/null'
     assert_success
     assert_equal "$(cat "$STATE")" '{"x": 1}'
 }
 
-sync() { in_lyne sync-state -- ''; }
+sync() { in_orvix sync-state -- ''; }
 
 @test "sync: no state.json yet = a copy of the defaults" {
     rm "$STATE"

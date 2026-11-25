@@ -9,24 +9,24 @@
 # The theme and size picked in Settings > Cursor (state.json), for XWayland and
 # native Wayland; Hyprland's local/settings.lua keeps them current after login
 # ------------------------------------------------------------------------------
-_lyne_cursor_theme=Bibata-Modern-Classic
-_lyne_cursor_size=24
+_orvix_cursor_theme=Bibata-Modern-Classic
+_orvix_cursor_size=24
 if command -v jq >/dev/null 2>&1 && [ -f "$HOME/.config/quickshell/state.json" ]; then
-    _lyne_value="$(jq -r '.cursor.theme // empty' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
-    [ -n "$_lyne_value" ] && _lyne_cursor_theme="$_lyne_value"
-    _lyne_value="$(jq -r '.cursor.size // empty' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
-    case "$_lyne_value" in
+    _orvix_value="$(jq -r '.cursor.theme // empty' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
+    [ -n "$_orvix_value" ] && _orvix_cursor_theme="$_orvix_value"
+    _orvix_value="$(jq -r '.cursor.size // empty' "$HOME/.config/quickshell/state.json" 2>/dev/null)"
+    case "$_orvix_value" in
         '' | *[!0-9]*) ;;
-        *) _lyne_cursor_size="$_lyne_value" ;;
+        *) _orvix_cursor_size="$_orvix_value" ;;
     esac
 fi
 
-export XCURSOR_THEME="$_lyne_cursor_theme"
-export XCURSOR_SIZE="$_lyne_cursor_size"
+export XCURSOR_THEME="$_orvix_cursor_theme"
+export XCURSOR_SIZE="$_orvix_cursor_size"
 
-export HYPRCURSOR_THEME="$_lyne_cursor_theme"
-export HYPRCURSOR_SIZE="$_lyne_cursor_size"
-unset _lyne_cursor_theme _lyne_cursor_size _lyne_value
+export HYPRCURSOR_THEME="$_orvix_cursor_theme"
+export HYPRCURSOR_SIZE="$_orvix_cursor_size"
+unset _orvix_cursor_theme _orvix_cursor_size _orvix_value
 
 # ------------------------------------------------------------------------------
 # AQUAMARINE / RENDERING (Hyprland > 0.40)

@@ -59,7 +59,7 @@ end
 --    "kb_options"?,"kb_model"?}],"notes":[...],"other":N}
 -- `other` counts what can't be imported (options other than kb_*, other
 -- calls); the file must stay when it isn't 0
-function lyne_keyboard_import(path, out, lst)
+function orvix_keyboard_import(path, out, lst)
     local devices, notes, other = {}, {}, 0
 
     -- Known layouts, "layout:variant" pairs and models

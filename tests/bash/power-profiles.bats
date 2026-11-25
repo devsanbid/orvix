@@ -5,14 +5,14 @@
 load helpers
 
 setup() {
-    lyne_setup
-    export LYNE_PP_BUS_NAMES="" LYNE_PP_COMMANDS="" LYNE_PP_POWER_SUPPLY="$BATS_TEST_TMPDIR/power_supply"
-    mkdir -p "$LYNE_PP_POWER_SUPPLY/AC"
+    orvix_setup
+    export ORVIX_PP_BUS_NAMES="" ORVIX_PP_COMMANDS="" ORVIX_PP_POWER_SUPPLY="$BATS_TEST_TMPDIR/power_supply"
+    mkdir -p "$ORVIX_PP_POWER_SUPPLY/AC"
 }
 
-on_bus() { export LYNE_PP_BUS_NAMES=$'org.freedesktop.DBus\norg.freedesktop.UPower.PowerProfiles'; }
-battery() { mkdir -p "$LYNE_PP_POWER_SUPPLY/BAT0"; }
-pp() { in_lyne power-profiles -- "$1"; }
+on_bus() { export ORVIX_PP_BUS_NAMES=$'org.freedesktop.DBus\norg.freedesktop.UPower.PowerProfiles'; }
+battery() { mkdir -p "$ORVIX_PP_POWER_SUPPLY/BAT0"; }
+pp() { in_orvix power-profiles -- "$1"; }
 
 @test "state: missing, ok, stopped, unknown daemon on the bus" {
     run pp pp_state
@@ -49,11 +49,11 @@ pp() { in_lyne power-profiles -- "$1"; }
     assert_output "ok power-profiles-daemon tlp"
     : >"$FAKE_PKGS"
     pkgs tlp tuned
-    export LYNE_PP_BUS_NAMES=""
+    export ORVIX_PP_BUS_NAMES=""
     run pp pp_state
     assert_output "conflict tlp+tuned"
     : >"$FAKE_PKGS"
-    export LYNE_PP_COMMANDS="auto-cpufreq"
+    export ORVIX_PP_COMMANDS="auto-cpufreq"
     run pp pp_state
     assert_output "conflict auto-cpufreq"
     pkgs power-profiles-daemon
@@ -89,11 +89,11 @@ pp() { in_lyne power-profiles -- "$1"; }
 }
 
 @test "install: blocked by auto-cpufreq or by TLP with TuneD" {
-    export LYNE_PP_COMMANDS="auto-cpufreq"
+    export ORVIX_PP_COMMANDS="auto-cpufreq"
     run pp pp_install
     assert_failure
     assert_output --partial "auto-cpufreq --remove"
-    export LYNE_PP_COMMANDS=""
+    export ORVIX_PP_COMMANDS=""
     pkgs tlp tuned
     run pp pp_install
     assert_failure
@@ -113,7 +113,7 @@ pp() { in_lyne power-profiles -- "$1"; }
     on_bus
     run pp pp_auto_install
     assert_output --partial "Another daemon already serves power profiles"
-    export LYNE_PP_BUS_NAMES=""
+    export ORVIX_PP_BUS_NAMES=""
     run grep -c sudo "$STUB_LOG"
     assert_output 0
     run pp pp_auto_install

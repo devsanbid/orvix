@@ -459,7 +459,7 @@ Scope {
             COPIED: I18n.tr("Screenshot copied"),
             NOT_SAVED: I18n.tr("not saved to a file")
         };
-        const env = Object.keys(texts).map(k => "LYNE_T_" + k + "=" + texts[k]);
+        const env = Object.keys(texts).map(k => "ORVIX_T_" + k + "=" + texts[k]);
         Quickshell.execDetached(["env", ...env, root.finishScript, action, sourcePath, geometry, Config.screenshotFolder, Config.screenshotFilename, ...tempFiles]);
     }
 

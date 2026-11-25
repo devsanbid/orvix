@@ -8,7 +8,7 @@ import qs.services
 import "../rows/"
 import "../../../components/"
 
-// The icon theme (IconService; also `lyne icons`)
+// The icon theme (IconService; also `orvix icons`)
 ColumnLayout {
     spacing: Config.spacing * 3
 

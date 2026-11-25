@@ -5,7 +5,7 @@
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     SCRIPT="$REPO/quickshell/.config/quickshell/scripts/wallpapers-add.sh"
     LIBRARY="$HOME/.local/wallpapers"
     SRC="$BATS_TEST_TMPDIR/src"
@@ -135,12 +135,12 @@ added:$LIBRARY/a-3.jpg"
     img "$SRC/big.mkv" 3840x2160
     run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC/big.mkv"
     assert_success
-    poster="$(ls "$HOME/.cache/lyne/wallpaper-posters/"*.jpg)"
+    poster="$(ls "$HOME/.cache/orvix/wallpaper-posters/"*.jpg)"
     assert_output "$(printf 'fitting:%s\t%s\nprogress:%s\t25\nprogress:%s\t99\nadded:%s' \
         "$LIBRARY/big.mp4" "$poster" "$LIBRARY/big.mp4" "$LIBRARY/big.mp4" "$LIBRARY/big.mp4")"
     read -r _ size tag <"$LIBRARY/big.mp4"
     assert_equal "$size" 1920x1080
-    assert_equal "$tag" "lyne-source:$(sha1sum "$SRC/big.mkv" | cut -d' ' -f1)"
+    assert_equal "$tag" "orvix-source:$(sha1sum "$SRC/big.mkv" | cut -d' ' -f1)"
     # The source as it was, no temporary file left
     assert_equal "$(cat "$SRC/big.mkv")" 3840x2160
     assert_equal "$(ls -A "$LIBRARY")" big.mp4
@@ -153,7 +153,7 @@ added:$LIBRARY/a-3.jpg"
     img "$SRC/a.mp4" 3840x2160
     img "$SRC/b.mp4" "3840x2160 b"
     echo "$LIBRARY/a.mp4" >"$BATS_TEST_TMPDIR/cancel"
-    LYNE_ADD_CANCEL="$BATS_TEST_TMPDIR/cancel" run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC"
+    ORVIX_ADD_CANCEL="$BATS_TEST_TMPDIR/cancel" run "$SCRIPT" --fit 1920x1080 "$LIBRARY" "$SRC"
     assert_success
     assert_line "cancelled:$LIBRARY/a.mp4"
     assert_line "added:$LIBRARY/b.mp4"

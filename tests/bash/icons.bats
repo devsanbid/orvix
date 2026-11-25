@@ -1,14 +1,14 @@
 #!/usr/bin/env bats
-# lib/icons.sh and `lyne icons`: icon themes in fake icon directories
+# lib/icons.sh and `orvix icons`: icon themes in fake icon directories
 
 load helpers
 
 setup() {
-    lyne_setup
+    orvix_setup
     USER_ICONS="$HOME/.local/share/icons"
     SYSTEM_ICONS="$BATS_TEST_TMPDIR/usr/share/icons"
-    export LYNE_ICON_DIRS="$USER_ICONS:$HOME/.icons:$SYSTEM_ICONS"
-    export LYNE_ICONS_NOTIFY_DELAY=0
+    export ORVIX_ICON_DIRS="$USER_ICONS:$HOME/.icons:$SYSTEM_ICONS"
+    export ORVIX_ICONS_NOTIFY_DELAY=0
     icons "$USER_ICONS/Tela-blue" name="Tela blue"
     icons "$USER_ICONS/Tela-blue-dark" name="Tela blue dark"
     icons "$USER_ICONS/Tela-blue-light" name="Tela blue light"
@@ -47,8 +47,8 @@ icons() {
     } >"$dir/index.theme"
 }
 
-lib() { in_lyne icons -- "$1"; }
-lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
+lib() { in_orvix icons -- "$1"; }
+orvix() { "$REPO/local/.local/bin/orvix" "$@"; }
 
 @test "themes: families of icon themes by name; cursor-only, hidden and fallback themes left out" {
     icons "$SYSTEM_ICONS/Papirus" name=Papirus
@@ -90,9 +90,9 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
 }
 
 @test "themes: missing icon directories and none at all" {
-    LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope:$SYSTEM_ICONS" run lib 'icons_themes | cut -f1'
+    ORVIX_ICON_DIRS="$BATS_TEST_TMPDIR/nope:$SYSTEM_ICONS" run lib 'icons_themes | cut -f1'
     assert_output breeze
-    LYNE_ICON_DIRS="$BATS_TEST_TMPDIR/nope" run lib 'icons_themes; icons_json'
+    ORVIX_ICON_DIRS="$BATS_TEST_TMPDIR/nope" run lib 'icons_themes; icons_json'
     assert_success
     assert_output "[]"
 }
@@ -128,7 +128,7 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     printf '[Appearance]\ncolor_scheme_path=x\nicon_theme=Tela-blue-dark\nstyle=Breeze\n\n[Fonts]\nicon_theme=not-this\n' >"$cfg/qt6ct/qt6ct.conf"
     # Without the key, and without the section
     printf '[Appearance]\nstyle=Fusion\n[Fonts]\nfixed=x\n' >"$cfg/qt5ct/qt5ct.conf"
-    printf '[General]\nColorScheme=Lyne\n' >"$cfg/kdeglobals"
+    printf '[General]\nColorScheme=Orvix\n' >"$cfg/kdeglobals"
     printf '[Settings]\ngtk-theme-name=adw-gtk3\ngtk-icon-theme-name=Tela-blue-dark\n' >"$cfg/gtk-3.0/settings.ini"
     run lib 'icons_apply breeze-dark'
     assert_success
@@ -140,7 +140,7 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     run cat "$cfg/qt5ct/qt5ct.conf"
     assert_output "$(printf '[Appearance]\nstyle=Fusion\nicon_theme=breeze-dark\n[Fonts]\nfixed=x')"
     run cat "$cfg/kdeglobals"
-    assert_output "$(printf '[General]\nColorScheme=Lyne\n\n[Icons]\nTheme=breeze-dark')"
+    assert_output "$(printf '[General]\nColorScheme=Orvix\n\n[Icons]\nTheme=breeze-dark')"
     run cat "$cfg/gtk-3.0/settings.ini"
     assert_output "$(printf '[Settings]\ngtk-theme-name=adw-gtk3\ngtk-icon-theme-name=breeze-dark')"
     # No settings.ini for GTK 4: none made
@@ -180,7 +180,7 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     run stat -c %a "$dots/qt6ct/qt6ct.conf"
     assert_output 600
     run ls -A "$dots/qt6ct" "$dots/kde"
-    refute_output --partial ".lyne"
+    refute_output --partial ".orvix"
 }
 
 @test "apply: an unknown theme changes nothing" {
@@ -204,11 +204,11 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     assert_output "dbus-send --session --type=signal /KIconLoader org.kde.KIconLoader.iconChanged int32:0"
 }
 
-@test "lyne icons set: the family saved (also from a variant id), its variant applied; unknown themes saved nowhere" {
+@test "orvix icons set: the family saved (also from a variant id), its variant applied; unknown themes saved nowhere" {
     fake_dots
     mkdir -p "$HOME/.config/qt6ct"
     printf '[Appearance]\nicon_theme=x\n' >"$HOME/.config/qt6ct/qt6ct.conf"
-    run lyne icons set breeze-dark
+    run orvix icons set breeze-dark
     assert_success
     assert_output "Icons: breeze (breeze-dark)"
     run jq -c .icons "$STATE"
@@ -218,48 +218,48 @@ lyne() { "$REPO/local/.local/bin/lyne" "$@"; }
     local _
     for _ in {1..20}; do grep -q dbus-send "$STUB_LOG" && break; sleep 0.1; done
     grep -q "dbus-send .*KIconLoader" "$STUB_LOG"
-    run lyne icons set Nope
+    run orvix icons set Nope
     assert_failure
     assert_output --partial "No icon theme named 'Nope'"
     run jq -c .icons "$STATE"
     assert_output '{"theme":"breeze"}'
 }
 
-@test "lyne icons apply: the saved family's variant for a mode; bad modes refused" {
+@test "orvix icons apply: the saved family's variant for a mode; bad modes refused" {
     fake_dots
     mkdir -p "$HOME/.config/qt6ct"
     printf '[Appearance]\nicon_theme=x\n' >"$HOME/.config/qt6ct/qt6ct.conf"
-    run lyne icons apply light
+    run orvix icons apply light
     assert_success
     grep -qx "icon_theme=Tela-blue-light" "$HOME/.config/qt6ct/qt6ct.conf"
-    run lyne icons apply dark
+    run orvix icons apply dark
     grep -qx "icon_theme=Tela-blue-dark" "$HOME/.config/qt6ct/qt6ct.conf"
-    run lyne icons apply sepia
+    run orvix icons apply sepia
     assert_failure
 }
 
-@test "lyne icons status: the saved theme, else defaults.json; missing ones flagged" {
+@test "orvix icons status: the saved theme, else defaults.json; missing ones flagged" {
     fake_dots
     jq 'del(.icons)' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
-    run lyne icons
+    run orvix icons
     assert_success
     assert_line "Theme: Tela-blue (dark mode: Tela-blue-dark)"
     assert_line --regexp "^  ● Tela-blue +~/.local/share/icons/Tela-blue \(dark and light\)$"
     assert_line --regexp "^  ○ breeze +.*/usr/share/icons/breeze \(dark and light\)$"
     refute_output --partial "not installed"
     jq '.icons = {theme: "Gone"}' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
-    run lyne icons
+    run orvix icons
     assert_line "Theme: Gone"
     assert_line --partial "not installed"
-    run lyne icons apply
+    run orvix icons apply
     assert_failure
-    run lyne icons list
+    run orvix icons list
     assert_line "Tela-blue	Tela blue	~/.local/share/icons/Tela-blue	Tela-blue-dark	Tela-blue-light"
 }
 
-# LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
-PREVIEW_SHELL="${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}"
-preview() { timeout 5 python3 "$PREVIEW_SHELL/scripts/icon-preview.py" "$LYNE_ICON_DIRS" "$@"; }
+# ORVIX_TEST_SHELL: a copy of the shell (to sabotage the script)
+PREVIEW_SHELL="${ORVIX_TEST_SHELL:-$REPO/quickshell/.config/quickshell}"
+preview() { timeout 5 python3 "$PREVIEW_SHELL/scripts/icon-preview.py" "$ORVIX_ICON_DIRS" "$@"; }
 
 # sized DIR INHERITS SUBDIR:TYPE:SIZE[:MIN:MAX[:SCALE]]...: a theme with
 # sized folders
@@ -355,7 +355,7 @@ pack() {
     assert_line "updated Fam"
     [[ ! -e "$USER_ICONS/Fam/old-file" ]]
     run ls -A "$USER_ICONS"
-    refute_output --partial .lyne-install
+    refute_output --partial .orvix-install
 }
 
 @test "install: a theme at the archive's top takes the archive's name; a folder" {
@@ -405,7 +405,7 @@ pack() {
     assert_failure 2
     [[ ! -e "$HOME/.local/index.theme" && ! -e "$HOME/index.theme" ]]
     run ls -A "$USER_ICONS"
-    refute_output --partial .lyne-install
+    refute_output --partial .orvix-install
 }
 
 @test "install: links kept when the icons folder is itself a link" {
@@ -437,20 +437,20 @@ pack() {
     assert_failure 2
 }
 
-@test "lyne icons install/remove: never the theme in use" {
+@test "orvix icons install/remove: never the theme in use" {
     fake_dots
     local src="$BATS_TEST_TMPDIR/src"
     icons "$src/Mine"
     pack "$BATS_TEST_TMPDIR/mine.tar.gz" "$src" Mine
-    run lyne icons install "$BATS_TEST_TMPDIR/mine.tar.gz" "$BATS_TEST_TMPDIR/nope.zip"
+    run orvix icons install "$BATS_TEST_TMPDIR/mine.tar.gz" "$BATS_TEST_TMPDIR/nope.zip"
     assert_failure
     assert_line "installed Mine"
-    lyne icons set Mine
-    run lyne icons remove Mine
+    orvix icons set Mine
+    run orvix icons remove Mine
     assert_failure
     assert_output --partial "in use"
     [[ -d "$USER_ICONS/Mine" ]]
-    run lyne icons remove Tela-blue-dark
+    run orvix icons remove Tela-blue-dark
     assert_success
     assert_output "Removed Tela-blue"
     [[ ! -e "$USER_ICONS/Tela-blue-dark" ]]

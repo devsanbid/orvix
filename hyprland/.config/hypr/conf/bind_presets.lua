@@ -4,7 +4,7 @@
 
 -- Starting keys for moving around, chosen in Settings › Hyprland ›
 -- Keybinds (Navigation keys) or the welcome screen. local/settings.lua
--- (generated) calls lyne_bind_preset(name) from conf/binds.lua, which makes
+-- (generated) calls orvix_bind_preset(name) from conf/binds.lua, which makes
 -- these the default keys of the binds below; the user's own changes are
 -- applied after it, so they stay.
 --   vim     the keys of conf/keybinds.lua: H/J/K/L

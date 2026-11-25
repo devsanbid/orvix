@@ -339,7 +339,7 @@ ClippingRectangle {
             spacing: root.unit * 0.12
 
             Line {
-                spans: [["~/lyne-dots", "color4", true], [" main", "color5"], [" ❯ ", "color2", true], ["ls", "foreground"]]
+                spans: [["~/orvix", "color4", true], [" main", "color5"], [" ❯ ", "color2", true], ["ls", "foreground"]]
             }
 
             Line {
@@ -347,7 +347,7 @@ ClippingRectangle {
             }
 
             Line {
-                spans: [["~/lyne-dots", "color4", true], [" main", "color5"], [" ❯ ", "color2", true], ["git status -s", "foreground"]]
+                spans: [["~/orvix", "color4", true], [" main", "color5"], [" ❯ ", "color2", true], ["git status -s", "foreground"]]
             }
 
             Line {
@@ -367,7 +367,7 @@ ClippingRectangle {
             }
 
             Line {
-                spans: [["~/lyne-dots", "color4", true], [" main", "color5"], [" ❯ ", "color2", true]]
+                spans: [["~/orvix", "color4", true], [" main", "color5"], [" ❯ ", "color2", true]]
 
                 // Block cursor
                 Rectangle {

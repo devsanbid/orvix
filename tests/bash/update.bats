@@ -1,14 +1,14 @@
 #!/usr/bin/env bats
-# lib/channel.sh (where lyne update goes) and lib/managed-files.sh (files the
+# lib/channel.sh (where orvix update goes) and lib/managed-files.sh (files the
 # update puts back), on throwaway git repos: origin.git, a work clone that
 # publishes, and $DOTS_DIR, the user's clone
 
 load helpers
 
 setup() {
-    lyne_setup
-    export LYNE_STATE_FILE="$HOME/state.json"
-    echo '{}' >"$LYNE_STATE_FILE"
+    orvix_setup
+    export ORVIX_STATE_FILE="$HOME/state.json"
+    echo '{}' >"$ORVIX_STATE_FILE"
     ORIGIN="$BATS_TEST_TMPDIR/origin.git"
     WORK="$BATS_TEST_TMPDIR/work"
     git init -q --bare -b main "$ORIGIN"
@@ -27,17 +27,17 @@ publish() {
 user_clone() { git clone -q "$ORIGIN" "$DOTS_DIR" 2>/dev/null; }
 fetch() { git -C "$DOTS_DIR" fetch -q --tags origin; }
 
-resolve() { in_lyne channel -- "channel_resolve ${1:-stable}; echo \"\$CH_FOLLOWS|\$CH_TARGET_NAME|\$CH_LAST_RELEASE|\$CH_BEHIND\""; }
+resolve() { in_orvix channel -- "channel_resolve ${1:-stable}; echo \"\$CH_FOLLOWS|\$CH_TARGET_NAME|\$CH_LAST_RELEASE|\$CH_BEHIND\""; }
 
 @test "channel_get: argument, then update.channel, then stable" {
-    run in_lyne channel -- 'channel_get latest'
+    run in_orvix channel -- 'channel_get latest'
     assert_output latest
-    run in_lyne channel -- 'channel_get'
+    run in_orvix channel -- 'channel_get'
     assert_output stable
-    echo '{"update": {"channel": "latest"}}' >"$LYNE_STATE_FILE"
-    run in_lyne channel -- 'channel_get'
+    echo '{"update": {"channel": "latest"}}' >"$ORVIX_STATE_FILE"
+    run in_orvix channel -- 'channel_get'
     assert_output latest
-    run in_lyne channel -- 'channel_get nightly'
+    run in_orvix channel -- 'channel_get nightly'
     assert_failure
     assert_output --partial "unknown channel 'nightly'"
 }
@@ -88,17 +88,17 @@ resolve() { in_lyne channel -- "channel_resolve ${1:-stable}; echo \"\$CH_FOLLOW
 @test "version: the last release, +N past it, nothing before the first" {
     publish one
     user_clone
-    run in_lyne channel -- 'channel_version'
+    run in_orvix channel -- 'channel_version'
     assert_output ""
     publish two v1.0.0
     publish three
     publish four
     fetch
     git -C "$DOTS_DIR" merge -q --ff-only origin/main
-    run in_lyne channel -- 'channel_version'
+    run in_orvix channel -- 'channel_version'
     assert_output "v1.0.0+2"
     git -C "$DOTS_DIR" checkout -q v1.0.0 2>/dev/null
-    run in_lyne channel -- 'channel_version'
+    run in_orvix channel -- 'channel_version'
     assert_output "v1.0.0"
 }
 
@@ -108,11 +108,11 @@ resolve() { in_lyne channel -- "channel_resolve ${1:-stable}; echo \"\$CH_FOLLOW
     publish three v1.2.0-rc1
     publish four v1.2.0 "Third"
     user_clone
-    run in_lyne channel -- 'channel_notes_json v1.0.0'
+    run in_orvix channel -- 'channel_notes_json v1.0.0'
     assert_success
     run jq -c '[.[] | [.version, .notes]]' <<<"$output"
     assert_output '[["v1.2.0","Third"],["v1.1.0","Second\n\n- a fix"]]'
-    run in_lyne channel -- 'channel_notes_json | jq length'
+    run in_orvix channel -- 'channel_notes_json | jq length'
     assert_output 3
 }
 
@@ -132,17 +132,17 @@ QT=theming/.config/qt6ct/qt6ct.conf
 @test "managed files don't count as uncommitted changes" {
     managed_repo
     echo '{"lazy": "mine"}' >"$DOTS_DIR/$LOCK"
-    run in_lyne managed-files -- 'git -C "$DOTS_DIR" status --porcelain -- . "${MANAGED_EXCLUDES[@]}"'
+    run in_orvix managed-files -- 'git -C "$DOTS_DIR" status --porcelain -- . "${MANAGED_EXCLUDES[@]}"'
     assert_output ""
     echo x >"$DOTS_DIR/history"
-    run in_lyne managed-files -- 'git -C "$DOTS_DIR" status --porcelain -- . "${MANAGED_EXCLUDES[@]}"'
+    run in_orvix managed-files -- 'git -C "$DOTS_DIR" status --porcelain -- . "${MANAGED_EXCLUDES[@]}"'
     assert_output " M history"
 }
 
 # update [MANAGED_FILES_LIB]: saves, pulls origin/main (fast-forward) and
-# restores, like lyne update (with the installed version's managed-files.sh)
+# restores, like orvix update (with the installed version's managed-files.sh)
 update() {
-    MANAGED_LIB="${1:-$LIB/managed-files.sh}" in_lyne -- '
+    MANAGED_LIB="${1:-$LIB/managed-files.sh}" in_orvix -- '
         source "$MANAGED_LIB"
         old=$(git -C "$DOTS_DIR" rev-parse HEAD)
         managed_save || exit 1
@@ -170,9 +170,9 @@ update() {
     publish "new pins"
     run update
     assert_success
-    assert_output --partial "$LOCK: the update brings a new version, yours is in $HOME/.local/share/lyne/backup/lazy-lock.json."
+    assert_output --partial "$LOCK: the update brings a new version, yours is in $HOME/.local/share/orvix/backup/lazy-lock.json."
     assert_equal "$(cat "$DOTS_DIR/$LOCK")" '{"lazy": "v2"}'
-    assert_equal "$(cat "$HOME"/.local/share/lyne/backup/lazy-lock.json.*)" '{"lazy": "mine"}'
+    assert_equal "$(cat "$HOME"/.local/share/orvix/backup/lazy-lock.json.*)" '{"lazy": "mine"}'
 }
 
 # The config files leave git (config-defaults.sh): the version installed
@@ -199,8 +199,8 @@ update() {
     assert_success
     assert_equal "$(tail -1 "$DOTS_DIR/$KDE")" 'Theme=Papirus-Dark'
     refute [ -e "$DOTS_DIR/$QT" ]
-    # What lyne update (and migration 046) does next
-    run in_lyne config-defaults -- "CONFIG_DEFAULT_FILES=($KDE $QT); config_defaults_seed"
+    # What orvix update (and migration 046) does next
+    run in_orvix config-defaults -- "CONFIG_DEFAULT_FILES=($KDE $QT); config_defaults_seed"
     assert_output "created $QT"
     cmp "$WORK/$QT" "$DOTS_DIR/$QT"
     assert_equal "$(tail -1 "$DOTS_DIR/$KDE")" 'Theme=Papirus-Dark'
@@ -212,6 +212,6 @@ update() {
 
 @test "update: unchanged managed files aren't copied around" {
     managed_repo
-    run in_lyne managed-files -- 'managed_save; echo "saved=${#MANAGED_SAVED[@]} dir=$MANAGED_SAVE_DIR"'
+    run in_orvix managed-files -- 'managed_save; echo "saved=${#MANAGED_SAVED[@]} dir=$MANAGED_SAVE_DIR"'
     assert_output "saved=0 dir="
 }

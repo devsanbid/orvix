@@ -339,7 +339,7 @@ PanelWindow {
                     visible: !empty.searching && empty.filter === "theme"
                     enabled: WallpaperService.generatingFor === ""
                     icon: "\u{f0674}"
-                    text: empty.generating ? I18n.tr("Generating…") : I18n.tr("Generate lyne-dots wallpaper")
+                    text: empty.generating ? I18n.tr("Generating…") : I18n.tr("Generate orvix wallpaper")
                     onClicked: WallpaperService.generateThemeWallpapers(WallpaperPickerService.themeName)
                 }
 

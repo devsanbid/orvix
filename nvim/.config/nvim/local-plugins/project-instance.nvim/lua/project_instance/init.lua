@@ -1,6 +1,6 @@
 -- One Neovim per project. The first Neovim opened in a project listens on a
--- socket named after the project's folder ($XDG_RUNTIME_DIR/lyne-nvim/), so
--- whoever wants to open a file of that project (another Neovim, lyne nvim
+-- socket named after the project's folder ($XDG_RUNTIME_DIR/orvix-nvim/), so
+-- whoever wants to open a file of that project (another Neovim, orvix nvim
 -- open, Godot) finds it there. The folder comes from the first file given
 -- (or the current one): the nearest folder upwards holding project.godot, a
 -- *.sln, .git or .root (an empty file that makes a folder without git a
@@ -12,8 +12,8 @@
 -- tmux server, the files still go there and that Neovim says so.
 --
 -- Neovims that never take a project's socket (state.skipped says why):
---   solo      LYNE_NVIM_SOLO=1 (tmux's popups set it)
---   headless  no UI (scripts, Mason, tests); LYNE_NVIM_INSTANCE=1 overrides
+--   solo      ORVIX_NVIM_SOLO=1 (tmux's popups set it)
+--   headless  no UI (scripts, Mason, tests); ORVIX_NVIM_INSTANCE=1 overrides
 --   flag      -R, -d, -M, -e, -E, -es, -Es, or - (text from stdin)
 --   waiting   a file someone waits for Neovim to finish: git's (commit
 --             message, rebase todo, anything in .git/) or a temp file
@@ -72,10 +72,10 @@ end
 
 -- Why this Neovim is not a project's, or nil
 function M.skip_reason()
-    if vim.env.LYNE_NVIM_SOLO == "1" then
+    if vim.env.ORVIX_NVIM_SOLO == "1" then
         return "solo"
     end
-    if #vim.api.nvim_list_uis() == 0 and vim.env.LYNE_NVIM_INSTANCE ~= "1" then
+    if #vim.api.nvim_list_uis() == 0 and vim.env.ORVIX_NVIM_INSTANCE ~= "1" then
         return "headless"
     end
     for i = 2, #vim.v.argv do
@@ -148,7 +148,7 @@ function M.socket(root)
     if not base or base == "" then
         base = vim.fn.stdpath("run")
     end
-    return base .. "/lyne-nvim/" .. M.session_name(root) .. "-" .. vim.fn.sha256(root):sub(1, 8) .. ".sock"
+    return base .. "/orvix-nvim/" .. M.session_name(root) .. "-" .. vim.fn.sha256(root):sub(1, 8) .. ".sock"
 end
 
 -- A Neovim answers on SOCKET (a file left by one that was killed doesn't)

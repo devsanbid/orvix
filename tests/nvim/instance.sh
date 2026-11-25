@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # One Neovim per project (local-plugins/project-instance.nvim): the first
 # Neovim opened in a project listens on that project's socket in
-# $XDG_RUNTIME_DIR/lyne-nvim (the sandbox's), found from the first file (the
+# $XDG_RUNTIME_DIR/orvix-nvim (the sandbox's), found from the first file (the
 # nearest folder with project.godot, a *.sln, .git or .root, else the file's
 # folder) or the current folder. One started there later hands its files
 # (and a +N line) to the first and quits; in tmux the client lands on the
 # first's pane, whatever window or session it was in, out of a floating
 # window and back to normal mode. A socket left by a killed Neovim is taken
-# over, and the Neovims that are never a project's (LYNE_NVIM_SOLO, no UI,
+# over, and the Neovims that are never a project's (ORVIX_NVIM_SOLO, no UI,
 # -R/-d/stdin, git's files and temp files, $TMPDIR here) don't touch it. The
 # session name matches config/projects.lua's.
 #
-# The Neovims run headless with LYNE_NVIM_INSTANCE=1 (headless ones are
+# The Neovims run headless with ORVIX_NVIM_INSTANCE=1 (headless ones are
 # skipped otherwise); each one is driven through its own --listen socket.
 #
 # Usage: tests/nvim/instance.sh   (needs nvim and the plugins)
-#   LYNE_TEST_NVIM=<dir>   another copy of nvim/.config/nvim (lib.sh)
-#   LYNE_TEST_ZSHRC=<file> another copy of zsh/.zshrc (its tmux function)
+#   ORVIX_TEST_NVIM=<dir>   another copy of nvim/.config/nvim (lib.sh)
+#   ORVIX_TEST_ZSHRC=<file> another copy of zsh/.zshrc (its tmux function)
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
 
@@ -55,7 +55,7 @@ cat >"$SB/inst.sh" <<EOF
 ctl="\$1"
 shift
 export XDG_CONFIG_HOME="$SB/config" XDG_DATA_HOME="$SB/data" XDG_STATE_HOME="$SB/state" XDG_CACHE_HOME="$SB/cache" XDG_RUNTIME_DIR="$SB/run"
-export LYNE_NVIM_INSTANCE="\${LYNE_NVIM_INSTANCE-1}"
+export ORVIX_NVIM_INSTANCE="\${ORVIX_NVIM_INSTANCE-1}"
 # The sandbox lives in /tmp: its own temp folder, or every file is a temp file
 export TMPDIR="$SB/tmpdir"
 exec nvim --headless --listen "\$ctl" "\$@"
@@ -66,7 +66,7 @@ chmod +x "$SB/inst.sh"
 start() {
     local name="$1" dir="$2"
     shift 2
-    (cd "$dir" && exec env -u TMUX -u LYNE_NVIM_SOLO TMUX_PANE="%$name" "$SB/inst.sh" "$SB/$name.ctl" "$@") \
+    (cd "$dir" && exec env -u TMUX -u ORVIX_NVIM_SOLO TMUX_PANE="%$name" "$SB/inst.sh" "$SB/$name.ctl" "$@") \
         </dev/null >/dev/null 2>&1 &
     PIDS+=($!)
     LAST_PID=$!
@@ -99,10 +99,10 @@ start a "$SB/work/plain" "$P/scripts/enemy/Enemy.txt"
 check "root: the nearest folder with project.godot" "$P" "$(state a root)"
 check "the first Neovim owns the project's socket" 1 "$(state a owner)"
 sock="$(state a socket)"
-check "socket in the runtime folder, named after the session" "$SB/run/lyne-nvim/game-" "${sock%????????.sock}"
+check "socket in the runtime folder, named after the session" "$SB/run/orvix-nvim/game-" "${sock%????????.sock}"
 check "socket listens" yes "$([[ -S "$sock" ]] && echo yes)"
 check "pane recorded" "%a" "$(state a pane)"
-check "socket folder is private" 700 "$(stat -c %a "$SB/run/lyne-nvim")"
+check "socket folder is private" 700 "$(stat -c %a "$SB/run/orvix-nvim")"
 check ":ProjectInstance exists" 2 "$(at a 'exists(":ProjectInstance")')"
 check "info() answers on the socket with the pid" "$(state a root)" \
     "$(nvim --headless --server "$sock" --remote-expr 'luaeval("require(\"project_instance\").info().root")' 2>/dev/null)"
@@ -115,7 +115,7 @@ at a 'luaeval("(function() _G.notes = {} vim.notify = function(m) table.insert(_
 launch() {
     local name="$1" dir="$2"
     shift 2
-    (cd "$dir" && exec env -u TMUX -u LYNE_NVIM_SOLO "$SB/inst.sh" "$SB/$name.ctl" "$@") </dev/null >/dev/null 2>&1 &
+    (cd "$dir" && exec env -u TMUX -u ORVIX_NVIM_SOLO "$SB/inst.sh" "$SB/$name.ctl" "$@") </dev/null >/dev/null 2>&1 &
     LAST_PID=$!
     PIDS+=("$LAST_PID")
 }
@@ -174,22 +174,22 @@ skipped r1 flag "-R" -R scripts/enemy/Enemy.txt
 skipped r2 flag "-d" -d scripts/enemy/Enemy.txt project.godot
 skipped r3 waiting "git's commit message" "$SB/work/repo/.git/COMMIT_EDITMSG"
 skipped r4 waiting "a temp file (\$TMPDIR)" "$SB/tmpdir/zshAbc.zsh"
-skipped r5 waiting "a file in /var/tmp" /var/tmp/lyne-test-none.txt
+skipped r5 waiting "a file in /var/tmp" /var/tmp/orvix-test-none.txt
 check "a skipped Neovim leaves the owner alone" 1 "$(state h owner)"
 
-# Headless without LYNE_NVIM_INSTANCE, and LYNE_NVIM_SOLO=1
-(cd "$P" && exec env -u TMUX LYNE_NVIM_INSTANCE= "$SB/inst.sh" "$SB/s1.ctl") </dev/null >/dev/null 2>&1 &
+# Headless without ORVIX_NVIM_INSTANCE, and ORVIX_NVIM_SOLO=1
+(cd "$P" && exec env -u TMUX ORVIX_NVIM_INSTANCE= "$SB/inst.sh" "$SB/s1.ctl") </dev/null >/dev/null 2>&1 &
 PIDS+=($!)
 _s1() { [[ "$(at s1 1)" == 1 ]]; }
 wait_for 15 _s1 || fail_early "Neovim s1 didn't start"
 check "headless: skipped" headless "$(state s1 skipped)"
-(cd "$P" && exec env -u TMUX LYNE_NVIM_SOLO=1 "$SB/inst.sh" "$SB/s2.ctl") </dev/null >/dev/null 2>&1 &
+(cd "$P" && exec env -u TMUX ORVIX_NVIM_SOLO=1 "$SB/inst.sh" "$SB/s2.ctl") </dev/null >/dev/null 2>&1 &
 PIDS+=($!)
 _s2() { [[ "$(at s2 1)" == 1 ]]; }
 wait_for 15 _s2 || fail_early "Neovim s2 didn't start"
-check "LYNE_NVIM_SOLO=1: skipped" solo "$(state s2 skipped)"
+check "ORVIX_NVIM_SOLO=1: skipped" solo "$(state s2 skipped)"
 
-# A real Neovim with its UI, in a tmux pane (no LYNE_NVIM_INSTANCE), seen
+# A real Neovim with its UI, in a tmux pane (no ORVIX_NVIM_INSTANCE), seen
 # through a client: one typed in another window of its session, or in
 # another session, hands its files over and the client lands on its pane
 SOCK="$SB/tmux.sock"
@@ -202,12 +202,12 @@ printf 'l%s\n' 1 2 3 4 5 6 7 8 9 >"$W/f2.txt"
 cat >"$SB/plain.sh" <<PLAIN
 #!/bin/sh
 export XDG_CONFIG_HOME="$SB/config" XDG_DATA_HOME="$SB/data" XDG_STATE_HOME="$SB/state" XDG_CACHE_HOME="$SB/cache" XDG_RUNTIME_DIR="$SB/run" TMPDIR="$SB/tmpdir"
-unset LYNE_NVIM_SOLO LYNE_NVIM_INSTANCE
+unset ORVIX_NVIM_SOLO ORVIX_NVIM_INSTANCE
 exec nvim "\$@"
 PLAIN
 chmod +x "$SB/plain.sh"
 env -u TMUX TMPDIR="$SB/tmpdir" SHELL=/bin/sh tmux -S "$SOCK" -f /dev/null new-session -d -s t -x 120 -y 30 -c "$W" \
-    "env -u LYNE_NVIM_SOLO -u LYNE_NVIM_INSTANCE $SB/nvim.sh f1.txt"
+    "env -u ORVIX_NVIM_SOLO -u ORVIX_NVIM_INSTANCE $SB/nvim.sh f1.txt"
 PIDS+=("$(T display -p -t t '#{pane_pid}')")
 owner="$(T display -p -t t '#{pane_id}')"
 _tui() { [[ "$(nv 'luaeval("require(\"project_instance\").state.owner and 1 or 0")')" == 1 ]]; }
@@ -285,15 +285,15 @@ sleep 0.5
 T kill-server 2>/dev/null
 kill "$CLIENT_PID" 2>/dev/null
 
-# Every tmux popup that runs Neovim sets LYNE_NVIM_SOLO=1
+# Every tmux popup that runs Neovim sets ORVIX_NVIM_SOLO=1
 popups="$(grep -E '^bind .*display-popup.*nvim' "$REPO/tmux/.tmux.conf")"
 check "tmux's Neovim popups found" 1 "$([[ -n "$popups" ]] && echo 1)"
-check "every Neovim popup sets LYNE_NVIM_SOLO=1" "" "$(grep -v -- '-e LYNE_NVIM_SOLO=1' <<<"$popups")"
+check "every Neovim popup sets ORVIX_NVIM_SOLO=1" "" "$(grep -v -- '-e ORVIX_NVIM_SOLO=1' <<<"$popups")"
 
 # The shell's tmux (zsh/.zshrc) with no arguments in a project: that
 # project's session; anywhere else, with arguments or inside tmux, plain
 # tmux. A stand-in tmux logs what it gets
-ZSHRC="${LYNE_TEST_ZSHRC:-$REPO/zsh/.zshrc}"
+ZSHRC="${ORVIX_TEST_ZSHRC:-$REPO/zsh/.zshrc}"
 tmux_fn="$(sed -n '/^tmux() {/,/^}/p' "$ZSHRC")"
 check "zshrc has its tmux function" 1 "$([[ -n "$tmux_fn" ]] && echo 1)"
 mkdir -p "$SB/fakebin"
@@ -303,7 +303,7 @@ shell_tmux() {
     local dir="$1"
     shift
     : >"$SB/tmux-args.log"
-    (cd "$dir" && env -u TMUX PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" XDG_RUNTIME_DIR="$SB/run" \
+    (cd "$dir" && env -u TMUX PATH="$SB/fakebin:$PATH" ORVIX_DIR="$REPO" XDG_RUNTIME_DIR="$SB/run" \
         TMPDIR="$SB/tmpdir" zsh -fc "$tmux_fn; tmux $*")
     cat "$SB/tmux-args.log"
 }
@@ -311,7 +311,7 @@ check "tmux in a project's subfolder: its session" "ARGS:new-session -A -s game 
 check "tmux in a .root folder's subfolder: its session" "ARGS:new-session -A -s notes -c $SB/work/notes" "$(shell_tmux "$SB/work/notes/a/b")"
 check "tmux outside any project: the session main" "ARGS:new-session -A -s main -c $HOME" "$(shell_tmux "$SB/work/plain/sub")"
 check "tmux with arguments: as given" "ARGS:ls" "$(shell_tmux "$P" ls)"
-check "tmux inside tmux: as given" "ARGS:" "$(cd "$P" && : >"$SB/tmux-args.log" && env TMUX=x PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" zsh -fc "$tmux_fn; tmux" && cat "$SB/tmux-args.log")"
+check "tmux inside tmux: as given" "ARGS:" "$(cd "$P" && : >"$SB/tmux-args.log" && env TMUX=x PATH="$SB/fakebin:$PATH" ORVIX_DIR="$REPO" zsh -fc "$tmux_fn; tmux" && cat "$SB/tmux-args.log")"
 
 # tmn: a new session on purpose, named
 tmn_fn="$(sed -n '/^tmn() {/,/^}/p' "$ZSHRC")"
@@ -353,10 +353,10 @@ check "tmq outside tmux, no name: fails, nothing closed" "1 " "$(shell_tmq "")"
 # tm is the shell's tmux
 tm_fn="$(grep '^tm() ' "$ZSHRC")"
 check "tm outside any project: the session main" "ARGS:new-session -A -s main -c $HOME" \
-    "$(: >"$SB/tmux-args.log"; cd "$SB/work/plain/sub" && env -u TMUX PATH="$SB/fakebin:$PATH" LYNE_DOTS="$REPO" XDG_RUNTIME_DIR="$SB/run" TMPDIR="$SB/tmpdir" zsh -fc "$tmux_fn; $tm_fn; tm"; cat "$SB/tmux-args.log")"
+    "$(: >"$SB/tmux-args.log"; cd "$SB/work/plain/sub" && env -u TMUX PATH="$SB/fakebin:$PATH" ORVIX_DIR="$REPO" XDG_RUNTIME_DIR="$SB/run" TMPDIR="$SB/tmpdir" zsh -fc "$tmux_fn; $tm_fn; tm"; cat "$SB/tmux-args.log")"
 
 # The session name is config/projects.lua's
-names='{"/a/game", "/a/.lyne-dots", "/a/my.app:v2", "/a/...", "/"}'
+names='{"/a/game", "/a/.orvix", "/a/my.app:v2", "/a/...", "/"}'
 check "session names match config/projects.lua" 1 \
     "$(at h "luaeval('(function() for _, d in ipairs($names) do if require(\"project_instance\").session_name(d) ~= require(\"config.projects\").session_name(d) then return 0 end end return 1 end)()')")"
 

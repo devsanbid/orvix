@@ -54,7 +54,7 @@ test("entries: a user file hides the system file; our override keeps the system 
     const user = [
         {
             path: "/home/u/.config/autostart/geoclue.desktop",
-            text: "[Desktop Entry]\nHidden=true\nX-Lyne-Override=true",
+            text: "[Desktop Entry]\nHidden=true\nX-Orvix-Override=true",
         },
         {
             path: "/home/u/.config/autostart/discord.desktop",

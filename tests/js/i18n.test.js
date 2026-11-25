@@ -16,11 +16,11 @@ const {
 const lib = load("services/i18n.js");
 const tool = require("../../tools/i18n.js");
 
-const SHELL = process.env.LYNE_TEST_SHELL || path.resolve(__dirname, "../../quickshell/.config/quickshell");
+const SHELL = process.env.ORVIX_TEST_SHELL || path.resolve(__dirname, "../../quickshell/.config/quickshell");
 
 // A shell with only the given files (and the real services/i18n.js)
 function fakeShell(t, files) {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lyne-i18n-"));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "orvix-i18n-"));
     t.after(() => fs.rmSync(dir, {
         recursive: true,
         force: true
@@ -166,8 +166,8 @@ test("extractor: keybind groups and descriptions from keybinds.lua (not the buil
         ].join("\n"),
         "lua/autostart.lua": "    { name = \"Polkit agent\",      command = \"/usr/lib/polkit\",\n      about = \"Asks for your password\" },"
     });
-    process.env.LYNE_I18N_LUA = path.join(dir, "lua");
-    t.after(() => delete process.env.LYNE_I18N_LUA);
+    process.env.ORVIX_I18N_LUA = path.join(dir, "lua");
+    t.after(() => delete process.env.ORVIX_I18N_LUA);
     const found = tool.extract(dir);
     assert.deepEqual(found.errors, []);
     assert.deepEqual([...found.strings.keys()], ["Apps", "Terminal", "Polkit agent", "Asks for your password"]);

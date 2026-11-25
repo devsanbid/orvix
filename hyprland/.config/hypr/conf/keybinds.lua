@@ -27,23 +27,23 @@ local mainMod = "SUPER"
 -- ==============================================================================
 
 -- The apps are chosen in Settings > System > Apps: local/settings.lua
--- (generated) calls lyne_apps() with their commands. The binds read them
+-- (generated) calls orvix_apps() with their commands. The binds read them
 -- when pressed, so changing an app doesn't need a rebind
-LYNE_APPS = {
+ORVIX_APPS = {
     terminal     = vars.terminal,
     file_manager = vars.fileManager,
     browser      = vars.browser,
 }
 
-function lyne_apps(apps)
+function orvix_apps(apps)
     for key, command in pairs(apps) do
-        LYNE_APPS[key] = command
+        ORVIX_APPS[key] = command
     end
 end
 
 local function open(app)
     return function()
-        local command = LYNE_APPS[app] or ""
+        local command = ORVIX_APPS[app] or ""
         if command ~= "" then
             hl.exec_cmd(command)
         end
@@ -220,7 +220,7 @@ bind("dashboard-system",   "Shell", "Dashboard (System)",   "", hl.dsp.global("q
 bind("dashboard-weather",  "Shell", "Dashboard (Weather)",  "", hl.dsp.global("quickshell:dashboard_weather"))
 -- Notification history (the bell's popup): no keys by default either
 bind("notifications",      "Shell", "Notifications",        "", hl.dsp.global("quickshell:notifications"))
-bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("lyne reload"))
+bind("reload",            "Shell", "Reload Quickshell", mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("orvix reload"))
 
 -- ==============================================================================
 -- KEYBOARD

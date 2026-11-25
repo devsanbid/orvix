@@ -23,14 +23,14 @@ import "i18n.js" as Lib
 //                                          trc one)
 //
 // Arguments to tr/trn/trc/noop must be string literals (the extractor
-// reads them from the source). LYNE_I18N=pseudo shows the pseudo-language
-// (accented, ~40% longer, bracketed), LYNE_I18N=<code> forces a language.
+// reads them from the source). ORVIX_I18N=pseudo shows the pseudo-language
+// (accented, ~40% longer, bracketed), ORVIX_I18N=<code> forces a language.
 Singleton {
     id: root
 
     readonly property string dir: Qt.resolvedUrl("../i18n/").toString().replace("file://", "")
 
-    readonly property string override: Quickshell.env("LYNE_I18N") ?? ""
+    readonly property string override: Quickshell.env("ORVIX_I18N") ?? ""
     readonly property bool pseudo: override === "pseudo"
     // general.language: "auto" (the system's) or a code from `languages`
     readonly property string setting: StateService.get("general.language", "auto")

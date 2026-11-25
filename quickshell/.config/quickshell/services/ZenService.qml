@@ -7,8 +7,8 @@ import Quickshell.Io
 
 // Zen Browser following the shell theme, for Settings › Theme › Zen Browser.
 // ThemeService hands every palette to applyPalette(), which writes
-// ~/.cache/lyne/zen.json and the CSS of the profiles where the theme is on
-// (scripts/zen.sh, from lyne's zen.sh lib; also `lyne zen`). Zen reads it at
+// ~/.cache/orvix/zen.json and the CSS of the profiles where the theme is on
+// (scripts/zen.sh, from orvix's zen.sh lib; also `orvix zen`). Zen reads it at
 // startup, so an open Zen shows changes after a restart. Options in
 // state.json: zen.themeBackground (the theme background over workspace
 // gradients), zen.transparent (the window follows the theme opacity)
@@ -33,7 +33,7 @@ Singleton {
     property var _palette: null
     property bool _pending: false
 
-    // Options changed (Settings, a reset, lyne state): rewrite the CSS. Only
+    // Options changed (Settings, a reset, orvix state): rewrite the CSS. Only
     // the window background uses the opacity, and only when transparent
     onThemeBackgroundChanged: optionsDebounce.restart()
     onTransparentChanged: optionsDebounce.restart()
@@ -70,7 +70,7 @@ Singleton {
     // The options as they are now (state.json is saved a moment later)
     function _env() {
         return {
-            LYNE_ZEN_OPTIONS: JSON.stringify({
+            ORVIX_ZEN_OPTIONS: JSON.stringify({
                 themeBackground: themeBackground,
                 transparent: transparent
             })

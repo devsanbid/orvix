@@ -84,7 +84,7 @@ fi
 # sessions. With arguments, or inside tmux, tmux as it is
 tmux() {
     if (( $# == 0 )) && [[ -z $TMUX ]] && (( $+commands[nvim] )); then
-        local cli="${LYNE_DOTS:-$HOME/.lyne-dots}/nvim/.config/nvim/local-plugins/project-instance.nvim/lua/project_instance/cli.lua"
+        local cli="${ORVIX_DIR:-$HOME/.orvix}/nvim/.config/nvim/local-plugins/project-instance.nvim/lua/project_instance/cli.lua"
         local root session socket alive found
         if [[ -f $cli ]] && IFS=$'\t' read -r root session socket alive found < <(nvim --clean --headless -l "$cli" locate 2>/dev/null) && [[ $found == 1 ]]; then
             command tmux new-session -A -s "$session" -c "$root"

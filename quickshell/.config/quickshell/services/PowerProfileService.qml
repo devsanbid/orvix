@@ -10,7 +10,7 @@ import "powerRules.js" as Rules
 
 // Power profiles (power saver, balanced, performance) through Quickshell's
 // PowerProfiles, served by power-profiles-daemon, tuned-ppd or tlp-pd.
-// scripts/power-profiles.sh (lyne's power-profiles.sh lib) says which daemon
+// scripts/power-profiles.sh (orvix's power-profiles.sh lib) says which daemon
 // is there or what installing one takes. PowerProfiles tries to start the
 // daemon once, when first read, and keeps that answer until Quickshell
 // restarts (its singleton outlives reloads), so it's only read once the

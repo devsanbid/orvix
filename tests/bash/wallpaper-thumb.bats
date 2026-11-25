@@ -6,11 +6,11 @@ load helpers
 bats_require_minimum_version 1.5.0
 
 setup() {
-    lyne_setup
-    # LYNE_TEST_SHELL: a copy of the shell (to sabotage the script)
-    SCRIPT="${LYNE_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-thumb.sh"
+    orvix_setup
+    # ORVIX_TEST_SHELL: a copy of the shell (to sabotage the script)
+    SCRIPT="${ORVIX_TEST_SHELL:-$REPO/quickshell/.config/quickshell}/scripts/wallpaper-thumb.sh"
     DIR="$HOME/.local/wallpapers"
-    CACHE="$HOME/.cache/lyne/wallpaper-thumbs"
+    CACHE="$HOME/.cache/orvix/wallpaper-thumbs"
     mkdir -p "$DIR" "$BATS_TEST_TMPDIR/bin"
     IMG="$DIR/a.jpg"
     VID="$DIR/clip.mp4"
@@ -68,7 +68,7 @@ thumb_of() {
     run "$SCRIPT" 640x360 "$VID"
     assert_success
     poster="$(sed -n 's/^ffmpeg \(.*\) scale=.*/\1/p' "$STUB_LOG")"
-    [[ "$poster" == "$HOME/.cache/lyne/wallpaper-posters/"*.jpg ]]
+    [[ "$poster" == "$HOME/.cache/orvix/wallpaper-posters/"*.jpg ]]
     assert_equal "$(head -1 "$STUB_LOG")" "ffmpeg $VID poster"
     assert_equal "$(wc -l <"$STUB_LOG")" 2
 }
@@ -101,7 +101,7 @@ thumb_of() {
 }
 
 @test "cache: files unused for a month go, the ones in use stay" {
-    POSTERS="$HOME/.cache/lyne/wallpaper-posters"
+    POSTERS="$HOME/.cache/orvix/wallpaper-posters"
     keep="$(thumb_of 320x180 "$IMG")"
     keep_poster="$("${SCRIPT%/*}/wallpaper-poster.sh" "$VID")"
     mkdir -p "$CACHE" "$POSTERS"
@@ -111,7 +111,7 @@ thumb_of() {
     printf 'new' >"$CACHE/recent.jpg"
     touch -d '40 days ago' "$keep" "$keep_poster" "$CACHE/gone.jpg" "$POSTERS/gone.jpg" "$CACHE/.half.123.jpg"
     touch -d '10 days ago' "$CACHE/recent.jpg"
-    rm -f "$HOME/.cache/lyne/.wallpaper-cache-pruned"
+    rm -f "$HOME/.cache/orvix/.wallpaper-cache-pruned"
     run "$SCRIPT" 320x180 "$IMG" "$VID"
     assert_success
     # Asked for again: touched before the next prune
@@ -126,7 +126,7 @@ thumb_of() {
 
 @test "cache: pruned once a day" {
     mkdir -p "$CACHE"
-    touch "$HOME/.cache/lyne/.wallpaper-cache-pruned"
+    touch "$HOME/.cache/orvix/.wallpaper-cache-pruned"
     printf 'old' >"$CACHE/gone.jpg"
     touch -d '40 days ago' "$CACHE/gone.jpg"
     run "$SCRIPT" 320x180 "$IMG"

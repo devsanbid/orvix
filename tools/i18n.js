@@ -18,7 +18,7 @@
 //                                            may be left: the tests fail);
 //                                            --list shows each one
 //
-// LYNE_I18N_SHELL points it at another copy of the shell (the tests do).
+// ORVIX_I18N_SHELL points it at another copy of the shell (the tests do).
 // =============================================================================
 
 "use strict";
@@ -28,7 +28,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const REPO = path.resolve(__dirname, "..");
-const SHELL = process.env.LYNE_I18N_SHELL || path.join(REPO, "quickshell/.config/quickshell");
+const SHELL = process.env.ORVIX_I18N_SHELL || path.join(REPO, "quickshell/.config/quickshell");
 
 // Languages that must be fully translated (the tests fail otherwise);
 // others may be partial (English shows for the rest)
@@ -347,7 +347,7 @@ function extract(shell = SHELL) {
 // The Lua files with strings the shell shows (keybinds, the system autostart
 // list), next to the shell in the repo (hyprland/.config/hypr/conf)
 function luaSources(shell) {
-    const dir = process.env.LYNE_I18N_LUA || path.join(shell, "../../../hyprland/.config/hypr/conf");
+    const dir = process.env.ORVIX_I18N_LUA || path.join(shell, "../../../hyprland/.config/hypr/conf");
     return ["keybinds.lua", "autostart.lua"].map(f => path.join(dir, f)).filter(f => fs.existsSync(f));
 }
 

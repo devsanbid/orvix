@@ -5,10 +5,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The icon theme (Settings › Icons; also `lyne icons`). The state keeps a
+// The icon theme (Settings › Icons; also `orvix icons`). The state keeps a
 // family (Tela-blue, Papirus...): its -dark or -light variant follows the
 // shell's theme (ThemeService.isDarkMode), a family without one uses its
-// base theme. scripts/icons.sh (lyne's icons.sh lib) lists the families and
+// base theme. scripts/icons.sh (orvix's icons.sh lib) lists the families and
 // writes the variant to GSettings, qt6ct/qt5ct, kdeglobals and the GTK
 // settings.ini.
 //
@@ -138,7 +138,7 @@ Singleton {
     function fresh(source: string): string {
         if (generation === 0 || !source.startsWith("image://icon/") || source.includes("?"))
             return source;
-        return source + "?path=lyne-icons-" + generation; // i18n-ignore
+        return source + "?path=orvix-icons-" + generation; // i18n-ignore
     }
 
     function apply() {

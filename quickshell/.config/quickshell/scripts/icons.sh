@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Icon themes for IconService (Settings › Icons), from lyne's icons.sh lib.
+# Icon themes for IconService (Settings › Icons), from orvix's icons.sh lib.
 #
 #   icons.sh json            the installed themes (families) as JSON
 #   icons.sh apply <theme>   use that theme (a variant) in GTK, Qt and KDE
@@ -15,7 +15,7 @@ set -uo pipefail
 SELF="$(realpath "${BASH_SOURCE[0]}")"
 DOTS_DIR="$(cd "$(dirname "$SELF")/../../../.." && pwd)"
 
-source "$DOTS_DIR/.data/lyne-cli/lib/icons.sh"
+source "$DOTS_DIR/.data/orvix-cli/lib/icons.sh"
 
 case "${1:-}" in
     json) icons_json ;;

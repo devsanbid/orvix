@@ -5,7 +5,7 @@
 # wallpaper-video.sh fps N
 # =============================================================================
 # Talks to the video wallpaper wallpaper-set.sh started, through mpv's IPC
-# socket ($XDG_RUNTIME_DIR/lyne-wallpaper-video.sock).
+# socket ($XDG_RUNTIME_DIR/orvix-wallpaper-video.sock).
 #
 #   pause       pauses or resumes it (WallpaperService, after videoRules.js).
 #               A player that just started gets up to 3 s to open its socket
@@ -17,7 +17,7 @@
 # Exits 1 when no video wallpaper is playing, 2 on a bad command.
 # =============================================================================
 
-sock="${XDG_RUNTIME_DIR:-/tmp}/lyne-wallpaper-video.sock"
+sock="${XDG_RUNTIME_DIR:-/tmp}/orvix-wallpaper-video.sock"
 
 # Ours among any other mpvpaper: named by its socket
 running() {

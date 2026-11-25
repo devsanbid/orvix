@@ -4,12 +4,12 @@
 # Isolation: Neovim's state and cache (shada, sessions, logs) go to a temp
 # folder; its data folder is a link to yours, for the plugins lazy.nvim and
 # Mason installed (nothing new is installed as long as those are there).
-#   LYNE_TEST_NVIM=<dir>   another copy of nvim/.config/nvim
+#   ORVIX_TEST_NVIM=<dir>   another copy of nvim/.config/nvim
 
 # shellcheck disable=SC2034  # REPO, C_* and SB are read by the scripts
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-NVIM_DIR="${LYNE_TEST_NVIM:-$REPO/nvim/.config/nvim}"
+NVIM_DIR="${ORVIX_TEST_NVIM:-$REPO/nvim/.config/nvim}"
 NVIM_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/nvim"
 
 if [[ -t 1 ]]; then
@@ -56,7 +56,7 @@ wait_for() {
 
 # A short temp folder ($SB; tmux's socket may live in it) with the config,
 # data, state, cache and runtime folders (the projects' sockets go to
-# $SB/run/lyne-nvim), and $SB/nvim.sh: Neovim in them, listening
+# $SB/run/orvix-nvim), and $SB/nvim.sh: Neovim in them, listening
 # on $SB/nvim.sock (arguments are passed on)
 nvim_sandbox() {
     SB="$(mktemp -d /tmp/lnv.XXXXXX)" || fail_early "no sandbox"

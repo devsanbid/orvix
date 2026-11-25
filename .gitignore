@@ -26,7 +26,7 @@ hyprland/.config/hypr/workspaces.lua
 
 # Each machine's own (the icon theme, the default terminal, qt6ct and KDE
 # settings): made from .data/config-defaults/ when missing, see
-# .data/lyne-cli/lib/config-defaults.sh
+# .data/orvix-cli/lib/config-defaults.sh
 kde/.config/kdeglobals
 theming/.config/qt6ct/qt6ct.conf
 theming/.config/qt5ct/qt5ct.conf

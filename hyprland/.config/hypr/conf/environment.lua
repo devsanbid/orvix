@@ -25,7 +25,7 @@ hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 -- KDE apps (Dolphin, Kate) ignore qt6ct's palette and read this file.
 -- ThemeService rewrites it in place, so the path stays valid.
-hl.env("KDE_COLOR_SCHEME_PATH", os.getenv("HOME") .. "/.local/share/color-schemes/Lyne.colors")
+hl.env("KDE_COLOR_SCHEME_PATH", os.getenv("HOME") .. "/.local/share/color-schemes/Orvix.colors")
 
 -- --- Cursors ---
 -- XCURSOR_* and HYPRCURSOR_* come from local/settings.lua (Settings › Cursor,

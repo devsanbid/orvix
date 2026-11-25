@@ -27,7 +27,7 @@ Singleton {
     readonly property bool rankByUsage: StateService.get("launcher.rankByUsage", true)
 
     // Persisted app ids. Usage is a list of { id, count, last } (not a map:
-    // lyne's state sync keeps lists whole but drops keys missing from defaults)
+    // orvix's state sync keeps lists whole but drops keys missing from defaults)
     readonly property var favorites: StateService.get("launcher.favorites", [])
     readonly property var hidden: StateService.get("launcher.hidden", [])
     readonly property var usage: StateService.get("launcher.usage", [])
