@@ -34,6 +34,11 @@ ColumnLayout {
             value: OmarchyService.shellRunning ? I18n.tr("Running") : I18n.tr("Not running")
         }
 
+        InfoRow {
+            label: I18n.tr("Shell plugins")
+            value: I18n.tr("%1 installed, not used by Orvix", OmarchyService.pluginCount)
+        }
+
         SettingRow {
             label: I18n.tr("Refresh")
             description: I18n.tr("Read the version, theme and shell state again")

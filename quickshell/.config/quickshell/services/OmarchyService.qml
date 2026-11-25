@@ -25,6 +25,8 @@ Singleton {
     readonly property string versionPath: "/usr/share/omarchy/version"
     readonly property string themesDir: "/usr/share/omarchy/themes"
     readonly property string userThemesDir: home + "/.config/omarchy/themes"
+    readonly property string systemPluginsDir: "/usr/share/omarchy/shell/plugins"
+    readonly property string userPluginsDir: home + "/.config/omarchy/plugins"
 
     // Raw file contents (FileView's text() is a function, so these properties
     // are what the bindings below watch)
@@ -39,9 +41,14 @@ Singleton {
     readonly property string themeId: nameText.trim()
     readonly property string themeName: themeId !== "" ? OmarchyTheme.prettyName(themeId) : ""
     readonly property var themeData: available ? OmarchyTheme.toThemeData(colors, themeName) : null
+    readonly property int pluginCount: plugins.length
 
     // [{ id, name, current }] from the system and user theme folders
     property var themes: []
+    // [{ id, name, source }] — read from the plugin folders, not from the
+    // running Omarchy shell, so it works while only Orvix runs. Informational:
+    // Orvix does not load these plugins
+    property var plugins: []
     property bool shellRunning: false
 
     // Last action run from Settings
@@ -57,6 +64,8 @@ Singleton {
             themesProc.running = true;
         if (!shellProc.running)
             shellProc.running = true;
+        if (!pluginsProc.running)
+            pluginsProc.running = true;
     }
 
     function _setColors(): void {
@@ -146,6 +155,35 @@ Singleton {
                     name: OmarchyTheme.prettyName(id),
                     current: id === current
                 }));
+            }
+        }
+    }
+
+    Process {
+        id: pluginsProc
+        command: ["sh", "-c", `
+            for base in "$1" "$2"; do
+                [ -d "$base" ] || continue
+                if [ "$base" = "$1" ]; then source=omarchy; else source=user; fi
+                for dir in "$base"/*/; do
+                    [ -f "$dir/manifest.json" ] || continue
+                    id=$(basename "$dir")
+                    name=$(jq -r '.name // empty' "$dir/manifest.json" 2>/dev/null || true)
+                    [ -n "$name" ] || name=$id
+                    printf '%s\t%s\t%s\n' "$id" "$source" "$name"
+                done
+            done
+        `, "sh", root.systemPluginsDir, root.userPluginsDir]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.plugins = text.split("\n").map(line => line.trim()).filter(line => line !== "").map(line => {
+                    const parts = line.split("\t");
+                    return {
+                        id: parts[0],
+                        source: parts[1],
+                        name: parts[2] || parts[0]
+                    };
+                });
             }
         }
     }

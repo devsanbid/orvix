@@ -1,6 +1,6 @@
 # Orvix × Omarchy Integration Plan
 
-> Working name: **Orvix** (renamed from Orvix). This file tracks the work to
+> Working name: **Orvix** (formerly Lyne-Dots). This file tracks the work to
 > make Orvix a first-class companion to Omarchy instead of a parallel desktop.
 >
 > Status legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked
@@ -32,92 +32,110 @@
 - [x] Inspect Orvix tree, entry point, services, installer, tests.
 - [x] Inspect installed Omarchy (version, commands, theme internals, plugin API).
 - [x] Confirm official marketplace only accepts `omarchy-shell` plugins → **skip**.
-- [ ] `git init`, baseline commit of the untouched tree.
+- [x] `git init`, baseline commit of the untouched tree (`ee18f0f`).
 - [ ] Add `orvix doctor` / Settings health checks for missing dependencies.
-- [ ] Confirm `install.sh` refuses to run on a non-Arch system with a clear message.
+- [x] `install.sh` checks `/etc/arch-release` and exits with a clear message
+      (static check; not run on a non-Arch machine).
 
-## Phase 1 — Rename Orvix → Orvix (full internal rename)
+## Phase 1 — Rename Lyne-Dots → Orvix (full internal rename)
 
 Chosen by the user: **full internal rename**, with a one-release compatibility
 shim so a live install does not break mid-session.
 
-- [ ] CLI `orvix` → `orvix`; `~/.local/bin/orvix` becomes a deprecated shim.
-- [ ] Env vars `ORVIX_*` → `ORVIX_*` (keep `ORVIX_*` reads as fallback for one release).
-- [ ] Repo dir `~/.orvix` → `~/.orvix` via `orvix migrate`; keep
-      `~/.orvix` as a symlink to the new path.
-- [ ] State keys, runtime JSON filenames (`orvix-keybinds.json`,
-      `orvix-autostart.json`, …) → `orvix-*`, with fallback reads.
-- [ ] QML/JS identifiers, theme IDs (`Orvix.colors` → `Orvix.colors`), Neovim
+- [x] CLI `lyne` → `orvix`; `~/.local/bin/lyne` is now a deprecated shim.
+- [x] Env vars `LYNE_*` → `ORVIX_*` (legacy `LYNE_*` reads kept for one release).
+- [x] Repo dir `~/.lyne-dots` → `~/.orvix`; `~/.lyne-dots` stays a symlink.
+- [x] State keys and runtime JSON filenames (`lyne-keybinds.json`,
+      `lyne-autostart.json`, …) → `orvix-*`, with fallback reads.
+- [x] QML/JS identifiers, theme IDs (`Lyne.colors` → `Orvix.colors`), Neovim
       colorscheme, generated files.
-- [ ] Wallpapers, assets, docs, About page, repo URLs, install URL.
-- [ ] Migration test: run on a copy of the current tree, verify symlinks and
-      `state.json` survive.
-- [ ] Keep `orvix` CLI working for one release; print a deprecation notice.
+- [x] Wallpapers, assets, docs, About page, install URL.
+- [x] Migration (`orvix migrate`) run on the live tree; symlinks, `state.json`
+      and generated files carried over (migrations 050/051).
+- [x] Keep the `lyne` CLI and `lyne_*` Lua globals working for one release,
+      with a deprecation notice.
+
+Compatibility exceptions kept on purpose: the third-party `lyne-sddm`
+theme/package and `LYNE_SDDM_REF`, historical migration filenames, and the
+`lyne-*-contour.jpg` wallpaper asset names.
 
 ## Phase 2 — Omarchy detection & coexistence (P0)
 
-- [ ] `OmarchyService.qml`: detect `/usr/share/omarchy`, `omarchy` binary,
-      version, current theme, whether `omarchy-shell` is running, plugin count.
-- [ ] `orvix doctor` / Settings banner when both shells would run.
-- [ ] Autostart guard: if `omarchy-shell` is running, do not start Orvix's bar
-      and notification overlay (configurable, default = warn only).
+- [x] `OmarchyService.qml`: detects `/usr/share/omarchy`, the version, the
+      current theme, whether `omarchy-shell` is running, and counts the
+      shell plugins (read from the plugin folders, no shell needed).
+- [x] Settings warns when both shells are running (warn only; nothing is
+      stopped automatically).
+- [ ] Autostart guard: an optional switch to skip Orvix's bar when
+      `omarchy-shell` is running (default stays warn only).
 - [ ] Document the two supported setups:
       1. **Orvix as the desktop** (Orvix Hyprland config + Orvix shell).
       2. **Omarchy as the desktop** (Omarchy Hyprland config + Omarchy shell;
          Orvix available on demand).
-- [ ] Never kill `omarchy-shell` automatically.
+- [x] Never kill `omarchy-shell` automatically.
 
 ## Phase 3 — Theme bridge (P1)
 
-- [ ] `OmarchyThemeService.qml`: read `colors.toml`, map to Orvix palette
-      (`background`, `foreground`, `accent`, `color0..15`).
-- [ ] Theme source selector in Settings › Theme:
-      `Orvix presets` · `Omarchy theme` · `Wallpaper (matugen)`.
-- [ ] Watch `~/.local/state/omarchy/current/theme` and live-update the palette.
-- [ ] Optional: mirror Orvix accent back to Omarchy **only** through
-      `omarchy theme set` when the user explicitly picks "Apply to Omarchy".
-- [ ] Respect light/dark from Omarchy (`mode`).
-- [ ] Test with Tokyo Night, Catppuccin, Gruvbox, and a light theme.
+- [x] `OmarchyTheme.js` + `OmarchyService`: read `colors.toml` and map it onto
+      the Orvix palette, terminal colors and Hyprland borders.
+- [x] Theme source selector in Settings › Theme:
+      `Theme` · `Material You` · `Omarchy`.
+- [x] Watch `~/.local/state/omarchy/current/theme` and live-update the palette.
+- [ ] Optional: mirror the Orvix accent back to Omarchy **only** through
+      `omarchy theme set` when the user explicitly asks.
+- [x] Respect light/dark from Omarchy (`mode`).
+- [~] Tested with Tokyo Night and a synthetic light theme in node tests;
+      Catppuccin/Gruvbox and a live switch are still manual checks.
 
 ## Phase 4 — Settings: beginner-friendly Omarchy page (P1)
 
-- [ ] New `Settings › System › Omarchy` page (only shown when detected).
-- [ ] Status card: version, current theme, shell running, plugins, last update.
-- [ ] Actions, each with a plain-language explanation and confirmation:
-      - [ ] Open theme picker (`omarchy theme switcher`).
-      - [ ] Refresh config (`omarchy refresh config`).
+- [x] New `Settings › System › Omarchy` page (only shown when detected).
+- [x] Status card: version, current theme, shell running, plugin count.
+- [x] Actions, each with a plain-language explanation:
+      - [x] Apply a theme from the list (`omarchy theme set <id>`, allowlisted
+            to installed themes).
+      - [x] Refresh config (`omarchy refresh config`).
+      - [ ] Open theme switcher (`omarchy theme switcher`).
       - [ ] Update system (`omarchy update`) — link to Omarchy docs, no silent run.
       - [ ] Open Omarchy menu (`omarchy menu`).
-      - [ ] List plugins (`omarchy plugin list`) read-only.
-- [ ] Inline help text for every action; never auto-run a destructive command.
-- [ ] Add search keywords so the page is findable.
+      - [~] List plugins: count only (Omarchy's own list needs `omarchy-shell`
+            running); read-only.
+- [x] Inline help text for every action; never auto-run a destructive command.
+- [x] Search keywords come from the page labels and description.
 
 ## Phase 5 — Overview redesign (P1)
 
 Current overview: clock + weather | month | player + resources (three columns).
 
-- [ ] New layout focused on "what do I need right now":
-      - [ ] Top: date/time, active workspace, focused window.
-      - [ ] Left: today's agenda (calendar + next event).
-      - [ ] Center: window/workspace switcher preview (Hyprland toplevels).
-      - [ ] Right: now playing + system health (CPU/GPU/RAM/disk/network).
-      - [ ] Bottom: quick actions (launcher, terminal, files, settings, lock).
-- [ ] Responsive: stack to two columns under a width threshold, one column on
-      small screens.
-- [ ] Keyboard-first: arrows move selection, Enter focuses, Esc closes.
-- [ ] Keep the existing tabs (Media, System, Weather) untouched.
-- [ ] Setting to switch between **Classic** and **Focus** overview.
-- [ ] Performance: no polling while closed; reuse existing watchers.
+Shipped in this pass:
+
+- [x] **Focus** layout: the clock across the top, weather and the player below,
+      no calendar (fewer things at a glance); **Classic** keeps the month.
+- [x] Responsive: both layouts stack into one column on narrow screens, and
+      the dashboard panel itself shrinks to fit a small screen.
+- [x] Switch from the button beside the tabs, `Settings › Dashboard › Layout`,
+      or `Ctrl+Shift+O`.
+- [x] Keep the existing tabs (Media, System, Weather) untouched.
+- [x] Performance: no polling while closed; the existing watchers are reused.
+- [ ] Remaining ideas, not done: an agenda row with the next event, a
+      Hyprland workspace/window preview, quick actions in the overview.
+- [ ] Keyboard roving focus between cards (arrows + Enter); only tab and
+      layout shortcuts exist today.
 
 ## Phase 6 — GTK/Qt customization (P2)
 
-- [ ] Settings › Appearance › GTK/Qt page:
-      - [ ] GTK theme, icon theme, cursor, font, color scheme.
-      - [ ] Qt style + color scheme, with a note that Omarchy may own these.
-      - [ ] "Reset to Omarchy defaults" button (reads Omarchy, does not guess).
-- [ ] Apply paths use `gsettings` / `qt6ct` / `kdeglobals` already present in
-      `ThemeService`, wrapped in the existing async helpers.
-- [ ] Live preview without restart where possible.
+- [x] Settings › Appearance › GTK & Qt page:
+      - [x] GTK theme (menu of installed themes), font, light/dark preference.
+      - [x] Icon and cursor themes linked to their existing pages.
+      - [x] Qt color scheme path, with a note that Omarchy does not manage it.
+      - [x] "Use Omarchy's GTK settings" (`omarchy-theme-set-gnome`), no guessing.
+- [x] Apply paths use `gsettings` and the existing `ThemeService` writers,
+      wrapped in the existing async helpers. Every value is an argument, not
+      shell text.
+- [x] Per-part switches in the same page (`theme.applyGtkTheme`,
+      `theme.applyGtkColors`, `theme.applyQtColors`) so the shell theme can
+      stop overriding the desktop's GTK/Qt look.
+- [x] Live: `gsettings` applies at once; no restart.
 
 ## Phase 7 — Installer & docs
 
