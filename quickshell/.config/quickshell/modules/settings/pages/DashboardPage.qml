@@ -67,6 +67,27 @@ ColumnLayout {
     }
 
     SettingsGroup {
+        title: I18n.tr("Overview")
+
+        SelectRow {
+            label: I18n.tr("Layout")
+            description: I18n.tr("Classic keeps the calendar beside the clock; Focus puts the clock first and leaves the calendar out. Ctrl+Shift+O switches them too.")
+            path: "dashboard.overviewLayout"
+            options: [
+                {
+                    label: I18n.tr("Classic"),
+                    icon: "\u{f056e}",
+                    value: "classic"
+                },
+                {
+                    label: I18n.tr("Focus"),
+                    value: "focus"
+                }
+            ]
+        }
+    }
+
+    SettingsGroup {
         title: I18n.tr("Calendar")
 
         SelectRow {

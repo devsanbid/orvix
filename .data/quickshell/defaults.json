@@ -34,7 +34,10 @@
     "theme": {
         "name": "tokyonight",
         "mode": "preset",
-        "scheme": "dark"
+        "scheme": "dark",
+        "applyGtkTheme": true,
+        "applyGtkColors": true,
+        "applyQtColors": true
     },
     "wallpaper": {
         "current": "~/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg",
@@ -131,7 +134,8 @@
         "gif": "",
         "hiddenTabs": [],
         "defaultTab": "overview",
-    "swipeTabs": true,
+        "overviewLayout": "classic",
+        "swipeTabs": true,
         "holidays": "auto"
     },
     "opacity": {

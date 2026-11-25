@@ -47,6 +47,18 @@ Singleton {
 
     // Tab the dashboard opens on: a tab id, or "last" for the one it was on
     readonly property string openOn: StateService.get("dashboard.defaultTab", "overview")
+    // Overview arrangement: "classic" (calendar beside the clock) or "focus"
+    // (clock across the top, no calendar)
+    readonly property string overviewLayout: StateService.get("dashboard.overviewLayout", "classic")
+
+    function setOverviewLayout(layout: string): void {
+        StateService.set("dashboard.overviewLayout", layout === "focus" ? "focus" : "classic");
+    }
+
+    function toggleOverviewLayout(): void {
+        setOverviewLayout(overviewLayout === "focus" ? "classic" : "focus");
+    }
+
     // Dragging the pages sideways (mouse, two fingers on a touchpad) changes tab
     readonly property bool swipeTabs: StateService.get("dashboard.swipeTabs", true)
     readonly property string defaultTab: hasTab(openOn) ? openOn : tabs[0].id

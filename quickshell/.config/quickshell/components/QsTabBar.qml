@@ -68,7 +68,9 @@ Item {
 
                 RowLayout {
                     id: label
+
                     anchors.centerIn: parent
+                    width: Math.min(implicitWidth, tab.width - Config.padding * 2)
                     spacing: Config.padding
 
                     Text {
@@ -86,7 +88,9 @@ Item {
                     }
 
                     Text {
+                        Layout.fillWidth: true
                         text: tab.modelData.label
+                        elide: Text.ElideRight
                         font.family: Config.font
                         font.pixelSize: Config.fontSizeNormal
                         font.bold: tab.current

@@ -13,11 +13,13 @@ QsPopupWindow {
 
     readonly property bool wanted: DashboardService.screen !== "" && DashboardService.screen === (screen?.name ?? "")
 
-    popupWidth: DashboardService.panelWidth
+    // The full panel, unless the screen is narrower than it (small laptops,
+    // portrait monitors): then the cards stack and the panel keeps a margin
+    popupWidth: Math.min(DashboardService.panelWidth, Math.max(Config.fontSizeNormal * 24, (screen?.width ?? DashboardService.panelWidth) - Config.spacing * 4))
     popupMaxHeight: screen ? screen.height - Config.barReservedHeight - Config.spacing * 2 : 900
     anchorSide: "left"
     moduleName: "Dashboard"
-    contentImplicitHeight: tabBar.implicitHeight + Config.spacing + pages.currentHeight
+    contentImplicitHeight: barRow.implicitHeight + Config.spacing + pages.currentHeight
     keyTargets: [keyHandler]
     visible: false
 
@@ -60,13 +62,15 @@ QsPopupWindow {
     }
 
     // Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+PgDown / Ctrl+PgUp switch tabs,
-    // Alt+1… jumps to one
+    // Alt+1… jumps to one, Ctrl+Shift+O switches the Overview layout
     Item {
         id: keyHandler
 
         Keys.onPressed: event => {
             const ctrl = event.modifiers & Qt.ControlModifier;
-            if (ctrl && (event.key === Qt.Key_Tab || event.key === Qt.Key_PageDown)) {
+            if (ctrl && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
+                DashboardService.toggleOverviewLayout();
+            } else if (ctrl && (event.key === Qt.Key_Tab || event.key === Qt.Key_PageDown)) {
                 DashboardService.cycleTab(1);
             } else if (ctrl && (event.key === Qt.Key_Backtab || event.key === Qt.Key_PageUp)) {
                 DashboardService.cycleTab(-1);
@@ -89,13 +93,38 @@ QsPopupWindow {
         columns: 1
         rowSpacing: Config.spacing
 
-        QsTabBar {
-            id: tabBar
+        RowLayout {
+            id: barRow
+
             Layout.row: Config.barOnBottom ? 1 : 0
-            flipped: Config.barOnBottom
-            tabs: DashboardService.tabs
-            currentIndex: DashboardService.tabIndex
-            onSelected: index => DashboardService.tab = DashboardService.tabs[index].id
+            Layout.fillWidth: true
+            spacing: Config.spacing
+
+            QsTabBar {
+                id: tabBar
+                Layout.fillWidth: true
+                flipped: Config.barOnBottom
+                tabs: DashboardService.tabs
+                currentIndex: DashboardService.tabIndex
+                onSelected: index => DashboardService.tab = DashboardService.tabs[index].id
+            }
+
+            // Switches the Overview between Classic and Focus; shown only
+            // there, where it does something
+            ActionButton {
+                id: layoutButton
+
+                visible: DashboardService.tab === "overview"
+                // The label says what the click gives you
+                text: DashboardService.overviewLayout === "focus" ? I18n.tr("Classic") : I18n.tr("Focus")
+                size: Config.fontSizeIcon * 2
+                onClicked: DashboardService.toggleOverviewLayout()
+
+                QsToolTip {
+                    text: I18n.tr("Switch the overview layout (Ctrl+Shift+O)")
+                    shown: layoutButton.hovered
+                }
+            }
         }
 
         Item {
