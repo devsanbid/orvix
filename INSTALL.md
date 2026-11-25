@@ -16,8 +16,8 @@ your old configuration back.
 - **An internet connection.** The full install downloads a few GB of packages.
 - **A backup of your important files**, as with any new desktop. The installer
   backs up every file it replaces, but it cannot back up what it never touches.
-- **Free space:** roughly 4 GB for packages, more if you keep several kernels or
-  a large NVIDIA driver.
+- **Free space:** several GB for packages, more if you keep several kernels or a
+  large NVIDIA driver.
 - **Optional:** an existing Omarchy install. Orvix detects it, mentions it in the
   review screen and never writes under `/usr/share/omarchy`. See
   [Omarchy](#omarchy) below.
