@@ -15,9 +15,11 @@ local HOME = os.getenv("HOME")
 
 -- Quickshell runs with 2 jemalloc arenas: by default every new worker thread
 -- gets an arena that keeps its memory after the thread ends (~70 MB more RSS,
--- same CPU). orvix reload starts it the same way.
+-- same CPU). scripts/shell-launch.sh starts it the same way, and skips it
+-- when Omarchy's shell runs and the guard is on (Settings › System › Omarchy).
+-- orvix reload starts it the same way, without the guard.
 local system = {
-    { name = "Quickshell",        command = "env MALLOC_CONF=narenas:2 quickshell",
+    { name = "Quickshell",        command = HOME .. "/.config/quickshell/scripts/shell-launch.sh",
       about = "Bar, notifications, launcher and this settings window" },
     { name = "Polkit agent",      command = "/usr/lib/polkit-kde-authentication-agent-1",
       about = "Asks for your password when an app needs admin rights" },

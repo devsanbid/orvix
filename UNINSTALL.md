@@ -45,8 +45,8 @@ find ~/.config ~/.local ~/.zshrc ~/.tmux.conf ~/.config/kitty ~/.config/nvim \
 ```
 
 Check the list before removing anything, then repeat the same command with
-`-delete`. `~/.local/bin/orvix` and the `~/.local/bin/lyne` shim are links too;
-remove them with the rest.
+`-delete`. `~/.local/bin/orvix` is a link too; remove it with the rest. (The
+old `~/.local/bin/lyne` shim is gone since migration `052-unlink-lyne`.)
 
 If you log in through the Orvix Hyprland config, switch the session back to your
 previous config (or to Omarchy's) before removing `~/.config/hypr`, otherwise the

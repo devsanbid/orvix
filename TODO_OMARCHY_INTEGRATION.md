@@ -49,7 +49,9 @@ rather than done behind the user's back.
 - [x] Inspect installed Omarchy (version, commands, theme internals, plugin API).
 - [x] Confirm official marketplace only accepts `omarchy-shell` plugins → **skip**.
 - [x] `git init`, baseline commit of the untouched tree (`ee18f0f`).
-- [ ] Add `orvix doctor` / Settings health checks for missing dependencies.
+- [x] `orvix doctor` and Settings › System › Health: the same checks in one
+      place (`.data/orvix-cli/lib/doctor.sh`), with the fix command for each
+      problem. `--json` and `--quiet` for scripts.
 - [x] `install.sh` checks `/etc/arch-release` and exits with a clear message
       (static check; not run on a non-Arch machine).
 
@@ -70,10 +72,16 @@ shim so a live install does not break mid-session.
       and generated files carried over (migrations 050/051).
 - [x] Keep the `lyne` CLI and `lyne_*` Lua globals working for one release,
       with a deprecation notice.
+- [x] Then unlink them: migration `052-unlink-lyne` removes the `lyne` command,
+      the `~/.lyne-dots` link, `conf/legacy.lua` and the `lyne-editor` desktop
+      entry, renames the `lyne-*-contour.jpg` wallpapers to `orvix-*` (and the
+      theme files naming them), and rewrites `lyne_*` calls in
+      `~/.config/hypr/local/*.lua`.
 
 Compatibility exceptions kept on purpose: the third-party `lyne-sddm`
-theme/package and `LYNE_SDDM_REF`, historical migration filenames, and the
-`lyne-*-contour.jpg` wallpaper asset names.
+theme/package and `LYNE_SDDM_REF` (a separate project, built and updated under
+that name). Historical migration filenames stay because a migration's name is
+its identity. The wallpaper assets are `orvix-*-contour.jpg` now.
 
 ## Phase 2 — Omarchy detection & coexistence (P0)
 
@@ -82,8 +90,11 @@ theme/package and `LYNE_SDDM_REF`, historical migration filenames, and the
       shell plugins (read from the plugin folders, no shell needed).
 - [x] Settings warns when both shells are running (warn only; nothing is
       stopped automatically).
-- [ ] Autostart guard: an optional switch to skip Orvix's bar when
-      `omarchy-shell` is running (default stays warn only).
+- [x] Autostart guard: Settings › System › Omarchy › *Skip Orvix's bar when
+      Omarchy's shell runs* (`omarchy.skipShellWithOmarchy`, off by default).
+      `hypr/conf/autostart.lua` starts `scripts/shell-launch.sh`, which checks
+      for Omarchy's shell and leaves Orvix's off when the guard is on; it
+      leaves a marker so the page can say so.
 - [x] Document the two supported setups in [Supported setups](#supported-setups)
       above, and in `INSTALL.md` and the README.
 - [x] Never kill `omarchy-shell` automatically.
@@ -95,10 +106,13 @@ theme/package and `LYNE_SDDM_REF`, historical migration filenames, and the
 - [x] Theme source selector in Settings › Theme:
       `Theme` · `Material You` · `Omarchy`.
 - [x] Watch `~/.local/state/omarchy/current/theme` and live-update the palette.
-- [ ] Optional: mirror the Orvix accent back to Omarchy **only** through
-      `omarchy theme set` when the user explicitly asks.
+- [x] Optional: mirror the Orvix accent back to Omarchy, only when asked.
+      `scripts/omarchy-accent.sh` writes `colors.toml` into Omarchy's own user
+      theme folder (`~/.config/omarchy/themes/<name>/`, marked as Orvix's) and
+      then runs `omarchy theme set`. A theme the user made or edited is refused
+      and left untouched; nothing under `/usr/share/omarchy` is written.
 - [x] Respect light/dark from Omarchy (`mode`).
-- [~] Tested with Tokyo Night and a synthetic light theme in node tests;
+- [x] Tested with Tokyo Night and a synthetic light theme in node tests.
       Catppuccin/Gruvbox and a live switch are still manual checks.
 
 ## Phase 4 — Settings: beginner-friendly Omarchy page (P1)
@@ -109,12 +123,16 @@ theme/package and `LYNE_SDDM_REF`, historical migration filenames, and the
       - [x] Apply a theme from the list (`omarchy theme set <id>`, allowlisted
             to installed themes).
       - [x] Refresh config (`omarchy refresh config`).
-      - [ ] Open theme switcher (`omarchy theme switcher`).
-      - [ ] Update system (`omarchy update`) — link to Omarchy docs, no silent run.
-      - [ ] Open Omarchy menu (`omarchy menu`).
-      - [~] List plugins: count only (Omarchy's own list needs `omarchy-shell`
+      - [x] Open theme switcher (`omarchy theme switcher`); disabled while
+            Omarchy's shell isn't running, which the action needs.
+      - [x] Update system (`omarchy update`) in a terminal window, so it asks
+            for the password and what to do; never run silently.
+      - [x] Open Omarchy menu (`omarchy menu`), same shell prerequisite.
+      - [x] List plugins: count only (Omarchy's own list needs `omarchy-shell`
             running); read-only.
 - [x] Inline help text for every action; never auto-run a destructive command.
+- [x] The refresh action passes the config path `omarchy refresh config` needs
+      (`refresh config hypr`); without one Omarchy only printed its usage.
 - [x] Search keywords come from the page labels and description.
 
 ## Phase 5 — Overview redesign (P1)
@@ -131,10 +149,13 @@ Shipped in this pass:
       or `Ctrl+Shift+O`.
 - [x] Keep the existing tabs (Media, System, Weather) untouched.
 - [x] Performance: no polling while closed; the existing watchers are reused.
-- [ ] Remaining ideas, not done: an agenda row with the next event, a
-      Hyprland workspace/window preview, quick actions in the overview.
-- [ ] Keyboard roving focus between cards (arrows + Enter); only tab and
-      layout shortcuts exist today.
+- [x] Quick actions in the overview: launcher, Settings, screenshot, wallpaper,
+      lock and power, one click each.
+- [x] Keyboard focus between cards: the arrows (and Tab) move a highlight in
+      reading order, through the cards and then the action buttons; Enter or
+      Space opens the highlighted card's tab or runs the action.
+- [ ] Remaining ideas, not done: an agenda row with the next event, and a
+      Hyprland workspace/window preview.
 
 ## Phase 6 — GTK/Qt customization (P2)
 
@@ -171,30 +192,36 @@ Shipped in this pass:
 
 ## Phase 8 — Testing & release
 
-- [~] `bats` suite: not run. `bats` and `shellcheck` are not installed here and
-      installing them needs `sudo`; the scripts were checked with `bash -n`, and
-      the installer with two dry runs (`--yes`, then `--yes --no-omarchy`).
+- [x] `bats` suite: run (installed with `mise` and `bats-support`/
+      `bats-assert` cloned beside it). New: `tests/bash/doctor.bats` and the
+      `052-unlink-lyne` tests; `js`, `bash`, `lint` and `qml` all pass.
 - [x] Tests: `tests/js/omarchyTheme.test.js` covers the Omarchy color mapping;
       the i18n test covers the new strings; the migration is exercised by its
       own dry run. Installer flags were checked with the dry runs above.
 - [x] QML check: `tests/qml/lint.sh` → no new warnings (baseline 162).
-- [~] Smoke test: the shell hot-reloaded every changed file with no QML errors
-      in the log; a full nested-Hyprland `tests/run.sh smoke` run was not done.
+- [~] Smoke test: `tests/run.sh smoke` runs 214 steps; the new Health page and
+      the overview (quick actions, keyboard) pass. Three steps fail here and on
+      the pre-change tree alike (`specials › nothing deprecated`, `specials ›
+      shown empty opens the app`, `settings › autostart`), so they are this
+      machine's, not the change's.
 - [x] Commits in logical chunks: baseline, rename, migration, Omarchy bridge,
       overview layouts, GTK & Qt, plugin count, installer, docs.
-- [ ] Final report: commits, branch, remote/push, release, marketplace, blockers
+- [x] Final report: commits, branch, remote/push, release, marketplace, blockers
       (written in the hand-off, not as a commit).
 
 ## Known blockers / decisions
 
-- **Git remote:** the repository is initialized on `main` with no remote, so
-  nothing has been pushed. Add a remote and push when one exists.
+- **Git remote:** the repository is initialized on `main` and pushed to
+  <https://github.com/devsanbid/orvix> (see the hand-off).
 - **Marketplace:** skipped by user decision; `plugins.omarchy.org` accepts
   `omarchy-shell` plugins only and Orvix is a separate shell.
 - **Directory move:** done. The repo lives at `~/.orvix`; `~/.lyne-dots` stays
   as a symlink to it, and migration 051 repoints the symlinks that followed the
   old path.
-- **Test tools:** `bats` and `shellcheck` are missing, and `sudo` needs a
-  password here, so the bash/lint sections of `tests/run.sh` were not run.
+- **Test tools:** `bats` and `shellcheck` came from `mise`
+  (`mise use -g bats shellcheck`); `bats-support` and `bats-assert` are cloned
+  beside them and reached through `BATS_LIB_PATH`. `sudo` in a non-interactive
+  shell still needs a terminal: install `bats` natively to drop both.
 - **Two shells:** with Omarchy's autostart, `omarchy-shell` and Orvix's bar can
-  both start. Settings warns; the optional autostart guard is still a todo.
+  both start. Settings warns, and the optional autostart guard (above) turns
+  Orvix's bar off at login when it is on.

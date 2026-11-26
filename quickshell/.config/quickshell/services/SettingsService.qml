@@ -234,6 +234,13 @@ Singleton {
             category: "System"
         },
         {
+            id: "health",
+            label: I18n.noop("Health"),
+            icon: "\u{f058}",
+            description: I18n.noop("Checks for Hyprland, Quickshell, the theme, your apps and the tools behind the shortcuts"),
+            category: "System"
+        },
+        {
             id: "profile",
             label: I18n.noop("Profile & Region"),
             icon: "\u{f0009}",
@@ -244,7 +251,7 @@ Singleton {
             id: "omarchy",
             label: I18n.noop("Omarchy"),
             icon: "\u{f0e09}",
-            description: I18n.noop("Omarchy version, current theme, theme list and config refresh"),
+            description: I18n.noop("Omarchy's version and theme, its switcher and menu, the two-shell guard and using Orvix's accent there"),
             category: "System"
         },
         {

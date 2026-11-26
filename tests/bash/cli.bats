@@ -81,6 +81,11 @@ uwsm_env() {
     assert_line "pkill -KILL -x quickshell"
     assert_line "quickshell  MALLOC_CONF=narenas:2"
 
-    run grep -F 'name = "Quickshell",        command = "env MALLOC_CONF=narenas:2 quickshell"' "$REPO/hyprland/.config/hypr/conf/autostart.lua"
+    run grep -F 'command = HOME .. "/.config/quickshell/scripts/shell-launch.sh"' "$REPO/hyprland/.config/hypr/conf/autostart.lua"
+    assert_success
+    # The launcher keeps the arenas, and reads the two-shell guard
+    run grep -F 'MALLOC_CONF=narenas:2 exec quickshell' "$REPO/quickshell/.config/quickshell/scripts/shell-launch.sh"
+    assert_success
+    run grep -F "skipShellWithOmarchy" "$REPO/quickshell/.config/quickshell/scripts/shell-launch.sh"
     assert_success
 }

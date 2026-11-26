@@ -19,9 +19,6 @@ require("conf/keybinds")
 require("conf/specials")
 require("conf/rules")
 
--- Old Lyne names for generated local files (remove after one release)
-require("conf/legacy")
-
 -- Load all local overrides: every .lua file inside the local folder
 -- (settings.lua from Settings, monitors.lua from Settings › Hyprland ›
 -- Monitors...). Only .lua: backups like monitors.lua.bak must not run

@@ -1,15 +1,18 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services
 import "../rows/"
 import "../../../components/"
 
 // Omarchy integration, shown only when Omarchy is installed. Read-only
-// status, the live theme bridge and the two safe actions Orvix offers:
-// apply an Omarchy theme and refresh Omarchy's config. Nothing here writes
-// Omarchy's files directly; the commands do.
+// status, the live theme bridge and the actions Orvix offers, each through
+// one of Omarchy's own commands: apply a theme, open its switcher or menu,
+// update it, mirror Orvix's accent, and the login guard for the two shells.
+// Nothing here writes Omarchy's files directly, and no Omarchy command runs
+// without the user asking.
 ColumnLayout {
     id: root
 
@@ -61,6 +64,25 @@ ColumnLayout {
             label: I18n.tr("Overlap")
             value: I18n.tr("Omarchy's bar and panels overlap Orvix's. Keep one of them.")
         }
+
+        ToggleRow {
+            label: I18n.tr("Skip Orvix's bar at login")
+            description: I18n.tr("While Omarchy's shell is running at login, Orvix's bar stays off. It applies at the next login; nothing is stopped now.")
+            checked: OmarchyService.skipShellWithOmarchy
+            onToggled: value => OmarchyService.setSkipShellWithOmarchy(value)
+        }
+    }
+
+    SettingsGroup {
+        visible: !OmarchyService.shellRunning
+        title: I18n.tr("At login")
+
+        ToggleRow {
+            label: I18n.tr("Skip Orvix's bar when Omarchy's shell runs")
+            description: I18n.tr("One bar at login instead of two. Off by default: Orvix's bar starts, and this page warns if Omarchy's does too.")
+            checked: OmarchyService.skipShellWithOmarchy
+            onToggled: value => OmarchyService.setSkipShellWithOmarchy(value)
+        }
     }
 
     // ================= COLORS =================
@@ -84,6 +106,22 @@ ColumnLayout {
             visible: !OmarchyService.available
             label: I18n.tr("Theme colors")
             value: I18n.tr("Not found at ~/.local/state/omarchy/current/theme/colors.toml")
+        }
+
+        // One direction at a time: Omarchy owns its theme, Orvix asks it to
+        // switch. The accent of the Orvix palette goes over only on request,
+        // through Omarchy's own command
+        SettingRow {
+            label: I18n.tr("Use Orvix's accent in Omarchy")
+            description: OmarchyService.available ? I18n.tr("Writes Orvix's accent color into Omarchy's current theme as a user override, then asks Omarchy to reapply it. A theme you made or edited yourself is left alone.") : I18n.tr("Pick a theme in Omarchy first")
+            enabled: OmarchyService.available && !OmarchyService.actionRunning
+
+            ActionButton {
+                icon: "\u{f0c9e}"
+                text: I18n.tr("Apply")
+                enabled: OmarchyService.available && !OmarchyService.actionRunning
+                onClicked: OmarchyService.applyAccent(ThemeService.palette.accent)
+            }
         }
     }
 
@@ -122,8 +160,45 @@ ColumnLayout {
         title: I18n.tr("Actions")
 
         SettingRow {
-            label: I18n.tr("Refresh Omarchy config")
-            description: I18n.tr("Reloads Omarchy's generated configuration (omarchy refresh config)")
+            label: I18n.tr("Open Omarchy's theme switcher")
+            description: I18n.tr("Omarchy's own theme picker, with previews (omarchy theme switcher). Needs Omarchy's shell running.")
+            enabled: !OmarchyService.actionRunning && OmarchyService.shellRunning
+
+            ActionButton {
+                icon: "\u{f03d8}"
+                text: I18n.tr("Open")
+                enabled: !OmarchyService.actionRunning && OmarchyService.shellRunning
+                onClicked: OmarchyService.openThemeSwitcher()
+            }
+        }
+
+        SettingRow {
+            label: I18n.tr("Open Omarchy's menu")
+            description: I18n.tr("Omarchy's main menu, the one its Super key opens (omarchy menu). Needs Omarchy's shell running.")
+            enabled: !OmarchyService.actionRunning && OmarchyService.shellRunning
+
+            ActionButton {
+                icon: "\u{f035c}"
+                text: I18n.tr("Open")
+                enabled: !OmarchyService.actionRunning && OmarchyService.shellRunning
+                onClicked: OmarchyService.openMenu()
+            }
+        }
+
+        SettingRow {
+            label: I18n.tr("Update Omarchy")
+            description: I18n.tr("Updates Omarchy and the system packages (omarchy update). It asks for your password and what to do, so it runs in a terminal window; nothing runs silently.")
+
+            ActionButton {
+                icon: "\u{f01da}"
+                text: I18n.tr("Open")
+                onClicked: Quickshell.execDetached(["kitty", "--hold", "--", "omarchy", "update"])
+            }
+        }
+
+        SettingRow {
+            label: I18n.tr("Refresh Omarchy's Hyprland config")
+            description: I18n.tr("Copies Omarchy's own Hyprland config over ~/.config/hypr, backing up yours first (omarchy refresh config hypr). Orvix's config is replaced, so use it only to return to Omarchy's desktop.")
             enabled: !OmarchyService.actionRunning
 
             ActionButton {

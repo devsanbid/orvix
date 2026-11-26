@@ -65,6 +65,7 @@ FloatingWindow {
             powerProfiles: powerProfilesPage,
             apps: appsPage,
             autostart: autostartPage,
+            health: healthPage,
             profile: profilePage,
             omarchy: omarchyPage,
             about: aboutPage
@@ -371,6 +372,11 @@ FloatingWindow {
     Component {
         id: autostartPage
         AutostartPage {}
+    }
+
+    Component {
+        id: healthPage
+        HealthPage {}
     }
 
     Component {

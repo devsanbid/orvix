@@ -12,6 +12,26 @@ with the rename.
 
 ### Added
 
+- **`orvix doctor` and Settings › System › Health.** One set of checks (in
+  `.data/orvix-cli/lib/doctor.sh`) for Hyprland and its config, Quickshell, the
+  wallpaper daemon, the polkit agent, the clipboard, the theme files and
+  matugen, your default apps, the tools behind the shortcuts, the update source
+  and Omarchy when it is installed. Each problem shows the command that fixes
+  it; nothing is installed or changed. `--json` and `--quiet` for scripts, and
+  the exit status is 1 when something failed.
+- **Quick actions in the overview.** Launcher, Settings, screenshot, wallpaper,
+  lock and power, one click each, under the cards.
+- **Keyboard focus in the overview.** The arrows and Tab move a highlight
+  through the cards and then the action buttons, in reading order; Enter or
+  Space opens the highlighted card's tab or runs the action.
+- **The two-shell guard.** Settings › System › Omarchy › *Skip Orvix's bar when
+  Omarchy's shell runs* keeps Orvix's shell off at login while Omarchy's is
+  running. Off by default. `conf/autostart.lua` now starts
+  `scripts/shell-launch.sh`, which applies the guard.
+- **Omarchy actions.** Open Omarchy's theme switcher or menu, run its updater in
+  a terminal window, and mirror Orvix's accent into Omarchy's current theme as
+  a user override (`scripts/omarchy-accent.sh`), each through an `omarchy`
+  command. A theme you made or edited yourself is refused and left untouched.
 - **Overview layouts.** The dashboard overview comes in **Classic** (calendar
   beside the clock and weather, player on the right) and **Focus** (clock across
   the top, weather and player below, no calendar). Both stack into one column
@@ -39,6 +59,10 @@ with the rename.
 
 ### Changed
 
+- The theme wallpapers are `orvix-<theme>-contour.jpg` now, and the theme files
+  name them; migration `052-unlink-lyne` renames the copies already in
+  `~/.local/wallpapers`.
+
 - **The project is now Orvix.** Internal rename across the shell, CLI, services,
   environment variables, settings state, Neovim colorscheme, assets, installer,
   migrations and docs. The repository can live anywhere; `~/.orvix` is the
@@ -58,17 +82,25 @@ with the rename.
 - A pre-existing i18n false positive in `ThemeService.qml` (a string that only
   looked translatable) no longer fails the translation check.
 
+### Removed
+
+- **The last Lyne names.** Migration `052-unlink-lyne` removes the
+  `~/.local/bin/lyne` command, the `~/.lyne-dots` link, `conf/legacy.lua` (and
+  its `lyne_*` Lua globals), the `lyne-editor` desktop entry, and the old
+  `~/.cache/lyne`, `~/.local/share/lyne` and `Lyne.colors` files once their
+  Orvix replacements exist. Generated `~/.config/hypr/local/*.lua` that still
+  called `lyne_*` is rewritten to `orvix_*`.
+
 ### Kept for compatibility
 
-- `~/.local/bin/lyne` forwards to `orvix` for one release.
-- `conf/legacy.lua` maps old `lyne_*` Lua globals for one release.
 - `lyne-sddm` keeps its package name (the login-screen theme is built and
-  installed under it), and `LYNE_SDDM_REF` still selects its build.
-- Historic migration file names and the `lyne-*-contour.jpg` wallpaper assets are
-  unchanged, so existing installs and theme files keep working.
+  installed under it), and `LYNE_SDDM_REF` still selects its build. It is a
+  third-party project, not part of Orvix.
+- Historic migration file names are unchanged: a migration's name is its
+  identity in `migrations-done`.
 
 ### Not done
 
-- No release tag, remote or package has been published from this tree.
+- No release tag or package has been published from this tree.
 - No Omarchy Shell marketplace plugin. The official marketplace accepts
   `omarchy-shell` plugins only; Orvix is a separate shell.

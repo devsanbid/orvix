@@ -41,7 +41,7 @@ in_ui() {
     assert_line --index 0 "a b"
     assert_line --index 1 "to"
     # Fitted with the ASCII ellipsis
-    assert_line --index 2 "~/.orvix-d..."
+    assert_line --index 2 "~/.orvix-..."
     assert_equal "${#lines[@]}" 3
 }
 

@@ -51,6 +51,19 @@ Singleton {
     property var plugins: []
     property bool shellRunning: false
 
+    // Settings › System › Omarchy: skip Orvix's shell at login while Omarchy's
+    // runs (hypr/conf/autostart.lua starts scripts/shell-launch.sh, which
+    // reads this). Off by default: the warning stays, nothing is stopped
+    readonly property bool skipShellWithOmarchy: StateService.get("omarchy.skipShellWithOmarchy", false)
+
+    function setSkipShellWithOmarchy(value: bool): void {
+        StateService.set("omarchy.skipShellWithOmarchy", value);
+    }
+
+    // Set by scripts/shell-launch.sh when it skipped Orvix's shell at login
+    readonly property string skippedMarker: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/orvix-shell-skipped"
+    property bool shellSkipped: false
+
     // Last action run from Settings
     property bool actionRunning: false
     property string lastAction: ""
@@ -85,7 +98,28 @@ Singleton {
     }
 
     function refreshConfig(): bool {
-        return run(["omarchy", "refresh", "config"], I18n.tr("Refreshing Omarchy config"));
+        // `omarchy refresh config` needs a config path: without one it only
+        // prints its usage. The shell's own config is the closest to "the
+        // config Orvix replaced", and Omarchy backs up what it finds there
+        return run(["omarchy", "refresh", "config", "hypr"], I18n.tr("Refreshing Omarchy config"));
+    }
+
+    // Opens Omarchy's own theme picker (`omarchy theme switcher`, the
+    // omarchy-theme-switcher window). It needs the Omarchy shell running
+    function openThemeSwitcher(): bool {
+        return run(["omarchy", "theme", "switcher"], I18n.tr("Opening Omarchy's theme switcher"));
+    }
+
+    // Omarchy's menu (omarchy.menu plugin, through omarchy-shell)
+    function openMenu(): bool {
+        return run(["omarchy", "menu"], I18n.tr("Opening Omarchy's menu"));
+    }
+
+    // The other direction, only when asked: Orvix's accent goes into the
+    // active Omarchy theme through Omarchy's own command (scripts/
+    // omarchy-accent.sh explains how; nothing Omarchy owns is edited)
+    function applyAccent(color: string): bool {
+        return run([Quickshell.env("HOME") + "/.config/quickshell/scripts/omarchy-accent.sh", String(color)], I18n.tr("Applying Orvix's accent to Omarchy"));
     }
 
     // Fixed commands only; the arguments come from this file, never from a
@@ -97,7 +131,9 @@ Singleton {
         lastOutput = "";
         lastExit = 0;
         actionRunning = true;
-        actionProc.run(args, { label });
+        actionProc.run(args, {
+            label
+        });
         return true;
     }
 

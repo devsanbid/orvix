@@ -156,23 +156,39 @@ The two supported setups are described in
 ## Coming from Lyne-Dots
 
 The project was called Lyne-Dots before Orvix. An existing install is adopted
-instead of replaced:
+instead of replaced, and the old names are gone once the chain has run:
 
-- Running `orvix update` (or the installer in the new tree) runs migration
-  `051-orvix-rename`: the Neovim palette cache (`~/.cache/lyne` →
-  `~/.cache/orvix`), the KDE color scheme (`Lyne.colors` → `Orvix.colors`) and,
-  when the repo is at the default `~/.lyne-dots`, the repository folder itself
-  (`~/.lyne-dots` → `~/.orvix`) are moved over. The symlinks that pointed into
-  the old folder are repointed, and the old path is left as a symlink so
-  anything still holding it keeps working.
-- `~/.local/bin/lyne` is kept for one release and forwards to `orvix`.
-- Lua globals with the old `lyne_` prefix are mapped by `conf/legacy.lua` for the
-  same release.
+- Migration `051-orvix-rename` moves the Neovim palette cache
+  (`~/.cache/lyne` → `~/.cache/orvix`), the KDE color scheme
+  (`Lyne.colors` → `Orvix.colors`) and, when the repo is at the default
+  `~/.lyne-dots`, the repository folder itself (`~/.lyne-dots` → `~/.orvix`).
+  The symlinks that pointed into the old folder are repointed.
+- Migration `052-unlink-lyne` removes what is left: the `~/.local/bin/lyne`
+  command, the `~/.lyne-dots` link, the `lyne-<theme>-contour.jpg` wallpapers
+  (renamed to `orvix-*`, and the theme files that name them updated), the old
+  caches, the `lyne-editor` desktop entry, and the last `lyne_*` Lua globals in
+  `~/.config/hypr/local/*.lua`.
 - Custom themes, wallpapers, `state.json` and your files in
-  `~/.config/hypr/local/` are not renamed or rewritten.
+  `~/.config/hypr/local/` are not rewritten beyond those names. A theme,
+  a wallpaper or a folder you made yourself stays as you made it.
+- Kept on purpose: the third-party **`lyne-sddm`** login-screen package and its
+  `LYNE_SDDM_REF` build variable. It is a separate project, installed and
+  updated under that name.
 
 If you start from a fresh clone on a machine that was never Lyne, none of this
 runs.
+
+## When something is missing
+
+```bash
+orvix doctor
+```
+
+Checks Hyprland and its config, Quickshell, the wallpaper daemon, the polkit
+agent, the clipboard, the theme files and matugen, your default apps, the tools
+behind the shortcuts (screenshots, OCR, media keys), the update source and, if
+it is installed, Omarchy. Nothing is changed: each problem comes with the
+command that fixes it. The same checks are in **Settings › System › Health**.
 
 ## First login
 

@@ -91,7 +91,7 @@ log() { cat "$DRY"/.cache/orvix/install-*.log; }
     refute grep -qE '^[[:space:]]*hl\.env\("(LIBVA_DRIVER_NAME|__GLX_VENDOR_LIBRARY_NAME)"' "$DRY/.config/hypr/local/extra_environment.lua"
     refute grep -q '^export' "$DRY/.config/uwsm/env.d/global_hardware.sh"
     # Theme wallpapers only in their theme's folder, none in the library root
-    assert [ -f "$DRY/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg" ]
+    assert [ -f "$DRY/.local/wallpapers/themes/tokyonight/orvix-tokyonight-contour.jpg" ]
     refute compgen -G "$DRY/.local/wallpapers/*.jpg"
 }
 

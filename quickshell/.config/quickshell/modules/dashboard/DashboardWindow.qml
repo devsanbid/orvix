@@ -68,6 +68,12 @@ QsPopupWindow {
 
         Keys.onPressed: event => {
             const ctrl = event.modifiers & Qt.ControlModifier;
+            // On the Overview the arrows and Enter belong to its cards (the
+            // highlight moves and Enter opens or runs what it is on)
+            if (!ctrl && DashboardService.tab === "overview" && root.overview && root.overview.handleKey(event.key, event.modifiers)) {
+                event.accepted = true;
+                return;
+            }
             if (ctrl && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
                 DashboardService.toggleOverviewLayout();
             } else if (ctrl && (event.key === Qt.Key_Tab || event.key === Qt.Key_PageDown)) {

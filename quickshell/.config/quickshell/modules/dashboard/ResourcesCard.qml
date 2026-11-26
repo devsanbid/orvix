@@ -24,6 +24,17 @@ Rectangle {
     implicitHeight: row.implicitHeight + Config.padding * 4
     radius: Config.radiusLarge
     color: mouse.containsMouse ? Config.cardHoverColor : Config.cardColor
+    // The overview's keyboard highlight (OverviewTab)
+    property bool focused: false
+    border.width: root.focused ? 2 : 0
+    border.color: Config.accentColor
+
+    Behavior on border.width {
+        enabled: !Config.themeTransitioning
+        NumberAnimation {
+            duration: Config.animDurationShort
+        }
+    }
 
     Behavior on color {
         enabled: !Config.themeTransitioning

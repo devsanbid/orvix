@@ -134,7 +134,7 @@ legacy_home() {
     # The config files kept out of git, from their defaults
     cmp "$REPO/.data/config-defaults/theming/.config/qt6ct/qt6ct.conf" "$DOTS_DIR/theming/.config/qt6ct/qt6ct.conf"
     # Theme on its old default wallpaper moves to the new one
-    assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/lyne-tokyonight-contour.jpg"
+    assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/orvix-tokyonight-contour.jpg"
 }
 
 @test "047: hybrid gpus.lua written again, the session-wide NVIDIA variables commented out" {
@@ -518,3 +518,74 @@ real_stow() {
     assert_line --partial "mpvpaper didn't build: try yay -S mpvpaper later"
 }
 
+
+@test "052: the last Lyne names go: shim, old folder, wallpapers, caches, Lua" {
+    fake_dots
+    local bin="$HOME/.local/bin" cache="$HOME/.cache" share="$HOME/.local/share"
+    mkdir -p "$bin" "$cache/lyne" "$cache/orvix" "$share/lyne" "$share/orvix" \
+        "$share/color-schemes" "$share/applications" "$HOME/.local/themes" \
+        "$HOME/.local/wallpapers/themes/tokyonight" "$HOME/.config/hypr/local"
+    ln -s ../../.orvix/local/.local/bin/lyne "$bin/lyne"
+    ln -s .orvix "$HOME/.lyne-dots"
+    : >"$cache/lyne/nvim.json"
+    : >"$share/orvix/migrations-done"
+    : >"$share/color-schemes/Lyne.colors"
+    : >"$share/color-schemes/Orvix.colors"
+    printf '[Desktop Entry]\nExec=/x/.lyne-dots/y\n' >"$share/applications/lyne-editor.desktop"
+    : >"$HOME/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg"
+    echo '{"wallpaper": "themes/tokyonight/lyne-tokyonight-contour.jpg"}' >"$HOME/.local/themes/tokyonight.json"
+    echo 'lyne_apps({ terminal = "kitty" })' >"$HOME/.config/hypr/local/settings.lua"
+
+    run migrate 052-unlink-lyne.sh
+    assert_success
+    refute [ -e "$bin/lyne" ]
+    refute [ -e "$HOME/.lyne-dots" ]
+    refute [ -e "$cache/lyne" ]
+    refute [ -e "$share/lyne" ]
+    refute [ -e "$share/color-schemes/Lyne.colors" ]
+    refute [ -e "$share/applications/lyne-editor.desktop" ]
+    # The wallpaper and the theme that names it
+    assert [ -f "$HOME/.local/wallpapers/themes/tokyonight/orvix-tokyonight-contour.jpg" ]
+    assert_equal "$(jq -r .wallpaper "$HOME/.local/themes/tokyonight.json")" "themes/tokyonight/orvix-tokyonight-contour.jpg"
+    # Generated Lua calls the new names
+    grep -q '^orvix_apps(' "$HOME/.config/hypr/local/settings.lua"
+    refute grep -q 'lyne_apps' "$HOME/.config/hypr/local/settings.lua"
+}
+
+@test "052: a real ~/.lyne-dots folder and another project's files stay" {
+    fake_dots
+    local bin="$HOME/.local/bin" share="$HOME/.local/share"
+    mkdir -p "$bin" "$HOME/.lyne-dots" "$share/color-schemes" "$share/applications"
+    # Someone's own clone, not the symlink 051 makes
+    ln -s /usr/bin/true "$bin/lyne"
+    : >"$share/color-schemes/Lyne.colors"
+    # Only Lyne.colors: no Orvix one, so nothing is lost
+    run migrate 052-unlink-lyne.sh
+    assert_success
+    assert [ -d "$HOME/.lyne-dots" ]
+    refute [ -e "$bin/lyne" ]
+    assert [ -f "$share/color-schemes/Lyne.colors" ]
+}
+
+@test "052: paths in state.json that name the old folder are repointed" {
+    fake_dots
+    mkdir -p "$HOME/.config/quickshell"
+    echo '{"wallpaper": {"current": "/home/x/.lyne-dots/local/.local/wallpapers/a.jpg", "favorites": ["/home/x/.lyne-dots/b.jpg"]}, "other": "/etc/passwd"}' >"$STATE"
+    run migrate 052-unlink-lyne.sh
+    assert_success
+    assert_equal "$(jq -r .wallpaper.current "$STATE")" "/home/x/.orvix/local/.local/wallpapers/a.jpg"
+    assert_equal "$(jq -r '.wallpaper.favorites[0]' "$STATE")" "/home/x/.orvix/b.jpg"
+    # Only that folder is touched
+    assert_equal "$(jq -r .other "$STATE")" "/etc/passwd"
+}
+
+@test "052: a second run changes nothing" {
+    fake_dots
+    mkdir -p "$HOME/.local/bin" "$HOME/.local/themes"
+    ln -s ../../.orvix/local/.local/bin/lyne "$HOME/.local/bin/lyne"
+    run migrate 052-unlink-lyne.sh
+    assert_success
+    run migrate 052-unlink-lyne.sh
+    assert_success
+    assert_output ""
+}

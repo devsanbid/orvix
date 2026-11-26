@@ -397,7 +397,7 @@ step_wallpaper() {
     fi
     # Fallback to default if .current doesn't exist or points to a missing file
     if [[ -z "$WALLPAPER" || ! -f "$WALLPAPER" ]]; then
-        WALLPAPER="$HOME/.local/wallpapers/themes/tokyonight/lyne-tokyonight-contour.jpg"
+        WALLPAPER="$HOME/.local/wallpapers/themes/tokyonight/orvix-tokyonight-contour.jpg"
     fi
 
     # A video wallpaper plays from the next login (wallpaper-boot.sh); awww

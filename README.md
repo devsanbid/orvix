@@ -21,8 +21,8 @@ that ties it all together. Almost everything is changed from the Settings app;
 nothing important needs a config file.
 
 It started as a local rework of **Lyne-Dots** and keeps its design language;
-the rename to Orvix is carried through the whole tree. If you have an older Lyne
-install, the migrations and the `lyne` command shim move it over; see
+the rename to Orvix is carried through the whole tree. An older Lyne install is
+adopted by the migrations, which also remove the last old names; see
 [INSTALL.md](INSTALL.md#coming-from-lyne-dots).
 
 ## Highlights
@@ -32,7 +32,7 @@ install, the migrations and the `lyne` command shim move it over; see
 <td width="33%" valign="top">
 
 **A Settings app for everything**<br>
-More than 30 pages: appearance, bar, launcher, dashboard, lock screen, monitors, GPUs, workspaces, keybinds, autostart, GTK & Qt. Searchable, applied live.
+More than 30 pages: appearance, bar, launcher, dashboard, lock screen, monitors, GPUs, workspaces, keybinds, autostart, GTK & Qt, a health check for the whole desktop. Searchable, applied live.
 
 </td>
 <td width="33%" valign="top">
@@ -64,7 +64,7 @@ Bar, launcher, Quick Settings, OSD, lock screen and power menu each come in seve
 <td valign="top">
 
 **A guided installer and a CLI**<br>
-Every question first, then an unattended install with a progress bar. `--dry-run`, `--yes` and `--answers` for scripts. `orvix update` pulls, syncs your settings and runs migrations.
+Every question first, then an unattended install with a progress bar. `--dry-run`, `--yes` and `--answers` for scripts. `orvix update` pulls, syncs your settings and runs migrations; `orvix doctor` says what's missing.
 
 </td>
 </tr>
@@ -79,7 +79,7 @@ Every question first, then an unattended install with a progress bar. `--dry-run
 
 | Document | What is in it |
 | --- | --- |
-| [INSTALL.md](INSTALL.md) | Requirements, the installer and its options, Omarchy coexistence, first login, troubleshooting |
+| [INSTALL.md](INSTALL.md) | Requirements, the installer and its options, Omarchy coexistence, `orvix doctor`, first login, troubleshooting |
 | [UNINSTALL.md](UNINSTALL.md) | Removing Orvix, restoring your old files, what is left behind |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, release by release |
 | [TODO_OMARCHY_INTEGRATION.md](TODO_OMARCHY_INTEGRATION.md) | The Omarchy plan and what is done, in progress or blocked |
@@ -156,6 +156,13 @@ good guest on a machine that also has [Omarchy](https://omarchy.org) installed.
   it alone. Changing a theme from Orvix does not edit Omarchy's files.
 - **GTK, through Omarchy's own command.** "Use Omarchy's GTK settings" runs
   `omarchy-theme-set-gnome`; Orvix never writes under `/usr/share/omarchy`.
+- **One bar, if you ask.** Settings › System › Omarchy › *Skip Orvix's bar when
+  Omarchy's shell runs* keeps Orvix's shell off at login while Omarchy's is
+  running. Off by default: both start, and the page says two bars overlap.
+- **Its own commands, not its files.** Apply an Omarchy theme, open its switcher
+  or menu, run its updater in a terminal, and mirror Orvix's accent into its
+  current theme as a user override — every action goes through an `omarchy`
+  command. A theme you made yourself is never rewritten.
 - **No quiet takeovers.** Installing Orvix replaces `~/.config/hypr` with its own
   Hyprland config, so Omarchy's autostart entries and keybinds do not run while
   Orvix's do. The installer says so, Settings warns when both shells are running,
@@ -207,6 +214,7 @@ subcommands.
 | `orvix migrate` | `list`, `run`, `done` for migrations |
 | `orvix link` | Each dotfiles package, linked or not; `orvix link <package>` links one the install left out |
 | `orvix unlink` | Removes a package's links and brings back your files from the backup |
+| `orvix doctor` | Checks Hyprland, Quickshell, the theme, your apps and the shortcut tools; `--json`, `--quiet` |
 | `orvix monitors` | Monitor rules from Settings; revert a trial or reset them |
 | `orvix workspaces` | Each monitor's workspace blocks |
 | `orvix keyboard` | Layouts, options and per-keyboard layouts |
@@ -399,7 +407,7 @@ tests/run.sh         # everything, including the smoke test in a nested Hyprland
 
 The `bash`, `lint` and `smoke` sections need `bats`, `shellcheck`, `tmux` and a
 running Hyprland session; a missing tool fails the section rather than being
-skipped silently.
+skipped silently. `tests/bash/doctor.bats` covers the health checks.
 
 ## Credits
 
