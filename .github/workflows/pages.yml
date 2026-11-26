@@ -1,6 +1,5 @@
 # Publishes bootstrap.sh on GitHub Pages as /install, the short install link:
-#   curl -fsSL https://<your-user>.github.io/orvix/install | \
-#     ORVIX_BOOTSTRAP_REPO=https://github.com/<your-user>/orvix.git bash
+#   curl -fsSL https://devsanbid.github.io/orvix/install | bash
 # Pages is set to deploy from GitHub Actions (Settings › Pages › Source)
 name: pages
 

@@ -9,7 +9,10 @@ One theme follows the bar, terminal, editor, GTK/Qt apps, Hyprland and Zen Brows
 
 <sub>Formerly Lyne-Dots · built to live alongside [Omarchy](#omarchy) without fighting it</sub>
 
-[Install](INSTALL.md) · [Uninstall](UNINSTALL.md) · [Changelog](CHANGELOG.md) · [Omarchy plan](TODO_OMARCHY_INTEGRATION.md) · [License](LICENSE)
+[![tests](https://github.com/devsanbid/orvix/actions/workflows/tests.yml/badge.svg)](https://github.com/devsanbid/orvix/actions/workflows/tests.yml)
+[![license: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+
+[Install](INSTALL.md) · [Uninstall](UNINSTALL.md) · [Changelog](CHANGELOG.md) · [Omarchy plan](TODO_OMARCHY_INTEGRATION.md) · [Contributing](CONTRIBUTING.md) · [License](LICENSE)
 
 </div>
 
@@ -83,6 +86,8 @@ Every question first, then an unattended install with a progress bar. `--dry-run
 | [UNINSTALL.md](UNINSTALL.md) | Removing Orvix, restoring your old files, what is left behind |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, release by release |
 | [TODO_OMARCHY_INTEGRATION.md](TODO_OMARCHY_INTEGRATION.md) | The Omarchy plan and what is done, in progress or blocked |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setting up a clone, what goes where, the rules the code follows, tests |
+| [SECURITY.md](SECURITY.md) | Reporting a vulnerability, and what Orvix already does about it |
 | [.install/README.md](.install/README.md) | How the installer is put together |
 | [LICENSE](LICENSE) | GPL-3.0, with the Lyne-Dots origin |
 
@@ -91,19 +96,17 @@ Every question first, then an unattended install with a progress bar. `--dry-run
 **Requirements:** Arch Linux (or a close derivative), a user with `sudo`, and an
 internet connection. About 4 GB of packages for the full install.
 
-There is no published remote for this copy of Orvix yet, so install from a clone:
-
 ```bash
-git clone <your-orvix-remote> ~/.orvix
+git clone https://github.com/devsanbid/orvix.git ~/.orvix
 cd ~/.orvix
 ./install.sh
 ```
 
-`bootstrap.sh` is the one-line installer for a hosted copy. Point it at a
-repository with `ORVIX_BOOTSTRAP_REPO`:
+`bootstrap.sh` is the one-line installer; it clones the repository and runs the
+installer:
 
 ```bash
-curl -fsSL https://<your-user>.github.io/orvix/install | ORVIX_BOOTSTRAP_REPO=https://github.com/<your-user>/orvix.git bash
+curl -fsSL https://devsanbid.github.io/orvix/install | bash
 ```
 
 The installer asks everything first, then installs without further questions

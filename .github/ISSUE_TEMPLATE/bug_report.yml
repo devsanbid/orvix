@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in Orvix doesn't work as it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. `orvix doctor` answers most of the "why" in one
+        go — please paste it below.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Settings › ...
+        2. Click ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: orvix doctor
+      description: The output of `orvix doctor` (or `orvix doctor --json`).
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Shell log
+      description: |
+        Anything in `quickshell log` around the problem (or the journal, if the
+        shell crashed). A QML error usually names the file and line.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `git -C ~/.orvix log -1 --format='%h %cd'`.
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: GPU, and whether Omarchy is installed on the same machine.
+      placeholder: NVIDIA RTX 3060 · Omarchy 4.0 installed alongside
+    validations:
+      required: false
