@@ -27,6 +27,16 @@ Item {
     readonly property bool hasMenu: isApp || clipEntry !== null
     // Waiting for a second Enter (power actions)
     readonly property bool confirming: !isApp && LauncherService.pendingConfirm === modelData.id
+    // Which group an action belongs to, shown small on the right: Omarchy's
+    // own group ("theme", "install") for its commands, or which of the two
+    // lists it comes from. "" for apps and clipboard entries.
+    readonly property string groupLabel: {
+        if (isApp)
+            return "";
+        if (modelData?.badge)
+            return modelData.badge;
+        return I18n.translate(LauncherService.actionGroupOf(modelData));
+    }
     readonly property string description: confirming ? I18n.tr("Press Enter again to confirm") : modelData?.comment || modelData?.genericName || ""
 
     signal activated
@@ -148,6 +158,18 @@ Item {
                 font.bold: root.confirming
                 color: root.confirming ? Config.warningColor : Config.subtextColor
             }
+        }
+
+        // Which group the action comes from, so a list that mixes Orvix's
+        // actions with Omarchy's still says where each one goes
+        Text {
+            visible: root.groupLabel !== "" && !root.selected && root.showDescription
+            text: root.groupLabel
+            elide: Text.ElideRight
+            Layout.maximumWidth: Config.fontSizeNormal * 7
+            font.family: Config.font
+            font.pixelSize: Config.fontSizeSmall
+            color: Config.mutedColor
         }
 
         MenuButton {

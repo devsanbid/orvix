@@ -166,6 +166,11 @@ good guest on a machine that also has [Omarchy](https://omarchy.org) installed.
   or menu, run its updater in a terminal, and mirror Orvix's accent into its
   current theme as a user override — every action goes through an `omarchy`
   command. A theme you made yourself is never rewritten.
+- **Its whole CLI, one `>` away.** The launcher's Actions mode lists every
+  command Omarchy ships next to Orvix's own: `> theme`, `> install`, `> monitor`
+  search a group, `> :omarchy` lists them all, and `> :theme` (or `:hw`,
+  `:font`…) narrows to one. Commands that need an argument open in a terminal
+  and ask; the catalogue is cached, so it costs nothing at login.
 - **No quiet takeovers.** Installing Orvix replaces `~/.config/hypr` with its own
   Hyprland config, so Omarchy's autostart entries and keybinds do not run while
   Orvix's do. The installer says so, Settings warns when both shells are running,

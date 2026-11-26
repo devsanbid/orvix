@@ -95,5 +95,50 @@ Singleton {
                 run: () => SettingsService.open(page.id)
             }))
 
-    readonly property var items: [...toggles, ...tools, ...settings, ...power]
+    // Omarchy's own CLI, one action per command. Empty while Omarchy isn't
+    // installed or its catalogue hasn't been read (see OmarchyCommands).
+    // Every one carries `badge` = Omarchy's group, so "> omarchy" lists them
+    // all and ":theme", ":install", ":monitor" narrow to one group.
+    readonly property var omarchy: OmarchyCommands.actions
+
+    // The groups the ":group" filter knows, as the list shows them.
+    //   :orvix     this shell's own actions
+    //   :omarchy   every command Omarchy ships
+    //   :<group>   one of Omarchy's groups (":theme", ":install", ":hw"…)
+    // The remaining groups are built from the catalogue, since Omarchy
+    // decides them; the order is this shell's first, then alphabetical.
+    readonly property var groups: {
+        const list = [
+            {
+                id: "orvix",
+                name: I18n.tr("Orvix"),
+                items: [...toggles, ...tools, ...settings, ...power]
+            },
+            {
+                id: "omarchy",
+                name: I18n.tr("Omarchy"),
+                items: omarchy
+            }
+        ];
+        const byGroup = new Map();
+        for (const action of omarchy) {
+            if (!action.badge)
+                continue;
+            if (!byGroup.has(action.badge))
+                byGroup.set(action.badge, []);
+            byGroup.get(action.badge).push(action);
+        }
+        for (const id of [...byGroup.keys()].sort()) {
+            list.push({
+                id: "omarchy:" + id,
+                name: id,
+                items: byGroup.get(id)
+            });
+        }
+        // ":theme" should mean Omarchy's theme group, not "omarchy:theme":
+        // the filter below strips the prefix, so a plain name works too
+        return list.filter(g => g.items.length > 0);
+    }
+
+    readonly property var items: [...toggles, ...tools, ...settings, ...power, ...omarchy]
 }

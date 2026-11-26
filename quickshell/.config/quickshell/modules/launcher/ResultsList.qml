@@ -95,6 +95,18 @@ ListView {
                     text: I18n.tr("Nothing copied yet")
                 };
         }
+        // ":xyz" picked a group that doesn't exist
+        if (mode === "actions" && LauncherService.groupState === "none")
+            return {
+                icon: "\u{f0e09}",
+                text: I18n.tr("No group “%1”. Try :omarchy or :orvix", LauncherService.groupFilter)
+            };
+        // Omarchy is there and its list is still coming
+        if (mode === "actions" && LauncherService.activeGroup?.id === "omarchy" && !OmarchyCommands.ready)
+            return {
+                icon: "\u{f01da}",
+                text: I18n.tr("Reading Omarchy's commands…")
+            };
         if (term !== "")
             return {
                 icon: "\u{f0980}",

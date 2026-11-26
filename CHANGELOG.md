@@ -32,6 +32,18 @@ with the rename.
   a terminal window, and mirror Orvix's accent into Omarchy's current theme as
   a user override (`scripts/omarchy-accent.sh`), each through an `omarchy`
   command. A theme you made or edited yourself is refused and left untouched.
+- **Omarchy's whole CLI in the launcher's `>` mode.** Every command Omarchy
+  publishes (`omarchy commands --json --all`, around 430 visible ones) shows
+  next to Orvix's own actions, with its group beside the name. `> theme`,
+  `> install` or `> monitor` search that group; `> :omarchy` lists them all and
+  `> :theme`, `> :hw`, `> :install` (or `:orvix` for the shell's own) narrow by
+  group. One that needs an argument (`omarchy font set`) opens in a terminal
+  and asks; the rest run straight away. The catalogue is read when the mode is
+  first opened and cached in `~/.cache/orvix/omarchy-commands.json`, so it
+  costs nothing at login.
+- **Launcher IPC.** `qs ipc call launcher mode actions`, `type "> theme"`,
+  `results` and `run <id>` open a mode, filter it, list what it shows and run
+  a result, for keybinds and scripts.
 - **Overview layouts.** The dashboard overview comes in **Classic** (calendar
   beside the clock and weather, player on the right) and **Focus** (clock across
   the top, weather and player below, no calendar). Both stack into one column

@@ -71,7 +71,7 @@ Singleton {
             prefix: ">",
             label: I18n.tr("Actions"),
             icon: "\u{f140b}",
-            placeholder: I18n.tr("Run an action…")
+            placeholder: OmarchyCommands.available ? I18n.tr("Run an action…  (:omarchy lists Omarchy's commands)") : I18n.tr("Run an action…")
         },
         {
             id: "calc",
@@ -205,7 +205,30 @@ Singleton {
     // ACTIONS
     // ========================================================================
 
-    readonly property var actionIndex: LauncherActions.items.map(action => ({
+    // ":theme" narrows the list to one group before searching: Orvix's own
+    // actions, all of Omarchy's, or one of Omarchy's groups (":theme",
+    // ":install"). The name after ":" may be partial. An exact id wins, so
+    // ":theme" is Omarchy's theme group and not ":omarchy:theme" matched
+    // loosely.
+    readonly property string groupFilter: {
+        if (mode.id !== "actions" || !term.startsWith(":"))
+            return "";
+        return term.slice(1).trim().toLowerCase();
+    }
+    readonly property var activeGroup: {
+        if (groupFilter === "")
+            return null;
+        const groups = LauncherActions.groups;
+        return groups.find(g => g.id === "omarchy:" + groupFilter) ?? groups.find(g => g.id === groupFilter) ?? groups.find(g => g.id.startsWith(groupFilter) || I18n.translate(g.name).toLowerCase().startsWith(groupFilter)) ?? null;
+    }
+    // "" while no group is picked, "none" when the name matched nothing
+    readonly property string groupState: groupFilter === "" ? "" : activeGroup ? "picked" : "none"
+    // What the list searches: the picked group, or everything
+    readonly property var actionPool: activeGroup ? activeGroup.items : LauncherActions.items
+    // The term without the group part
+    readonly property string actionTerm: groupFilter === "" ? term : ""
+
+    readonly property var actionIndex: actionPool.map(action => ({
                 item: action,
                 id: action.id,
                 fields: [
@@ -217,7 +240,29 @@ Singleton {
 
     readonly property var actionMatches: mode.id === "actions" ? _search(actionIndex, () => 0) : []
 
-    readonly property var filteredActions: term !== "" ? actionMatches.map(m => m.item) : LauncherActions.items
+    readonly property var filteredActions: {
+        if (groupState === "none")
+            return [];
+        return actionTerm !== "" ? actionMatches.map(m => m.item) : actionPool;
+    }
+
+    // The narrowest group a result belongs to, for the small label on its
+    // row: for Omarchy's commands, Omarchy's own group ("theme",
+    // "install"), else the list it came from ("Orvix")
+    function actionGroupOf(item): string {
+        if (!item)
+            return "";
+        if (item.badge)
+            return item.badge;
+        // The groups with items, narrowest first: the per-group buckets are
+        // the omarchy:<group> ones, the two catch-alls come first in the list
+        const groups = LauncherActions.groups;
+        for (let i = groups.length - 1; i >= 0; i--) {
+            if (groups[i].items.some(x => x.id === item.id))
+                return groups[i].name;
+        }
+        return "";
+    }
 
     // ========================================================================
     // CALCULATOR
@@ -415,6 +460,10 @@ Singleton {
         visible = true;
         if (id === "clipboard")
             ClipboardService.refresh();
+        // Omarchy's commands are read when its group is first asked for, not
+        // at login: the catalogue is ~270 KB and only the launcher shows it
+        if (id === "actions" || query.startsWith(">"))
+            OmarchyCommands.load();
     }
 
     // Closes if open in that mode, else opens (or switches) to it
@@ -765,6 +814,41 @@ Singleton {
 
         function toggle(): void {
             root.toggle();
+        }
+
+        // Opens a mode straight from the command line ("actions", "calc"…),
+        // handy in a keybind or a script
+        function mode(id: string): void {
+            root.showMode(id);
+        }
+
+        // Types a query in the open launcher, as if by hand (";>" to get to
+        // the actions first): the same keybinds and scripts can filter it
+        function type(text: string): void {
+            root.query = text;
+            root.selectedIndex = 0;
+        }
+
+        // What the current mode would show, for scripts and tests: one line
+        // per result, "id<TAB>name<TAB>group"
+        function results(): string {
+            return root.results.map(item => [root.isApp(item) ? "app:" + root.appId(item) : item.id, item.name, root.isApp(item) ? "" : root.actionGroupOf(item) || item.badge || ""].join("\t")).join("\n");
+        }
+
+        // How many Omarchy commands the ">" mode has, and whether the
+        // catalogue was read
+        function omarchy(): string {
+            return [OmarchyCommands.ready ? "ready" : OmarchyCommands.loading ? "loading" : "not loaded", String(OmarchyCommands.actions.length), OmarchyCommands.error].join("\t"); // i18n-ignore
+        }
+
+        // Runs the result with this id, the way Enter does (for keybinds,
+        // scripts and the tests)
+        function run(id: string): string {
+            const item = root.results.find(r => r.id === id);
+            if (!item)
+                return "not found: " + id; // i18n-ignore
+            root.activate(item);
+            return "ran: " + id;
         }
     }
 }

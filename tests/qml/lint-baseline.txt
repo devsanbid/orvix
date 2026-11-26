@@ -136,6 +136,7 @@ Warning: services/MprisService.qml: Member "values" not found on type "UntypedOb
 Warning: services/NetworkService.qml: Type NetworkService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/NotificationService.qml: Member "filter" not found on type "QList<qs::service::notifications::NotificationAction*>" [missing-property]
 Warning: services/NotificationService.qml: Redundant optional chaining for lookup on non-voidable and non-nullable type QVariantMap [redundant-optional-chaining]
+Warning: services/OmarchyCommands.qml: Type OmarchyCommands not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/OmarchyService.qml: Type OmarchyService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/OsdService.qml: Type OsdService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/Paths.qml: Type Paths not declared as singleton in qmldir but using pragma Singleton [import]
