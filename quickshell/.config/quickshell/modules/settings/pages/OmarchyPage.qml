@@ -62,7 +62,30 @@ ColumnLayout {
 
         InfoRow {
             label: I18n.tr("Overlap")
-            value: I18n.tr("Omarchy's bar and panels overlap Orvix's. Keep one of them.")
+            value: OmarchyService.omarchyBarHidden ? I18n.tr("Omarchy's shell runs behind Orvix with its bar hidden: its plugins and panels keep working.") : I18n.tr("Omarchy's bar and panels overlap Orvix's. Keep one of them.")
+        }
+
+        // The supported way to run both: Omarchy's shell stays up (plugins,
+        // panels, services) and only its bar goes away, through Omarchy's own
+        // visibility flag. This is what survives `omarchy update`.
+        ToggleRow {
+            label: I18n.tr("Hide Omarchy's bar and dock")
+            description: I18n.tr("Keeps Omarchy's shell running, so its plugins work, and hides only its bar and dock. Omarchy's own flag does the hiding, so nothing is killed or edited.")
+            checked: OmarchyService.hideOmarchyBar
+            onToggled: value => OmarchyService.setHideOmarchyBar(value)
+        }
+
+        SettingRow {
+            visible: OmarchyService.hideOmarchyBar
+            label: I18n.tr("Keep it hidden after updates")
+            description: I18n.tr("Omarchy restarts its shell during an update, which used to bring the bar back. These hooks re-apply the setting after every update and at login.")
+
+            ActionButton {
+                icon: "\u{f0450}"
+                text: OmarchyService.actionRunning ? I18n.tr("Working…") : I18n.tr("Install hooks")
+                enabled: !OmarchyService.actionRunning
+                onClicked: OmarchyService.installOmarchyHooks()
+            }
         }
 
         ToggleRow {

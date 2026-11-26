@@ -60,6 +60,39 @@ Singleton {
         StateService.set("omarchy.skipShellWithOmarchy", value);
     }
 
+    // Keep Omarchy's bar (and dock) hidden so its shell can run behind Orvix
+    // with plugins alive. The flag Omarchy itself reads lives in
+    // ~/.local/state/omarchy/toggles/bar-off; `orvix omarchy` sets it, and
+    // the post-update/post-boot hooks re-apply it.
+    readonly property bool hideOmarchyBar: StateService.get("omarchy.hideOmarchyBar", false)
+    // What the bar is doing now, read from Omarchy's own flag
+    readonly property string barFlagPath: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/omarchy/toggles/bar-off"
+    property bool omarchyBarHidden: false
+
+    function setHideOmarchyBar(value: bool): void {
+        StateService.set("omarchy.hideOmarchyBar", value);
+        run([Paths.dots + "/local/.local/bin/orvix", "omarchy", value ? "on" : "off"], value ? I18n.tr("Hiding Omarchy's bar") : I18n.tr("Showing Omarchy's bar"));
+    }
+
+    // Installs the hooks that keep it hidden across `omarchy update` and login
+    function installOmarchyHooks(): bool {
+        return run([Paths.dots + "/local/.local/bin/orvix", "omarchy", "hooks", "install"], I18n.tr("Installing Omarchy's hooks"));
+    }
+
+    // The flag is created and removed rather than edited, so a process that
+    // tests for the file is simpler and more reliable than a FileView on a
+    // path that may not exist
+    function refreshBarFlag(): void {
+        if (!barFlagProc.running)
+            barFlagProc.running = true;
+    }
+
+    Process {
+        id: barFlagProc
+        command: ["test", "-f", root.barFlagPath]
+        onExited: code => root.omarchyBarHidden = code === 0
+    }
+
     // Set by scripts/shell-launch.sh when it skipped Orvix's shell at login
     readonly property string skippedMarker: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/orvix-shell-skipped"
     property bool shellSkipped: false
@@ -79,6 +112,7 @@ Singleton {
             shellProc.running = true;
         if (!pluginsProc.running)
             pluginsProc.running = true;
+        root.refreshBarFlag();
     }
 
     function _setColors(): void {

@@ -237,7 +237,14 @@ _doctor_omarchy() {
     _doctor_row ok omarchy "Omarchy" "${version:-installed}" ""
 
     if pgrep -af 'quickshell.*(/usr/share/omarchy|omarchy)/shell' >/dev/null 2>&1; then
-        _doctor_row warn omarchy-shell "Omarchy shell" "Running: two bars overlap" "keep one shell (Settings › System › Omarchy)"
+        # Omarchy's shell can run behind Orvix with its bar parked off screen:
+        # that is the supported setup, not a conflict
+        local flag="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles/bar-off"
+        if [[ -f "$flag" ]]; then
+            _doctor_row ok omarchy-shell "Omarchy shell" "Running, its bar hidden: plugins stay available" ""
+        else
+            _doctor_row warn omarchy-shell "Omarchy shell" "Running: two bars overlap" "orvix omarchy bar off (Settings › System › Omarchy)"
+        fi
     else
         _doctor_row ok omarchy-shell "Omarchy shell" "Not running: Orvix owns the bar" ""
     fi
