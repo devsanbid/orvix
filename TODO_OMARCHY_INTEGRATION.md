@@ -208,11 +208,16 @@ Shipped in this pass:
       overview layouts, GTK & Qt, plugin count, installer, docs.
 - [x] Final report: commits, branch, remote/push, release, marketplace, blockers
       (written in the hand-off, not as a commit).
+- [x] Released as **v1.0.0** on `main`
+      (<https://github.com/devsanbid/orvix/releases/tag/v1.0.0>), which the
+      Stable channel follows. A fresh clone of the tag passes `js bash lint`.
 
 ## Known blockers / decisions
 
-- **Git remote:** the repository is initialized on `main` and pushed to
-  <https://github.com/devsanbid/orvix> (see the hand-off).
+- **Git remote:** pushed to <https://github.com/devsanbid/orvix> (`origin`,
+  over SSH). CI (`.github/workflows/tests.yml`) runs `js bash lint` on every
+  push and passes, and Pages serves `bootstrap.sh` at
+  <https://devsanbid.github.io/orvix/install>.
 - **Marketplace:** skipped by user decision; `plugins.omarchy.org` accepts
   `omarchy-shell` plugins only and Orvix is a separate shell.
 - **Directory move:** done. The repo lives at `~/.orvix`; `~/.lyne-dots` stays
