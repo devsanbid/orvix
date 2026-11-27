@@ -739,6 +739,7 @@ Singleton {
         }
     }
 
+
     Timer {
         id: calcDelay
         interval: 150
@@ -787,10 +788,16 @@ Singleton {
         }
     }
 
-    // The history is read when the clipboard mode opens (not while typing)
+    // Per-mode work when the mode changes. Both are done here, once: QML
+    // allows one handler per signal.
+    //   clipboard  read the history when the mode opens (not while typing)
+    //   actions    read Omarchy's commands, whether the ">" was typed or the
+    //              mode was switched to (showMode covers the switches)
     onModeIdChanged: {
         if (modeId === "clipboard" && visible)
             ClipboardService.refresh();
+        if (modeId === "actions")
+            OmarchyCommands.load();
     }
 
     // Reset selection and confirmation when the query or selection changes
