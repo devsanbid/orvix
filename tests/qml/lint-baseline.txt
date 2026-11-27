@@ -252,6 +252,7 @@ Warning: modules/settings/pages/ThemePage.qml: Member "contentY" not found on ty
 Warning: modules/settings/pages/ThemePage.qml: Member "contentY" not found on type "QQuickItem" [missing-property]
 Warning: modules/settings/pages/ThemePage.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/TypographyPage.qml: Warnings occurred while importing path "../../../components/": [import]
+Warning: modules/settings/pages/WallpaperPage.qml: Unqualified access [unqualified]
 Warning: modules/settings/pages/WallpaperPage.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/WorkspacesPage.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/XkbPicker.qml: Warnings occurred while importing path "../../../components/": [import]

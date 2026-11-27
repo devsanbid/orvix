@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Widgets
 import qs.config
@@ -49,6 +50,10 @@ ColumnLayout {
     readonly property string themeLabel: ThemeService.themePreviews[themeName]?.name ?? themeName
     readonly property bool themeLinked: WallpaperService.dynamicWallpaper && !ThemeService.isAutoMode
     readonly property bool onThemeWallpaper: WallpaperService.currentWallpaper !== "" && WallpaperService.fileName(WallpaperService.currentWallpaper) === WallpaperService.fileName(WallpaperService.themeWallpaperPath(themeName))
+
+    // The library grid stops growing here and scrolls inside; a library of
+    // hundreds of wallpapers used to be one enormous column of tiles
+    readonly property real gridMaxHeight: Config.fontSizeNormal * 30
 
     readonly property var shown: {
         let list = WallpaperService.wallpapers;
@@ -748,58 +753,61 @@ ColumnLayout {
                     }
                 }
 
-                GridLayout {
+                // A GridView, not a GridLayout of a Repeater: the Repeater
+                // built every tile at once, and a library of a few hundred
+                // wallpapers therefore took seconds to open — each tile is a
+                // QML object with an Image, a menu button and hover handlers.
+                // A GridView makes only the tiles on screen (plus a little
+                // beyond), so the cost follows the window, not the library.
+                GridView {
                     id: grid
-
-                    readonly property real cellWidth: (width - columnSpacing * (root.columns - 1)) / root.columns
 
                     visible: root.shown.length > 0
                     Layout.fillWidth: true
-                    columns: root.columns
-                    columnSpacing: Config.spacing
-                    rowSpacing: Config.spacing
-
-                    Repeater {
-                        id: tiles
-
-                        model: tilesModel
-
-                        // `path` comes from the model's role
-                        WallpaperTile {
-                            id: tile
-
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: grid.cellWidth
-                            current: path === WallpaperService.currentWallpaper
-                            selected: root.selection.includes(path)
-                            selecting: root.selecting
-                            isNew: root.newPaths.includes(path)
-                            badge: isNew ? I18n.tr("New") : ""
-                            onActivated: root.activate(tile.path)
-                            onSelectToggled: root.toggleSelected(tile.path)
-                            onMenuRequested: anchor => menu.openAt(anchor, tile.path)
-                            renaming: root.renamingPath === path
-                            onRenamingChanged: renameError = ""
-                            onRenameAccepted: name => {
-                                const error = WallpaperService.renameWallpaper(tile.path, name);
-                                if (error !== "")
-                                    tile.renameError = error;
-                                else
-                                    root.renamingPath = "";
-                            }
-                            onRenameCancelled: root.renamingPath = ""
-                        }
+                    // The grid is as tall as its content, and the page's own
+                    // Flickable does the scrolling: so this grows to fit and
+                    // is never scrolled itself
+                    // A bounded height, and the grid scrolls itself: that is
+                    // what lets it build only the visible rows. Growing to
+                    // contentHeight (so the page scrolled it) forced every
+                    // tile to be created to measure it, which is the cost
+                    // this was meant to avoid.
+                    Layout.preferredHeight: Math.min(grid.contentHeight, root.gridMaxHeight)
+                    cellWidth: Math.max(1, (width - Config.spacing * (root.columns - 1)) / root.columns)
+                    cellHeight: grid.cellWidth * 0.62
+                    interactive: grid.contentHeight > root.gridMaxHeight
+                    boundsBehavior: Flickable.StopAtBounds
+                    cacheBuffer: 600
+                    ScrollBar.vertical: QsScrollBar {
+                        policy: grid.contentHeight > root.gridMaxHeight ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
                     }
 
-                    // Fills the first row when there are fewer tiles than
-                    // columns, so a lone tile keeps its size
-                    Repeater {
-                        model: Math.max(0, root.columns - root.shown.length)
+                    model: tilesModel
 
-                        Item {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: grid.cellWidth
+                    delegate: WallpaperTile {
+                        id: tile
+
+                        // `path` comes from the model's role
+                        width: grid.cellWidth
+                        height: grid.cellHeight
+                        current: path === WallpaperService.currentWallpaper
+                        selected: root.selection.includes(path)
+                        selecting: root.selecting
+                        isNew: root.newPaths.includes(path)
+                        badge: isNew ? I18n.tr("New") : ""
+                        onActivated: root.activate(tile.path)
+                        onSelectToggled: root.toggleSelected(tile.path)
+                        onMenuRequested: anchor => menu.openAt(anchor, tile.path)
+                        renaming: root.renamingPath === path
+                        onRenamingChanged: renameError = ""
+                        onRenameAccepted: name => {
+                            const error = WallpaperService.renameWallpaper(tile.path, name);
+                            if (error !== "")
+                                tile.renameError = error;
+                            else
+                                root.renamingPath = "";
                         }
+                        onRenameCancelled: root.renamingPath = ""
                     }
                 }
 
