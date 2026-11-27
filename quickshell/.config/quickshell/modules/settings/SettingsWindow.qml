@@ -30,8 +30,25 @@ FloatingWindow {
     // Room on both sides of the page column, so the scrollbar never covers it
     readonly property int pageGutter: Config.padding * 2
     // The size it opens at: the window rule in hypr/conf/rules.lua only
-    // floats and centers it
-    readonly property size defaultSize: Qt.size(960, 680)
+    // floats and centers it. It asks for a share of the screen rather than a
+    // fixed 960x680, so a big monitor doesn't open a small window in the
+    // middle of it; the page column inside is still capped by
+    // maxContentWidth, so wide screens get margins rather than long lines.
+    // The small end stays usable on a 1366x768 laptop.
+    //
+    // Set once, on the first screen, and never re-evaluated after: it is the
+    // size the "default" button goes back to, and WindowSizeControls compares
+    // the window against it. A binding would move that target whenever the
+    // screen changed (or the window crossed monitors) and leave the window
+    // reading as "custom" for no reason.
+    property size defaultSize: Qt.size(960, 680)
+
+    readonly property size _initialSize: {
+        const w = (screen?.width ?? 1920) * 0.78;
+        const h = (screen?.height ?? 1080) * 0.82;
+        return Qt.size(Math.round(Math.min(1800, Math.max(960, w))), Math.round(Math.min(1150, Math.max(680, h))));
+    }
+
 
     // Page id (SettingsService.pages) -> component. Pages are imported
     // statically: Quickshell only resolves directories it can reach that way
@@ -130,7 +147,11 @@ FloatingWindow {
         slot.opacity = 1;
     }
 
-    Component.onCompleted: showPage()
+    Component.onCompleted: {
+        // The size it opens at, from the screen it first lands on
+        defaultSize = _initialSize;
+        showPage();
+    }
 
     // Rows the search result asked for, flashed once the scroll ends
     property var _flashRows: []
