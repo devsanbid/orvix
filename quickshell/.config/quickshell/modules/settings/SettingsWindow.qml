@@ -61,6 +61,7 @@ FloatingWindow {
             icons: iconsPage,
             gtk: gtkPage,
             bar: barPage,
+            plugins: pluginsPage,
             launcher: launcherPage,
             clipboard: clipboardPage,
             dashboard: dashboardPage,
@@ -398,6 +399,11 @@ FloatingWindow {
     Component {
         id: healthPage
         HealthPage {}
+    }
+
+    Component {
+        id: pluginsPage
+        PluginsPage {}
     }
 
     Component {

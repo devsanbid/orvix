@@ -234,6 +234,13 @@ Singleton {
             category: "System"
         },
         {
+            id: "plugins",
+            label: I18n.noop("Plugins"),
+            icon: "\u{f0fe7}",
+            description: I18n.noop("Orvix plugins and Omarchy's: install, enable, configure and arrange them"),
+            category: "Shell"
+        },
+        {
             id: "health",
             label: I18n.noop("Health"),
             icon: "\u{f058}",

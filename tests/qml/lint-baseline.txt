@@ -232,6 +232,7 @@ Warning: modules/settings/pages/OmarchyPage.qml: Warnings occurred while importi
 Warning: modules/settings/pages/OsdPage.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/OsdStylePreview.qml: Member "implicitHeight" not found on type "QObject" [missing-property]
 Warning: modules/settings/pages/OsdStylePreview.qml: Member "implicitWidth" not found on type "QObject" [missing-property]
+Warning: modules/settings/pages/PluginsPage.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/PowerProfilesPage.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/PowerStylePreview.qml: Warnings occurred while importing path "../../../components/": [import]
 Warning: modules/settings/pages/ProfilePage.qml: Warnings occurred while importing path "../../../components/": [import]
