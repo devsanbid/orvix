@@ -70,6 +70,57 @@ ColumnLayout {
         value: I18n.tr("gsettings was not found, so GTK settings can't be read or changed here")
     }
 
+    // The three scales on this desktop are different things, so they are three
+    // controls and not one slider. Each says what it actually affects.
+    SettingsGroup {
+        title: I18n.tr("Scaling")
+
+        StepperRow {
+            label: I18n.tr("Orvix's text")
+            description: I18n.tr("The shell's own font size (bar, launcher, Settings). It doesn't change GTK or Qt apps")
+            path: "typography.sizeNormal"
+            from: 10
+            to: 22
+            format: v => v + "px"
+        }
+
+        SliderRow {
+            label: I18n.tr("GTK text")
+            description: I18n.tr("GTK apps multiply their fonts by this. Applies at once")
+            from: 0.7
+            to: 2.0
+            stepSize: 0.05
+            value: GtkService.textScale
+            format: v => Math.round(v * 100) + "%"
+            enabled: GtkService.available
+            onMoved: value => GtkService.setTextScale(value)
+        }
+
+        SliderRow {
+            label: I18n.tr("Qt scaling")
+            description: QtScaleService.needsRestart ? I18n.tr("Saved. Apps started from now on use it; one already open keeps its size until it restarts") : I18n.tr("QT_SCALE_FACTOR for Qt apps, saved for the next login as well")
+            from: 1.0
+            to: 2.5
+            stepSize: 0.05
+            value: QtScaleService.savedScale
+            format: v => Math.round(v * 100) + "%"
+            enabled: QtScaleService.available
+            onMoved: value => QtScaleService.setScale(value)
+        }
+
+        InfoRow {
+            visible: QtScaleService.needsRestart
+            label: I18n.tr("Qt restart")
+            value: I18n.tr("Log out and back in, or restart the app, to see the new Qt scale")
+        }
+
+        InfoRow {
+            visible: QtScaleService.error !== ""
+            label: I18n.tr("Problem")
+            value: QtScaleService.error
+        }
+    }
+
     SettingsGroup {
         title: I18n.tr("Icons and cursor")
 

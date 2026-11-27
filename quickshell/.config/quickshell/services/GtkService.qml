@@ -27,6 +27,16 @@ Singleton {
 
     property var gtkThemes: []
 
+    // GTK text scale: 1.0 is normal. GTK apps multiply their fonts by it, so
+    // it is the honest "text is bigger" control; widget sizes follow.
+    property real textScale: 1.0
+
+    function setTextScale(value: real): void {
+        const v = Math.min(3.0, Math.max(0.5, Math.round(value * 100) / 100));
+        _set("text-scaling-factor", String(v));
+        root.textScale = v;
+    }
+
     // gsettings is missing (a very small install): the page shows a note
     property bool available: true
     property bool actionRunning: false
@@ -78,7 +88,7 @@ Singleton {
         id: valuesProc
         command: ["sh", "-c", `
             command -v gsettings >/dev/null 2>&1 || { echo "__missing__"; exit 0; }
-            for key in gtk-theme icon-theme cursor-theme cursor-size font-name color-scheme; do
+            for key in gtk-theme icon-theme cursor-theme cursor-size font-name color-scheme text-scaling-factor; do
                 value=$(gsettings get org.gnome.desktop.interface "$key" 2>/dev/null) || value=""
                 printf '%s\t%s\n' "$key" "$value"
             done
@@ -108,6 +118,9 @@ Singleton {
                 const size = parseInt(values["cursor-size"], 10);
                 if (!isNaN(size))
                     root.cursorSize = size;
+                const scale = parseFloat(values["text-scaling-factor"]);
+                if (!isNaN(scale))
+                    root.textScale = scale;
             }
         }
     }

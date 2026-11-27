@@ -58,3 +58,4 @@ if [ -f "$HOME/.config/uwsm/env.d/global_hardware.sh" ]; then
     . "$HOME/.config/uwsm/env.d/global_hardware.sh"
 fi
 
+export QT_SCALE_FACTOR=1.1

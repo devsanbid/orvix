@@ -351,6 +351,7 @@ Warning: services/PluginService.qml: Type PluginService not declared as singleto
 Warning: services/PowerProfileService.qml: Type PowerProfileService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/PowerService.qml: Type PowerService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/ProfileService.qml: Type ProfileService not declared as singleton in qmldir but using pragma Singleton [import]
+Warning: services/QtScaleService.qml: Type QtScaleService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/QuickSettingsService.qml: Type QuickSettingsService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/QuickSettingsService.qml: Unqualified access [unqualified]
 Warning: services/SddmService.qml: Type SddmService not declared as singleton in qmldir but using pragma Singleton [import]

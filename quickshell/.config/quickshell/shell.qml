@@ -31,6 +31,10 @@ ShellRoot {
     // Ensure IdleService singleton loads
     property bool _idleReady: IdleService.caffeineEnabled
 
+    // Qt's scale, read once so Settings can show it without a process starting
+    // on the first open of the page
+    property real _qtScaleReady: QtScaleService.savedScale
+
     // Loads the plugin store with the shell: it is otherwise only reached
     // from Settings › Plugins, and an enabled plugin's service has to start
     // at login, not the first time the page is opened
