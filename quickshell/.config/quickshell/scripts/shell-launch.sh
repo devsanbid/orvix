@@ -29,7 +29,9 @@ read_setting() {
 
 # omarchy_shell_running: Omarchy's shell process (its own config folder)
 omarchy_shell_running() {
-    pgrep -f 'quickshell[^ ]* .*(/usr/share/omarchy|omarchy)/shell' >/dev/null 2>&1
+    # Any Omarchy shell, wherever it is installed (OMARCHY_PATH may point at
+    # a checkout): the folder name is what the pattern can rely on
+    pgrep -f 'quickshell[^ ]* .*(/omarchy/shell|omarchy-shell)' >/dev/null 2>&1
 }
 
 guard=$(read_setting '.omarchy.skipShellWithOmarchy' false)

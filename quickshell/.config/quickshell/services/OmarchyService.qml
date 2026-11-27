@@ -22,10 +22,15 @@ Singleton {
     readonly property string stateDir: home + "/.local/state/omarchy"
     readonly property string colorsPath: stateDir + "/current/theme/colors.toml"
     readonly property string namePath: stateDir + "/current/theme.name"
-    readonly property string versionPath: "/usr/share/omarchy/version"
-    readonly property string themesDir: "/usr/share/omarchy/themes"
+    // Omarchy exports OMARCHY_PATH (its own lag is the reason a dev checkout
+    // can be linked in place of the packaged one); /usr/share/omarchy is only
+    // the fallback. Reading it here means a checkout, or a distro that puts it
+    // elsewhere, works without Orvix knowing the path.
+    readonly property string omarchyPath: Quickshell.env("OMARCHY_PATH") || "/usr/share/omarchy"
+    readonly property string versionPath: omarchyPath + "/version"
+    readonly property string themesDir: omarchyPath + "/themes"
     readonly property string userThemesDir: home + "/.config/omarchy/themes"
-    readonly property string systemPluginsDir: "/usr/share/omarchy/shell/plugins"
+    readonly property string systemPluginsDir: omarchyPath + "/shell/plugins"
     readonly property string userPluginsDir: home + "/.config/omarchy/plugins"
 
     // Raw file contents (FileView's text() is a function, so these properties
@@ -308,7 +313,9 @@ Singleton {
     Process {
         id: shellProc
         // omarchy-shell runs as `quickshell -p /usr/share/omarchy/shell`
-        command: ["sh", "-c", "pgrep -af 'quickshell.*(/usr/share/omarchy|omarchy)/shell' >/dev/null 2>&1"]
+        // Any Omarchy shell, wherever its config lives: the pattern matches
+        // the folder name, not one hardcoded path
+        command: ["sh", "-c", "pgrep -af 'quickshell.*(/omarchy/shell|omarchy-shell)' >/dev/null 2>&1"]
         onExited: code => root.shellRunning = code === 0
     }
 

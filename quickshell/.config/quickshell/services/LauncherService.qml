@@ -466,9 +466,10 @@ Singleton {
         visible = true;
         if (id === "clipboard")
             ClipboardService.refresh();
-        // Omarchy's commands are read when its group is first asked for, not
-        // at login: the catalogue is ~270 KB and only the launcher shows it
-        if (id === "actions" || query.startsWith(">"))
+        // Omarchy's commands are read when its mode is first opened, not at
+        // login: the catalogue is ~270 KB and only the launcher shows it.
+        // ":" is that mode now that it has one of its own.
+        if (id === "omarchy" || query.startsWith(":"))
             OmarchyCommands.load();
     }
 
@@ -797,12 +798,12 @@ Singleton {
     // Per-mode work when the mode changes. Both are done here, once: QML
     // allows one handler per signal.
     //   clipboard  read the history when the mode opens (not while typing)
-    //   actions    read Omarchy's commands, whether the ">" was typed or the
-    //              mode was switched to (showMode covers the switches)
+    //   omarchy    read Omarchy's commands, whether ":" was typed or the mode
+    //              was switched to (showMode covers the switches)
     onModeIdChanged: {
         if (modeId === "clipboard" && visible)
             ClipboardService.refresh();
-        if (modeId === "actions")
+        if (modeId === "omarchy")
             OmarchyCommands.load();
     }
 
