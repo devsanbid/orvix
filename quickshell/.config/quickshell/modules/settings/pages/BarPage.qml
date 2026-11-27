@@ -6,681 +6,191 @@ import qs.services
 import "../rows/"
 import "../../../components/"
 
+// The bar, in tabs. The page used to be one column of ten groups and a few
+// hundred rows of settings — a long scroll where the thing you wanted was
+// rarely on screen. It is the same controls, split by what they are about:
+//
+//   Style      template, position, height, margin
+//   Widgets    the launcher button and the workspaces
+//   Center     clock or buttons, and what the buttons lead to
+//   Tray       the system tray and its items
+//   Quick      the notification bell and Quick Settings
+//   Plugins    Omarchy's bar widgets and the ones installed on top
+//   Behaviour  whether there is a bar at all, and auto hide
+//
+// "The bar is off" is handled first and on its own: with `bar.show` false the
+// other tabs would all be settings for something that isn't drawn, so the
+// page says so and offers to bring it back. The tab is remembered in
+// state.json (`bar.settingsTab`), so the page comes back where it was.
 ColumnLayout {
     id: page
 
     spacing: Config.spacing * 3
 
-    // Omarchy's catalogue and live state, read when the page opens (only
-    // while Omarchy is there; the service ignores it otherwise)
-    Component.onCompleted: OmarchyBarWidgets.refresh()
-
-    // What a right or middle click on the launcher button can do
-    readonly property var launcherClickOptions: [
+    readonly property var tabs: [
         {
-            label: I18n.tr("Nothing"),
-            value: "none"
+            id: "style",
+            label: I18n.tr("Style"),
+            icon: "\u{f03d8}"
         },
         {
-            label: I18n.tr("Actions"),
-            value: "actions"
+            id: "widgets",
+            label: I18n.tr("Widgets"),
+            icon: "\u{f04f0}"
         },
         {
-            label: I18n.tr("Clipboard"),
-            value: "clipboard"
+            id: "center",
+            label: I18n.tr("Center"),
+            icon: "\u{f0954}"
         },
         {
-            label: I18n.tr("Settings"),
-            value: "settings"
+            id: "tray",
+            label: I18n.tr("Tray"),
+            icon: "\u{f0c9e}"
         },
         {
-            label: I18n.tr("Power"),
-            value: "power"
+            id: "quick",
+            label: I18n.tr("Quick"),
+            icon: "\u{f0493}"
+        },
+        {
+            id: "plugins",
+            label: I18n.tr("Plugins"),
+            icon: "\u{f0fe7}",
+            // Nothing to configure without Omarchy: the tab hides rather
+            // than showing an empty page
+            visible: OmarchyBarWidgets.available
+        },
+        {
+            id: "behavior",
+            label: I18n.tr("Behavior"),
+            icon: "\u{f0493}"
         }
-    ]
+    ].filter(t => t.visible !== false)
 
-    SettingsGroup {
-        title: I18n.tr("Style")
+    readonly property int tabIndex: Math.max(0, tabs.findIndex(t => t.id === tabId))
 
-        // Label repeated here for the Settings search (it reads the page source)
-        BarTemplatePicker {
-            label: I18n.tr("Template")
-        }
+    property string tabId: StateService.get("bar.settingsTab", "style")
 
-        ToggleRow {
-            label: I18n.tr("Attach to the bar")
-            description: Config.barIslands || Config.barFloating ? I18n.tr("Popups grow out of the screen edge with rounded joins (the bar has no continuous edge in its current style): Quick Settings, the dashboard and the launcher (dropdown, sidebar and spotlight next to the bar)") : I18n.tr("Popups grow out of the bar with rounded joins: Quick Settings, the dashboard and the launcher (dropdown, sidebar and spotlight next to the bar)")
-            path: "bar.attachPopups"
-        }
+    // A remembered tab that no longer exists (Omarchy removed) lands on Style
+    Component.onCompleted: {
+        if (!tabs.some(t => t.id === tabId))
+            tabId = "style";
     }
 
-    SettingsGroup {
-        title: I18n.tr("Layout")
-
-        SelectRow {
-            label: I18n.tr("Position")
-            description: I18n.tr("Screen edge the bar sits on")
-            path: "bar.position"
-            options: [
-                {
-                    label: I18n.tr("Top"),
-                    icon: "\u{f1513}",
-                    value: "top"
-                },
-                {
-                    label: I18n.tr("Bottom"),
-                    icon: "\u{f10a9}",
-                    value: "bottom"
-                }
-            ]
-        }
-
-        SliderRow {
-            label: I18n.tr("Height")
-            description: I18n.tr("Height of the bar; the islands and buttons follow it")
-            path: "bar.height"
-            from: 24
-            to: 48
-            format: v => v + "px"
-        }
-
-        SliderRow {
-            label: I18n.tr("Margin")
-            description: I18n.tr("Gap between the floating bar and the screen edges")
-            path: "bar.margin"
-            enabled: Config.barFloating
-            from: 0
-            to: 24
-            format: v => v + "px"
-        }
+    function selectTab(id: string): void {
+        tabId = id;
+        StateService.set("bar.settingsTab", id);
     }
 
+    // ===================== THE BAR IS OFF =====================
+    // Its own state, not a tab: a setting for a bar that isn't drawn would be
+    // misleading, and this is where someone turns it back on
     SettingsGroup {
-        title: I18n.tr("Launcher button")
-
-        TemplatePicker {
-            label: I18n.tr("Style")
-            description: ({
-                    "pill": I18n.tr("The logo on a soft accent pill that is always there"),
-                    "compact": I18n.tr("A round button, the same size as the bar's other icons")
-                })[Config.barLauncherStyle] ?? I18n.tr("Just the logo; a pill the size of the logo shows on hover")
-            path: "bar.launcher.style"
-            options: [
-                {
-                    label: I18n.tr("Logo"),
-                    value: "logo"
-                },
-                {
-                    label: I18n.tr("Pill"),
-                    value: "pill"
-                },
-                {
-                    label: I18n.tr("Compact"),
-                    value: "compact"
-                }
-            ]
-            preview: Component {
-                LauncherButtonPreview {}
-            }
-        }
-
-        SelectRow {
-            label: I18n.tr("Icon")
-            description: I18n.tr("The orvix logo, or your distro's logo from the Nerd Font")
-            path: "bar.launcher.icon"
-            options: [
-                {
-                    label: "orvix",
-                    value: "orvix"
-                },
-                {
-                    label: I18n.tr("Distro"),
-                    icon: "\u{f31a}",
-                    value: "distro"
-                }
-            ]
-        }
-
-        ToggleRow {
-            label: I18n.tr("Animate")
-            description: I18n.tr("The dot bounces on hover and rides the line when the launcher opens; the logo draws itself when the shell starts")
-            path: "bar.launcher.animate"
-        }
-
-        SelectRow {
-            label: I18n.tr("Right click")
-            description: I18n.tr("Actions and Clipboard open that launcher mode")
-            path: "bar.launcher.rightClick"
-            options: page.launcherClickOptions
-        }
-
-        SelectRow {
-            label: I18n.tr("Middle click")
-            description: I18n.tr("Same choices as the right click")
-            path: "bar.launcher.middleClick"
-            options: page.launcherClickOptions
-        }
-    }
-
-    SettingsGroup {
-        title: I18n.tr("Workspaces")
-
-        TemplatePicker {
-            label: I18n.tr("Style")
-            description: ({
-                    "numbers": I18n.tr("Numbers of the workspaces in use, dots for the empty ones"),
-                    "dots": I18n.tr("Filled dots for workspaces in use, rings for empty ones; the active one is a bar"),
-                    "groups": I18n.tr("Numbers where neighbouring workspaces in use share one background"),
-                    "icons": I18n.tr("Icons of the apps open on each workspace, numbers for the empty ones")
-                })[Config.barWorkspaceStyle] ?? I18n.tr("A pill per workspace, solid when it has windows")
-            path: "bar.workspaces.style"
-            options: [
-                {
-                    label: I18n.tr("Pills"),
-                    value: "pills"
-                },
-                {
-                    label: I18n.tr("Numbers"),
-                    value: "numbers"
-                },
-                {
-                    label: I18n.tr("Dots"),
-                    value: "dots"
-                },
-                {
-                    label: I18n.tr("Groups"),
-                    value: "groups"
-                },
-                {
-                    label: I18n.tr("Icons"),
-                    value: "icons"
-                }
-            ]
-            preview: Component {
-                WorkspaceStylePreview {}
-            }
-        }
-
-        StepperRow {
-            label: I18n.tr("Shown")
-            description: I18n.tr("Workspaces in view at once; the strip scrolls to reach the others")
-            path: "bar.workspaces.count"
-            from: 3
-            to: 15
-            enabled: !Config.barWorkspaceHideEmpty
-        }
-
-        ToggleRow {
-            label: I18n.tr("Hide empty")
-            description: I18n.tr("Only workspaces with windows, plus the active one")
-            path: "bar.workspaces.hideEmpty"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Scroll to switch")
-            description: I18n.tr("The mouse wheel over the workspaces moves to the next or previous one, like the keys (Hyprland › Workspaces)")
-            path: "bar.workspaces.scroll"
-        }
-    }
-
-    SettingsGroup {
-        title: I18n.tr("Center")
-
-        SelectRow {
-            label: I18n.tr("Style")
-            description: Config.barCenterClock ? I18n.tr("The clock alone, with cava faintly behind it while something plays; hover shows the track") : I18n.tr("The clock plus the buttons below, each opening its dashboard tab")
-            path: "bar.centerStyle"
-            options: [
-                {
-                    label: I18n.tr("Buttons"),
-                    icon: "\u{f056e}",
-                    value: "buttons"
-                },
-                {
-                    label: I18n.tr("Clock"),
-                    icon: "\u{f0954}",
-                    value: "clock"
-                }
-            ]
-        }
-
-        ToggleRow {
-            label: I18n.tr("Media")
-            description: I18n.tr("Cover and spectrum of what's playing, title on hover; opens the dashboard's Media tab")
-            path: "bar.showMedia"
-            enabled: !Config.barCenterClock && DashboardService.hasTab("media")
-        }
-
-        ToggleRow {
-            label: I18n.tr("System")
-            description: I18n.tr("CPU usage graph; opens the dashboard's System tab")
-            path: "bar.showSystem"
-            enabled: !Config.barCenterClock && DashboardService.hasTab("system")
-        }
-
-        ToggleRow {
-            label: I18n.tr("Weather")
-            description: I18n.tr("Its own button for the Weather tab; off, the clock shows the weather")
-            path: "bar.showWeather"
-            enabled: !Config.barCenterClock && DashboardService.hasTab("weather")
-        }
-
-        SelectRow {
-            label: I18n.tr("Keyboard layout")
-            description: I18n.tr("The layout in use: click to pick one, scroll to switch. Auto shows it with two or more layouts")
-            path: "bar.keyboardLayout"
-            options: [
-                {
-                    label: I18n.tr("Auto"),
-                    value: "auto"
-                },
-                {
-                    label: I18n.tr("Always"),
-                    value: "always"
-                },
-                {
-                    label: I18n.tr("Never"),
-                    value: "never"
-                }
-            ]
-        }
-    }
-
-    SettingsGroup {
-        title: I18n.tr("Tray")
-
-        TemplatePicker {
-            label: I18n.tr("Style")
-            description: ({
-                    "row": I18n.tr("Every icon always in the bar"),
-                    "overflow": I18n.tr("One button in the bar; the icons open in a grid under it"),
-                    "pinned": I18n.tr("The items switched on below stay in the bar; the rest wait behind a button")
-                })[Config.barTrayStyle] ?? I18n.tr("The icons slide out of a button in the bar")
-            path: "bar.tray.style"
-            options: [
-                {
-                    label: I18n.tr("Row"),
-                    value: "row"
-                },
-                {
-                    label: I18n.tr("Drawer"),
-                    value: "drawer"
-                },
-                {
-                    label: I18n.tr("Overflow"),
-                    value: "overflow"
-                },
-                {
-                    label: I18n.tr("Pinned"),
-                    value: "pinned"
-                }
-            ]
-            thumbHeight: Config.fontSizeIconLarge * 4
-            preview: Component {
-                TrayStylePreview {}
-            }
-        }
-
-        ToggleRow {
-            label: I18n.tr("Tooltips")
-            description: I18n.tr("The item's name on hover. Middle click and the mouse wheel go to the app")
-            path: "bar.tray.tooltips"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Monochrome icons")
-            description: I18n.tr("Tint the icons with the text color, like the rest of the bar")
-            path: "bar.tray.monochrome"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Attention badge")
-            description: I18n.tr("A pulsing dot on items asking for attention, and on the button hiding them")
-            path: "bar.tray.attention"
-        }
-
-        // Running items in bar order: move, hide, and pin (pinned style)
-        Repeater {
-            model: TrayService.items
-
-            SettingRow {
-                id: trayRow
-
-                required property var modelData
-                required property int index
-
-                readonly property string itemId: modelData.id
-                readonly property bool hidden: TrayService.isHidden(itemId)
-                readonly property bool pinned: TrayService.isPinned(itemId)
-                readonly property bool pinnedStyle: Config.barTrayStyle === "pinned"
-                readonly property int buttonSize: Config.fontSizeIconSmall + Config.padding * 2
-
-                label: TrayService.itemName(modelData)
-                description: hidden ? I18n.tr("Hidden from the bar") : !pinnedStyle ? "" : pinned ? I18n.tr("Pinned to the bar") : I18n.tr("Behind the button")
-
-                leading: TrayIconBox {
-                    source: TrayService.getIconSource(trayRow.modelData.icon)
-                    color: trayRow.controlColor
-                    opacity: trayRow.hidden ? 0.4 : 1
-                }
-
-                // md-arrow_up / md-arrow_down
-                ActionButton {
-                    icon: "\u{f005d}"
-                    size: trayRow.buttonSize
-                    baseColor: trayRow.controlColor
-                    opacity: trayRow.index > 0 ? 1 : 0.3
-                    onClicked: TrayService.move(trayRow.itemId, -1)
-                }
-
-                ActionButton {
-                    icon: "\u{f0045}"
-                    size: trayRow.buttonSize
-                    baseColor: trayRow.controlColor
-                    opacity: trayRow.index < TrayService.items.length - 1 ? 1 : 0.3
-                    onClicked: TrayService.move(trayRow.itemId, 1)
-                }
-
-                // md-eye / md-eye_off
-                ActionButton {
-                    icon: trayRow.hidden ? "\u{f0208}" : "\u{f0209}"
-                    text: trayRow.hidden ? I18n.tr("Show") : I18n.tr("Hide")
-                    size: trayRow.buttonSize
-                    baseColor: trayRow.controlColor
-                    onClicked: TrayService.setHidden(trayRow.itemId, !trayRow.hidden)
-                }
-
-                QsSwitch {
-                    visible: trayRow.pinnedStyle
-                    enabled: !trayRow.hidden
-                    opacity: enabled ? 1 : 0.4
-                    checked: trayRow.pinned
-                    onToggled: {
-                        TrayService.setPinned(trayRow.itemId, checked);
-                        checked = Qt.binding(() => trayRow.pinned);
-                    }
-                }
-            }
-        }
-
-        // Pinned or hidden items that aren't running right now
-        Repeater {
-            model: TrayService.missingIds
-
-            SettingRow {
-                id: missingRow
-
-                required property string modelData
-
-                label: modelData
-                description: TrayService.isHidden(modelData) ? I18n.tr("Hidden, not running") : I18n.tr("Pinned, not running")
-
-                leading: TrayIconBox {
-                    source: ""
-                    color: missingRow.controlColor
-                }
-
-                // md-close
-                ActionButton {
-                    icon: "\u{f0156}"
-                    text: I18n.tr("Forget")
-                    size: Config.fontSizeIconSmall + Config.padding * 2
-                    baseColor: missingRow.controlColor
-                    onClicked: TrayService.forget(missingRow.modelData)
-                }
-            }
-        }
-    }
-
-    SettingsGroup {
-        title: I18n.tr("Notifications")
-
-        ToggleRow {
-            label: I18n.tr("Notifications button")
-            description: I18n.tr("A bell after Quick Settings that opens the notification history; the badge counts the conversations you haven't seen yet")
-            path: "bar.showNotifications"
-        }
-    }
-
-    SettingsGroup {
-        title: I18n.tr("Quick Settings")
-
-        TemplatePicker {
-            label: I18n.tr("Style")
-            description: Config.barQsStyle === "minimal" ? I18n.tr("One icon; a dot on it when something needs a glance: low battery, no network, a microphone in use") : I18n.tr("Network, Bluetooth and battery; muted audio and a microphone in use show up only then")
-            path: "bar.quickSettings.style"
-            options: [
-                {
-                    label: I18n.tr("Icons"),
-                    value: "icons"
-                },
-                {
-                    label: I18n.tr("Pill"),
-                    value: "pill"
-                },
-                {
-                    label: I18n.tr("Chips"),
-                    value: "chips"
-                },
-                {
-                    label: I18n.tr("Minimal"),
-                    value: "minimal"
-                }
-            ]
-            preview: Component {
-                QsStylePreview {}
-            }
-        }
-
-        ToggleRow {
-            label: I18n.tr("Battery percentage")
-            description: I18n.tr("Next to the battery icon, or inside the pill style's battery capsule (not in the minimal style)")
-            path: "bar.quickSettings.batteryPercent"
-            enabled: BatteryService.hasBattery && Config.barQsStyle !== "minimal"
-        }
-    }
-
-    SettingsGroup {
-        title: I18n.tr("Quick Settings indicators")
-
-        ToggleRow {
-            label: I18n.tr("Network")
-            description: I18n.tr("Wi-Fi signal, or ethernet while a cable is connected")
-            path: "bar.quickSettings.indicators.network"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Bluetooth")
-            description: I18n.tr("While a device is connected")
-            path: "bar.quickSettings.indicators.bluetooth"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Muted sound")
-            description: I18n.tr("While the output is muted")
-            path: "bar.quickSettings.indicators.volume"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Microphone")
-            description: I18n.tr("While it's muted or an app is recording")
-            path: "bar.quickSettings.indicators.mic"
-        }
-
-        ToggleRow {
-            label: I18n.tr("Battery")
-            description: I18n.tr("Level and charging, on laptops")
-            path: "bar.quickSettings.indicators.battery"
-        }
-    }
-
-    // ===================== OMARCHY'S BAR WIDGETS =====================
-    // Orvix draws its own bar, so these belong to Omarchy's bar and only make
-    // sense while its shell runs: they are its plugins, and Omarchy's own
-    // registry turns them on and off. Shown here because this is where you
-    // look when you want something on a bar.
-    //
-    // Two origins, kept apart: the widgets Omarchy ships, and the ones
-    // installed on top of it (`omarchy plugin add <git-url>` or a folder in
-    // ~/.config/omarchy/plugins). Each is grouped by Omarchy's own category.
-    SettingsGroup {
-        visible: OmarchyBarWidgets.available
-        title: I18n.tr("Omarchy's bar widgets")
+        visible: !Config.barVisible
+        title: I18n.tr("The bar is off")
 
         InfoRow {
-            label: I18n.tr("Available")
-            value: OmarchyBarWidgets.shellRunning ? I18n.tr("%1 from Omarchy, %2 installed, %3 on Omarchy's bar", OmarchyBarWidgets.omarchyWidgets.length, OmarchyBarWidgets.communityWidgets.length, OmarchyBarWidgets.addedCount) : I18n.tr("%1 from Omarchy, %2 installed", OmarchyBarWidgets.omarchyWidgets.length, OmarchyBarWidgets.communityWidgets.length)
-        }
-
-        InfoRow {
-            visible: OmarchyBarWidgets.available && !OmarchyBarWidgets.shellRunning
-            label: I18n.tr("Where they show")
-            value: I18n.tr("They draw on Omarchy's bar, not Orvix's. Start Omarchy's shell to switch them, and hide its bar in Settings › System › Omarchy if you only want its plugins.")
+            label: I18n.tr("Bar")
+            value: I18n.tr("Orvix isn't drawing a bar. The screens have the space back.")
         }
 
         SettingRow {
-            visible: OmarchyBarWidgets.available
-            label: I18n.tr("Refresh")
-            description: I18n.tr("Read Omarchy's catalogue and what is on its bar again")
-            enabled: !OmarchyBarWidgets.loading
+            label: I18n.tr("Show the bar")
+            description: I18n.tr("Draw it again and come back to these settings")
 
             ActionButton {
-                icon: "\u{f0450}"
-                text: OmarchyBarWidgets.loading ? I18n.tr("Reading…") : I18n.tr("Refresh")
-                enabled: !OmarchyBarWidgets.loading
-                onClicked: OmarchyBarWidgets.refresh()
-            }
-        }
-
-        InfoRow {
-            visible: OmarchyBarWidgets.error !== ""
-            label: I18n.tr("Problem")
-            value: OmarchyBarWidgets.error
-        }
-    }
-
-    // Omarchy's own, by category
-    Repeater {
-        model: OmarchyBarWidgets.omarchyCategories
-
-        SettingsGroup {
-            id: omarchyCategory
-
-            required property var modelData
-
-            visible: OmarchyBarWidgets.available && omarchyCategory.modelData.items.length > 0
-            // The first one says where these come from; the rest just name
-            // their category
-            title: (omarchyCategory.modelData.category !== "" ? omarchyCategory.modelData.category : I18n.tr("Other")) + " · " + I18n.tr("Omarchy")
-
-            Repeater {
-                model: omarchyCategory.modelData.items
-                delegate: WidgetRow {}
+                icon: "\u{f012c}"
+                text: I18n.tr("Turn on")
+                onClicked: StateService.set("bar.show", true)
             }
         }
     }
 
-    // Installed on top of Omarchy: git plugins and hand-written ones
+    // ===================== TABS =====================
     SettingsGroup {
-        visible: OmarchyBarWidgets.available && OmarchyBarWidgets.communityWidgets.length === 0
-        title: I18n.tr("Installed widgets")
+        visible: Config.barVisible
+        title: ""
 
-        InfoRow {
-            label: I18n.tr("None yet")
-            value: I18n.tr("Add one with omarchy plugin add <git-url>, or drop a folder in ~/.config/omarchy/plugins. It shows here, next to Omarchy's own.")
-        }
-    }
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: tabBar.implicitHeight
 
-    Repeater {
-        model: OmarchyBarWidgets.communityCategories
+            QsTabBar {
+                id: tabBar
 
-        SettingsGroup {
-            id: communityCategory
-
-            required property var modelData
-
-            visible: OmarchyBarWidgets.available
-            title: (communityCategory.modelData.category !== "" ? communityCategory.modelData.category : I18n.tr("Other")) + " · " + I18n.tr("Installed")
-
-            Repeater {
-                model: communityCategory.modelData.items
-                delegate: WidgetRow {}
+                anchors.fill: parent
+                tabs: page.tabs
+                currentIndex: page.tabIndex
+                onSelected: index => page.selectTab(page.tabs[index].id)
             }
         }
     }
 
-    SettingsGroup {
-        title: I18n.tr("Behavior")
+    // Wrapped in an Item: a Loader is not an Item, so Layout attached
+    // properties on it have nowhere to go
+    Item {
+        visible: Config.barVisible
+        Layout.fillWidth: true
+        Layout.preferredHeight: tabLoader.implicitHeight
 
-        // The bar at all. Off, its window isn't created: the screens get the
-        // space back, popups dock to the edge, and this row stays reachable
-        // to turn it on again (Settings opens without a bar).
-        ToggleRow {
-            label: I18n.tr("Show the bar")
-            description: Config.barVisible ? I18n.tr("Off hides the bar completely; the screens get its space back and this page keeps working") : I18n.tr("The bar is off. Turn it on here, or with: orvix bar on")
-            path: "bar.show"
-        }
+        Loader {
+            id: tabLoader
 
-        ToggleRow {
-            label: I18n.tr("Auto hide")
-            description: I18n.tr("Hide the bar until the pointer reaches its edge of the screen")
-            path: "bar.autoHide"
-            enabled: Config.barVisible
-        }
-    }
-
-    // One Omarchy bar widget: its name and description, and the switch that
-    // adds it to or removes it from Omarchy's bar
-    component WidgetRow: SettingRow {
-        id: widgetRow
-
-        required property var modelData
-
-        label: widgetRow.modelData.name
-        description: widgetRow.modelData.description
-        enabled: OmarchyBarWidgets.shellRunning && !OmarchyBarWidgets.actionRunning
-
-        QsSwitch {
-            checked: widgetRow.modelData.enabled
-            onToggled: {
-                OmarchyBarWidgets.toggle(widgetRow.modelData.id, checked);
-                // Clicking breaks the binding; the catalogue is the source of
-                // truth and comes back after the action
-                checked = Qt.binding(() => widgetRow.modelData.enabled);
+            width: parent.width
+            sourceComponent: {
+                switch (page.tabId) {
+                case "widgets":
+                    return widgetsTab;
+                case "center":
+                    return centerTab;
+                case "tray":
+                    return trayTab;
+                case "quick":
+                    return quickTab;
+                case "plugins":
+                    return pluginsTab;
+                case "behavior":
+                    return behaviorTab;
+                default:
+                    return styleTab;
+                }
             }
         }
     }
 
-    // Tray item icon in a rounded box, like the launcher's app rows
-    component TrayIconBox: Rectangle {
-        id: iconBox
+    Component {
+        id: styleTab
+        BarTabStyle {}
+    }
 
-        property string source
+    Component {
+        id: widgetsTab
+        BarTabWidgets {}
+    }
 
-        implicitWidth: Config.fontSizeIconLarge + Config.padding * 2
-        implicitHeight: implicitWidth
-        radius: Config.radiusLarge
+    Component {
+        id: centerTab
+        BarTabCenter {}
+    }
 
-        Image {
-            id: icon
-            anchors.centerIn: parent
-            width: Config.fontSizeIconLarge
-            height: width
-            source: iconBox.source
-            sourceSize: Qt.size(width * 2, height * 2)
-            fillMode: Image.PreserveAspectFit
-            visible: status === Image.Ready
-        }
+    Component {
+        id: trayTab
+        BarTabTray {}
+    }
 
-        // Missing or broken icon
-        Image {
-            anchors.centerIn: parent
-            width: Config.fontSizeIconLarge
-            height: width
-            source: IconService.url("application-x-executable", "")
-            sourceSize: Qt.size(width * 2, height * 2)
-            fillMode: Image.PreserveAspectFit
-            visible: icon.status !== Image.Ready
-        }
+    Component {
+        id: quickTab
+        BarTabQuick {}
+    }
+
+    Component {
+        id: pluginsTab
+        BarTabPlugins {}
+    }
+
+    Component {
+        id: behaviorTab
+        BarTabBehavior {}
     }
 }

@@ -59,6 +59,7 @@
     "bar": {
         "keyboardLayout": "auto",
         "show": true,
+        "settingsTab": "style",
         "autoHide": false,
         "height": 33,
         "style": "docked-corners",
