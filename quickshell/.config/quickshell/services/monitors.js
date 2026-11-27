@@ -607,3 +607,24 @@ function mirrorProblem(rules, skip) {
     }
     return "";
 }
+
+// Which rules of `draft` differ from the applied ones in `base`, by index.
+// The unit is the whole rule: a resolution, a refresh rate, a scale, a
+// position or a mirror all count. Used for the page's Apply/Recover row, so
+// it has to answer for any change, including going back to a value that was
+// applied before (that is what a stale copy of `base` used to hide).
+function changedRules(base, draft) {
+    var list = draft || [];
+    var applied = base || [];
+    var changed = [];
+    for (var i = 0; i < list.length; i++) {
+        if (JSON.stringify(list[i]) !== JSON.stringify(applied[i]))
+            changed.push(list[i]);
+    }
+    return changed;
+}
+
+// Same, as the yes/no the page binds to
+function isDirty(base, draft) {
+    return changedRules(base, draft).length > 0;
+}

@@ -140,8 +140,9 @@ Singleton {
         // Rules taken from ~/.config/hypr/monitors.lua now live in
         // local/monitors.lua: the old file goes aside once that's written
         _dropLegacy = !fileManaged && _fileText === "" && legacyText !== "";
+        // `kept()` comes from writeProc, once the file is really written: what
+        // the page re-reads as the applied rules has to be the new ones
         _write(_pendingRules);
-        kept();
     }
 
     // `reason` (reverted on its own) goes into a notification
@@ -320,8 +321,13 @@ Singleton {
                     StateService.set("monitors.rules", root._previousRules);
                     // The trial's rules are still live: back to the saved file
                     Quickshell.execDetached(["bash", root.script, "revert"]);
-                } else if (root._dropLegacy) {
-                    root.removeLegacy();
+                } else {
+                    if (root._dropLegacy)
+                        root.removeLegacy();
+                    // The saved rules are the applied ones now. The page
+                    // re-captures its base from this, so the Apply button
+                    // keeps reacting to every further change.
+                    root.kept();
                 }
                 root._dropLegacy = false;
                 root.refreshSoon.restart();

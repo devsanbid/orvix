@@ -26,7 +26,10 @@ ColumnLayout {
     readonly property var monitors: MonitorsService.monitors
     readonly property var lidOff: MonitorsService.lidOffNames
     readonly property var layoutRects: Lib.rects(draft, monitors, lidOff)
-    readonly property var changed: draft.filter((r, i) => JSON.stringify(r) !== JSON.stringify(base[i]))
+    // The rules that differ from the applied ones (a function in monitors.js,
+    // so the rule is testable: it has to answer for every change, including
+    // going back to a value that was applied before)
+    readonly property var changed: Lib.changedRules(base, draft)
     readonly property bool dirty: changed.length > 0
     readonly property string problem: MonitorsService.problemWith(draft)
     readonly property bool trial: MonitorsService.trialActive
@@ -182,6 +185,16 @@ ColumnLayout {
             // Keep an edit in progress unless the monitors themselves changed
             if (!root.dirty || root.monitors.map(m => m.name).join(" ") !== root._ports)
                 root.reset();
+        }
+
+        // A kept configuration is the new truth: re-capture `base` without
+        // touching `draft`, so the Apply row follows the change back to a
+        // value that was already applied. Without this, base stayed at the
+        // pre-apply rules: 60 -> 240 applied, then 240 -> 60 compared equal to
+        // the stale base, `dirty` went false and the Apply button vanished
+        // even though the display was still at 240 Hz.
+        function onKept() {
+            root.reset();
         }
     }
 

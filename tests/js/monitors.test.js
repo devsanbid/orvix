@@ -176,3 +176,69 @@ test("mirroring: targets, mirrors of a rule, problems", () => {
     assert.equal(M.mirrorProblem([{ output: "B", label: "Right", mirror: "B" }], []), "Right can't mirror itself");
     assert.equal(M.mirrorProblem([...rules.slice(0, 2), { output: "D", label: "Third", mirror: "B" }], []), "Third mirrors Right, which mirrors another one");
 });
+
+// The Apply row follows the draft against the *applied* rules. The bug this
+// covers: base was never re-captured after a successful apply, so going
+// 60 -> 240 -> 60 compared equal to the stale base and the button vanished
+// while the display was still at 240 Hz.
+test("changedRules: a refresh rate change, in both directions", () => {
+    const rule = (mode) => [
+        {
+            name: "eDP-1",
+            output: "eDP-1",
+            mode,
+            scale: 1.6
+        }
+    ];
+    const applied = rule("2560x1600@60.00");
+
+    assert.equal(M.isDirty(applied, rule("2560x1600@60.00")), false);
+    assert.equal(M.isDirty(applied, rule("2560x1600@240.00")), true);
+    // After the keep, the applied rules ARE the 240 ones: the page re-captures
+    // base from them, so going back to 60 is a change again
+    const afterKeep = rule("2560x1600@240.00");
+    assert.equal(M.isDirty(afterKeep, rule("2560x1600@60.00")), true);
+    assert.equal(M.isDirty(afterKeep, rule("2560x1600@240.00")), false);
+});
+
+test("changedRules: resolution, scale, position, mirror and off all count", () => {
+    const base = [
+        {
+            name: "eDP-1",
+            output: "eDP-1",
+            mode: "2560x1600@60.00",
+            scale: 1.6,
+            position: "auto",
+            mirror: ""
+        }
+    ];
+    const withField = (key, value) => [Object.assign({}, base[0], {
+                [key]: value
+            })];
+    assert.equal(M.isDirty(base, withField("mode", "1920x1200@60.00")), true);
+    assert.equal(M.isDirty(base, withField("scale", 1.25)), true);
+    assert.equal(M.isDirty(base, withField("position", "1920x0")), true);
+    assert.equal(M.isDirty(base, withField("mirror", "HDMI-A-1")), true);
+    assert.equal(M.isDirty(base, withField("disabled", true)), true);
+});
+
+test("changedRules: a monitor that appeared or went away", () => {
+    const base = [
+        {
+            name: "eDP-1",
+            mode: "2560x1600@60.00"
+        }
+    ];
+    assert.equal(M.isDirty(base, []), false);
+    assert.equal(M.changedRules(base, []).length, 0);
+    assert.equal(M.isDirty(base, [...base, {
+        name: "HDMI-A-1",
+        mode: "1920x1080@60.00"
+    }]), true);
+});
+
+test("changedRules: no rules at all is not dirty", () => {
+    assert.equal(M.isDirty([], []), false);
+    assert.equal(M.isDirty(undefined, undefined), false);
+    assert.deepEqual(M.changedRules(null, null), []);
+});
