@@ -45,6 +45,14 @@ Singleton {
 
     // [{ id, name, current }] from the system and user theme folders
     property var themes: []
+    // id -> parsed colors.toml, read with the list (no extra process per theme)
+    property var _themeColors: ({})
+
+    // A theme's colors, by id: {} while the list hasn't been read or the
+    // theme's colors.toml is missing
+    function colorsOf(id: string): var {
+        return _themeColors[id] ?? {};
+    }
     // [{ id, name, source }] — read from the plugin folders, not from the
     // running Omarchy shell, so it works while only Orvix runs. Informational:
     // Orvix does not load these plugins
@@ -113,6 +121,8 @@ Singleton {
         if (!pluginsProc.running)
             pluginsProc.running = true;
         root.refreshBarFlag();
+        // The theme folder may have been replaced since the last read
+        colorsFile.reload();
     }
 
     function _setColors(): void {
@@ -121,6 +131,19 @@ Singleton {
             root.colorsText = text;
             root.themeChanged();
         }
+    }
+
+    // `omarchy theme set` replaces the whole theme folder, so colors.toml is a
+    // new inode: FileView's watch is still on the old one and won't fire
+    // again. Re-pointing the FileView (reload) reads the new file and starts
+    // watching it. Bar.qml watches a directory for the same reason.
+    function _reloadColors(): void {
+        colorsFile.reload();
+        // A theme that only changed its name keeps the same colors; the list
+        // and the name file are cheap to read again
+        if (!themesProc.running)
+            themesProc.running = true;
+        nameFile.reload();
     }
 
     // Applies one of the themes listed above, by its folder id. Anything else
@@ -206,21 +229,45 @@ Singleton {
         onLoaded: root.nameText = text()
         onFileChanged: {
             root.nameText = text();
-            root._setColors();
+            // In place, so this is the reliable "the theme changed" signal:
+            // re-read colors.toml through a fresh FileView, since the folder
+            // (and the file's inode) were replaced under it
+            root._reloadColors();
         }
     }
 
     Process {
         id: themesProc
+        // id, then the theme's colors.toml base64'd on one line: a theme
+        // missing from a later pass must not leave stale colors behind, and
+        // base64 keeps the TOML's newlines out of this line format
         command: ["sh", "-c", `
             for d in "$1"/*/ "$2"/*/; do
-                [ -f "$d/colors.toml" ] && basename "$d"
-            done | sort -u
+                [ -f "$d/colors.toml" ] || continue
+                printf '%s\t' "$(basename "$d")"
+                base64 -w0 <"$d/colors.toml" 2>/dev/null || printf ''
+                printf '\n'
+            done | sort -u -t'	' -k1,1
         `, "sh", root.themesDir, root.userThemesDir]
         stdout: StdioCollector {
             onStreamFinished: {
                 const current = root.themeId;
-                root.themes = text.split("\n").map(s => s.trim()).filter(s => s !== "").map(id => ({
+                const colors = {};
+                const list = text.split("\n").map(s => s.trim()).filter(s => s !== "").map(line => {
+                    const tab = line.indexOf("\t");
+                    const id = (tab >= 0 ? line.slice(0, tab) : line).trim();
+                    const b64 = tab >= 0 ? line.slice(tab + 1) : "";
+                    if (b64 !== "") {
+                        try {
+                            colors[id] = OmarchyTheme.parseColors(Qt.atob(b64));
+                        } catch (e) {
+                            colors[id] = {};
+                        }
+                    }
+                    return id;
+                }).filter(id => id !== "");
+                root._themeColors = colors;
+                root.themes = list.map(id => ({
                     id,
                     name: OmarchyTheme.prettyName(id),
                     current: id === current

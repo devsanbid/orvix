@@ -91,6 +91,32 @@ Singleton {
     // Preview data: { "themeName": { name, palette: { background, accent, ... } } }
     property var themePreviews: ({})
 
+    // Omarchy's themes, for the grid while the Omarchy source is picked:
+    // [{ id, name, palette, accent, variant, current }]. Read from each
+    // theme's colors.toml through OmarchyService, so it needs no shell and
+    // nothing is written to the theme. Empty when Omarchy isn't there.
+    readonly property var omarchyThemes: {
+        if (!omarchyAvailable)
+            return [];
+        const current = OmarchyService.themeId;
+        return (OmarchyService.themes ?? []).map(t => {
+            const colors = OmarchyService.colorsOf(t.id);
+            return {
+                id: t.id,
+                name: t.name,
+                // A few colors for the tile: the theme's own background and
+                // accent, so the swatch reads like that theme
+                palette: {
+                    background: colors.background || "#1a1b26",
+                    accent: colors.accent || colors.blue || "#7aa2f7",
+                    text: colors.foreground || "#c0caf5"
+                },
+                variant: colors.mode === "light" ? "light" : "dark",
+                current: t.id === current
+            };
+        });
+    }
+
     // The palette is the single source of truth for all colors
     // Config.qml reads from here. It starts with the last applied one (see
     // lastPalette); these are the colors of a first start

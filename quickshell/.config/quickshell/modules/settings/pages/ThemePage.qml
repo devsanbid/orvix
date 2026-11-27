@@ -209,8 +209,10 @@ ColumnLayout {
         }
     }
 
+    // ===================== ORVIX'S OWN THEMES =====================
+    // The presets in ~/.local/themes: files Orvix owns and can edit.
     SettingsGroup {
-        visible: root.onGrid
+        visible: root.onGrid && !ThemeService.isOmarchyMode
         title: I18n.tr("Themes")
 
         SettingRow {
@@ -253,6 +255,74 @@ ColumnLayout {
                         loadImage: root.onGrid
                         showDetails: true
                         onDetailsRequested: root.openDetail(tile.modelData)
+                    }
+                }
+            }
+        }
+    }
+
+    // ===================== OMARCHY'S THEMES =====================
+    // While the Omarchy source is picked, the grid is Omarchy's collection:
+    // picking one here switches what Omarchy is using, through Omarchy's own
+    // command, and Orvix follows it (the palette comes from Omarchy's
+    // colors.toml). Picking the "Theme" source goes back to the presets above.
+    // Shown only when Omarchy is installed and has themes; a machine without
+    // it never sees this group.
+    SettingsGroup {
+        visible: root.onGrid && ThemeService.isOmarchyMode
+        title: I18n.tr("Omarchy's themes")
+
+        SettingRow {
+            id: omarchyRefreshRow
+
+            label: I18n.tr("Available themes")
+            description: OmarchyService.themes.length === 0 ? I18n.tr("None found: install a theme in Omarchy first") : I18n.tr("%1 in Omarchy's collection, applied through Omarchy itself", OmarchyService.themes.length)
+
+            ActionButton {
+                icon: "\u{f0450}"
+                text: I18n.tr("Refresh")
+                enabled: !OmarchyService.actionRunning
+                onClicked: OmarchyService.refresh()
+            }
+        }
+
+        InfoRow {
+            visible: OmarchyService.actionRunning
+            label: OmarchyService.lastAction
+            value: I18n.tr("Working…")
+        }
+
+        InfoRow {
+            visible: !OmarchyService.actionRunning && OmarchyService.lastOutput !== "" && OmarchyService.lastExit !== 0
+            label: I18n.tr("Failed")
+            value: OmarchyService.lastOutput
+        }
+
+        Rectangle {
+            visible: OmarchyService.themes.length > 0
+            Layout.fillWidth: true
+            implicitHeight: omarchyGrid.implicitHeight + Config.padding * 4
+            radius: Config.radiusLarge
+            color: Config.cardColor
+
+            GridLayout {
+                id: omarchyGrid
+
+                anchors.fill: parent
+                anchors.margins: Config.padding * 2
+                columns: root.columns
+                columnSpacing: Config.spacing
+                rowSpacing: Config.spacing
+
+                Repeater {
+                    model: ThemeService.omarchyThemes
+
+                    OmarchyThemeTile {
+                        id: omarchyTile
+
+                        Layout.preferredWidth: (omarchyGrid.width - omarchyGrid.columnSpacing * (root.columns - 1)) / root.columns
+                        selected: OmarchyService.themeId === omarchyTile.modelData.id
+                        onActivated: OmarchyService.applyTheme(omarchyTile.modelData.id)
                     }
                 }
             }
