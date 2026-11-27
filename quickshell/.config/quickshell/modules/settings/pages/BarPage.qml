@@ -519,19 +519,23 @@ ColumnLayout {
     // sense while its shell runs: they are its plugins, and Omarchy's own
     // registry turns them on and off. Shown here because this is where you
     // look when you want something on a bar.
+    //
+    // Two origins, kept apart: the widgets Omarchy ships, and the ones
+    // installed on top of it (`omarchy plugin add <git-url>` or a folder in
+    // ~/.config/omarchy/plugins). Each is grouped by Omarchy's own category.
     SettingsGroup {
         visible: OmarchyBarWidgets.available
         title: I18n.tr("Omarchy's bar widgets")
 
         InfoRow {
-            label: I18n.tr("Widgets")
-            value: OmarchyBarWidgets.shellRunning ? I18n.tr("%1 available, %2 on Omarchy's bar", OmarchyBarWidgets.widgets.length, OmarchyBarWidgets.addedCount) : I18n.tr("Omarchy's shell isn't running, so its bar widgets can't be switched")
+            label: I18n.tr("Available")
+            value: OmarchyBarWidgets.shellRunning ? I18n.tr("%1 from Omarchy, %2 installed, %3 on Omarchy's bar", OmarchyBarWidgets.omarchyWidgets.length, OmarchyBarWidgets.communityWidgets.length, OmarchyBarWidgets.addedCount) : I18n.tr("%1 from Omarchy, %2 installed", OmarchyBarWidgets.omarchyWidgets.length, OmarchyBarWidgets.communityWidgets.length)
         }
 
         InfoRow {
             visible: OmarchyBarWidgets.available && !OmarchyBarWidgets.shellRunning
             label: I18n.tr("Where they show")
-            value: I18n.tr("They draw on Omarchy's bar, not Orvix's. Start Omarchy's shell to use them, and hide its bar in Settings › System › Omarchy if you only want its plugins.")
+            value: I18n.tr("They draw on Omarchy's bar, not Orvix's. Start Omarchy's shell to switch them, and hide its bar in Settings › System › Omarchy if you only want its plugins.")
         }
 
         SettingRow {
@@ -555,40 +559,52 @@ ColumnLayout {
         }
     }
 
-    // One group per category Omarchy uses (Compositor, Time, Network…)
+    // Omarchy's own, by category
     Repeater {
-        model: OmarchyBarWidgets.categories
+        model: OmarchyBarWidgets.omarchyCategories
 
         SettingsGroup {
-            id: categoryGroup
+            id: omarchyCategory
 
             required property var modelData
 
-            visible: OmarchyBarWidgets.available && categoryGroup.modelData.items.length > 0
-            title: categoryGroup.modelData.category !== "" ? categoryGroup.modelData.category : I18n.tr("Other")
+            visible: OmarchyBarWidgets.available && omarchyCategory.modelData.items.length > 0
+            // The first one says where these come from; the rest just name
+            // their category
+            title: (omarchyCategory.modelData.category !== "" ? omarchyCategory.modelData.category : I18n.tr("Other")) + " · " + I18n.tr("Omarchy")
 
             Repeater {
-                model: categoryGroup.modelData.items
+                model: omarchyCategory.modelData.items
+                delegate: WidgetRow {}
+            }
+        }
+    }
 
-                SettingRow {
-                    id: widgetRow
+    // Installed on top of Omarchy: git plugins and hand-written ones
+    SettingsGroup {
+        visible: OmarchyBarWidgets.available && OmarchyBarWidgets.communityWidgets.length === 0
+        title: I18n.tr("Installed widgets")
 
-                    required property var modelData
+        InfoRow {
+            label: I18n.tr("None yet")
+            value: I18n.tr("Add one with omarchy plugin add <git-url>, or drop a folder in ~/.config/omarchy/plugins. It shows here, next to Omarchy's own.")
+        }
+    }
 
-                    label: widgetRow.modelData.name
-                    description: widgetRow.modelData.description
-                    enabled: OmarchyBarWidgets.shellRunning && !OmarchyBarWidgets.actionRunning
+    Repeater {
+        model: OmarchyBarWidgets.communityCategories
 
-                    QsSwitch {
-                        checked: widgetRow.modelData.enabled
-                        onToggled: {
-                            OmarchyBarWidgets.toggle(widgetRow.modelData.id, checked);
-                            // Clicking breaks the binding; the catalogue is the
-                            // source of truth and comes back after the action
-                            checked = Qt.binding(() => widgetRow.modelData.enabled);
-                        }
-                    }
-                }
+        SettingsGroup {
+            id: communityCategory
+
+            required property var modelData
+
+            visible: OmarchyBarWidgets.available
+            title: (communityCategory.modelData.category !== "" ? communityCategory.modelData.category : I18n.tr("Other")) + " · " + I18n.tr("Installed")
+
+            Repeater {
+                model: communityCategory.modelData.items
+                delegate: WidgetRow {}
             }
         }
     }
@@ -600,6 +616,28 @@ ColumnLayout {
             label: I18n.tr("Auto hide")
             description: I18n.tr("Hide the bar until the pointer reaches its edge of the screen")
             path: "bar.autoHide"
+        }
+    }
+
+    // One Omarchy bar widget: its name and description, and the switch that
+    // adds it to or removes it from Omarchy's bar
+    component WidgetRow: SettingRow {
+        id: widgetRow
+
+        required property var modelData
+
+        label: widgetRow.modelData.name
+        description: widgetRow.modelData.description
+        enabled: OmarchyBarWidgets.shellRunning && !OmarchyBarWidgets.actionRunning
+
+        QsSwitch {
+            checked: widgetRow.modelData.enabled
+            onToggled: {
+                OmarchyBarWidgets.toggle(widgetRow.modelData.id, checked);
+                // Clicking breaks the binding; the catalogue is the source of
+                // truth and comes back after the action
+                checked = Qt.binding(() => widgetRow.modelData.enabled);
+            }
         }
     }
 

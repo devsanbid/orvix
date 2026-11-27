@@ -42,8 +42,14 @@ Singleton {
     property string error: ""
     property bool loaded: false
 
-    // By category, in Omarchy's own order, for the page
-    readonly property var categories: Lib.groupByCategory(widgets)
+    // The page keeps the two origins apart: Omarchy's own widgets, then the
+    // ones installed from a git repo or written by hand. Each is grouped by
+    // Omarchy's own category (Time, Network, Audio…).
+    readonly property var omarchyWidgets: widgets.filter(w => w.source !== "community")
+    readonly property var communityWidgets: widgets.filter(w => w.source === "community")
+    readonly property var omarchyCategories: Lib.groupByCategory(omarchyWidgets)
+    readonly property var communityCategories: Lib.groupByCategory(communityWidgets)
+
     readonly property int addedCount: widgets.filter(w => w.onBar).length
     readonly property int enabledCount: widgets.filter(w => w.enabled).length
 

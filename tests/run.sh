@@ -43,7 +43,9 @@ need() {
 
 run_js() {
     need node nodejs || return 1
-    node --test tests/js/
+    # The glob, not the folder: node 22 does not take a directory here (26
+    # does), and the glob works on both
+    node --test tests/js/*.test.js
 }
 
 run_bash() {

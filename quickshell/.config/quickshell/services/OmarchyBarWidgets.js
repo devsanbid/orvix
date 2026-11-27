@@ -30,7 +30,12 @@ function parseCatalog(text) {
             // Omarchy's own grouping (Time, Network, Audio…); "" when it has none
             category: String(widget.category || "").trim(),
             // Several on the bar at once (a spacer, a second clock)
-            allowMultiple: widget.allowMultiple === true
+            allowMultiple: widget.allowMultiple === true,
+            // Who made it: Omarchy ships the first-party ones, the rest come
+            // from a git repo or a hand-written plugin folder
+            source: m.firstParty === true ? "omarchy" : "community",
+            // Where it lives, for the "open its folder" action
+            dir: String(m.sourceDir || "").trim()
         };
     });
 }
@@ -87,6 +92,22 @@ function merge(catalogue, onBar, enabled) {
             onBar: bar[w.id] === true,
             enabled: live[w.id] === true
         }));
+}
+
+// The origin groups the page shows first: Omarchy's own, then everything
+// installed on top of it. `items` is the flat list of that origin.
+function groupBySource(widgets) {
+    const order = ["omarchy", "community"];
+    const out = [];
+    for (const source of order) {
+        const items = widgets.filter(w => (w.source || "omarchy") === source);
+        if (items.length > 0)
+            out.push({
+                source,
+                items
+            });
+    }
+    return out;
 }
 
 // [{ category, items }], categories in the order Omarchy first lists them,
