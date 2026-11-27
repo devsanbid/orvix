@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import qs.config
 
 // Whether the bar can be seen on each screen, so the panels that touch it
 // (attached popups, launcher, wallpaper picker, OSD) go to the screen edge
@@ -27,15 +28,20 @@ Singleton {
     // Screen name -> true while an auto-hiding bar is slid away (set by Bar)
     property var autoHidden: ({})
 
+    // The bar isn't drawn at all (Settings › Bar › "Show the bar"): every
+    // screen is without it, so panels go to the edge as they do for a
+    // covered bar
+    readonly property bool disabled: !Config.barVisible
+
     // A fullscreen window covers the bar. Panels that keep an auto-hiding
     // bar shown while open (WindowManagerService) only need this
     function coveredOn(screenName: string): bool {
         return coveredScreens.includes(screenName);
     }
 
-    // Covered, or slid away by auto hide
+    // Covered, turned off, or slid away by auto hide
     function hiddenOn(screenName: string): bool {
-        return coveredOn(screenName) || autoHidden[screenName] === true;
+        return disabled || coveredOn(screenName) || autoHidden[screenName] === true;
     }
 
     function setAutoHidden(screenName: string, hidden: bool): void {

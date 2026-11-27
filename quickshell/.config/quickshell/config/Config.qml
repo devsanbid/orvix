@@ -129,6 +129,11 @@ Singleton {
     // ========================================================================
     readonly property int barHeight: getState("bar.height", 33)
     readonly property bool barAutoHide: getState("bar.autoHide", false)
+    // The bar is drawn at all. Off, its window is not created: the screens get
+    // the space back and the panels that attach to it dock to the screen edge
+    // (BarService.hiddenOn reports it). The key is `bar.show` rather than
+    // `bar.hidden`, so a state.json from before this existed reads as "shown".
+    readonly property bool barVisible: getState("bar.show", true)
     // Screen edge the bar sits on: "top" or "bottom"
     readonly property bool barOnBottom: getState("bar.position", "top") === "bottom"
     // Layout template: "islands", "docked", "floating" or "docked-corners"

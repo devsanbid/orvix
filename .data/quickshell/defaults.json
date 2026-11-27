@@ -58,6 +58,7 @@
     },
     "bar": {
         "keyboardLayout": "auto",
+        "show": true,
         "autoHide": false,
         "height": 33,
         "style": "docked-corners",

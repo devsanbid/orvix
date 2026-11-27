@@ -37,6 +37,11 @@ Scope {
             color: "transparent"
             screen: modelData
 
+            // Settings › Bar › "Show the bar": off, the window is not
+            // created, so the screens get the space back and popups dock to
+            // the edge (BarService.hiddenOn)
+            visible: Config.barVisible
+
             // Auto hide reserves nothing: -1 (what ExclusionMode.Ignore sends).
             // Not 0: the bar starts before state.json is read, reserving its
             // height, and Quickshell never sends a change back to 0 (it
