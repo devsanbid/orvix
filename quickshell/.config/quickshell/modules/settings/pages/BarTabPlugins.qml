@@ -102,6 +102,27 @@ ColumnLayout {
         }
     }
 
+    // While a toggle waits for Omarchy's shell to come up
+    SettingsGroup {
+        visible: OmarchyBarWidgets.available && OmarchyBarWidgets.startingMessage !== ""
+        title: I18n.tr("Working")
+
+        InfoRow {
+            label: OmarchyBarWidgets.startingMessage
+            value: I18n.tr("A moment…")
+        }
+    }
+
+    SettingsGroup {
+        visible: OmarchyBarWidgets.error !== ""
+        title: I18n.tr("Problem")
+
+        InfoRow {
+            label: OmarchyBarWidgets.error
+            value: I18n.tr("Nothing was changed")
+        }
+    }
+
     // One Omarchy bar widget: its name and description, and the switch that
     // adds it to or removes it from Omarchy's bar
     component WidgetRow: SettingRow {
@@ -111,7 +132,10 @@ ColumnLayout {
 
         label: widgetRow.modelData.name
         description: widgetRow.modelData.description
-        enabled: OmarchyBarWidgets.shellRunning && !OmarchyBarWidgets.actionRunning
+        // Not gated on the shell any more: a toggle starts it when it has to,
+        // which is the only way to change Omarchy's plugins. Only a change in
+        // flight blocks another.
+        enabled: !OmarchyBarWidgets.actionRunning && !OmarchyBarWidgets._startingShell
 
         QsSwitch {
             checked: widgetRow.modelData.enabled

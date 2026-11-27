@@ -68,19 +68,90 @@ Singleton {
 
     // Turns one on. `placement` is optional (Omarchy picks the default spot)
     function enable(id: string): void {
-        if (!shellRunning) {
-            error = I18n.tr("Omarchy's shell isn't running, so its bar can't change");
-            return;
-        }
-        run(["omarchy", "plugin", "enable", id], I18n.tr("Adding %1 to Omarchy's bar", _name(id)));
+        _withShell(["omarchy", "plugin", "enable", id], I18n.tr("Adding %1 to Omarchy's bar", _name(id)));
     }
 
     function disable(id: string): void {
-        if (!shellRunning) {
-            error = I18n.tr("Omarchy's shell isn't running, so its bar can't change");
+        _withShell(["omarchy", "plugin", "disable", id], I18n.tr("Removing %1 from Omarchy's bar", _name(id)));
+    }
+
+    // Omarchy's plugin registry lives in its running shell: `omarchy plugin
+    // enable` answers "omarchy-shell is not running" and changes nothing. So a
+    // toggle starts the shell first when it has to. Its bar stays hidden (the
+    // bar-off flag Orvix manages), so this brings up the plugins, not a second
+    // bar.
+    function _withShell(args: var, label: string): void {
+        error = "";
+        if (shellRunning) {
+            run(args, label);
             return;
         }
-        run(["omarchy", "plugin", "disable", id], I18n.tr("Removing %1 from Omarchy's bar", _name(id)));
+        if (_startingShell) {
+            // One at a time: the first toggle is the one that will run
+            return;
+        }
+        _pending = {
+            args: args,
+            label: label
+        };
+        _startingShell = true;
+        startProc.running = true;
+    }
+
+    // The toggle waiting for the shell to come up
+    property var _pending: null
+    // True while it starts: the page shows what is happening
+    property bool _startingShell: false
+    // What the page says while it waits
+    readonly property string startingMessage: _startingShell ? I18n.tr("Starting Omarchy's shell so its plugins can change") : ""
+
+    Process {
+        id: startProc
+        command: ["omarchy-launch-shell"]
+        onExited: code => {
+            if (code !== 0) {
+                root._startingShell = false;
+                root._pending = null;
+                root.error = I18n.tr("Omarchy's shell couldn't start");
+                return;
+            }
+            // The shell takes a few seconds to load its plugins: poll rather
+            // than guess a delay
+            waitTimer.tries = 0;
+            waitTimer.restart();
+        }
+    }
+
+    Timer {
+        id: waitTimer
+        property int tries: 0
+        interval: 700
+        repeat: true
+        onTriggered: {
+            tries++;
+            if (root._shellAnswers()) {
+                stop();
+                root._startingShell = false;
+                const next = root._pending;
+                root._pending = null;
+                // Up: the change can go through, and the reads have a shell
+                if (next)
+                    root.run(next.args, next.label);
+                root.refresh();
+                return;
+            }
+            if (tries > 20) {
+                stop();
+                root._startingShell = false;
+                root._pending = null;
+                root.error = I18n.tr("Omarchy's shell didn't come up; start it with omarchy-launch-shell");
+            }
+        }
+    }
+
+    // A cheap "is it there yet": the same test the shell-detection uses
+    function _shellAnswers(): bool {
+        return OmarchyService.shellRunning;
     }
 
     function toggle(id: string, on: bool): void {

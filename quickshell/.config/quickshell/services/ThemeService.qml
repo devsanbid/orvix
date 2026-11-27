@@ -27,6 +27,9 @@ Singleton {
 
     readonly property string themesDir: Quickshell.env("HOME") + "/.local/themes"
     readonly property string kittyThemePath: Quickshell.env("HOME") + "/.config/kitty/current-theme.conf"
+    // Not Quickshell.shellDir: it is empty while a singleton is built
+    readonly property string kittyApplyScript: Quickshell.env("HOME") + "/.config/quickshell/scripts/kitty-apply.sh"
+
     // Read by the Neovim "orvix" colorscheme (nvim/.config/nvim/lua/orvix/)
     readonly property string nvimPalettePath: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/orvix/nvim.json"
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/.local/wallpapers"
@@ -615,7 +618,12 @@ Singleton {
 
         const content = lines.join("\n");
 
-        kittyProc.run(["bash", "-c", "mkdir -p \"$(dirname " + shellEscape(kittyThemePath) + ")\" && cat > " + shellEscape(kittyThemePath) + " << 'THEME_EOF'\n" + content + "THEME_EOF\n" + "pkill -USR1 -x kitty 2>/dev/null; true"]);
+        // Written to a temporary file and handed to kitty-apply.sh, which
+        // copies it into place and pushes the colours into every running
+        // kitty through its remote-control socket. SIGUSR1 is not used: this
+        // kitty build does not install a handler for it, so it changed the
+        // file and left the open windows as they were.
+        kittyProc.run(["bash", "-c", "tmp=$(mktemp) && cat > \"$tmp\" << 'THEME_EOF'\n" + content + "THEME_EOF\n" + "bash " + shellEscape(kittyApplyScript) + " \"$tmp\"; rc=$?; rm -f \"$tmp\"; exit $rc"]);
     }
 
 
@@ -1039,8 +1047,13 @@ Singleton {
             onRead: data => console.error("[Theme:Kitty] " + data)
         }
         onExited: exitCode => {
-            if (exitCode === 0)
+            if (exitCode === 0) {
                 console.log("[Theme] Kitty theme updated");
+            } else {
+                // The file may still be written; say what stopped it rather
+                // than leaving the terminal silently on another theme
+                console.error("[Theme] Kitty theme not applied (exit " + exitCode + ")");
+            }
         }
     }
 
@@ -1211,6 +1224,43 @@ Singleton {
                     console.error("[Theme] Failed to parse hyprland colors:", e);
                 }
             }
+        }
+    }
+
+    // The theme mode and what each app was last given, so a round trip can be
+    // checked without opening Settings and reading the kitty file by eye.
+    // "mode<TAB>kitty-background<TAB>theme-name"
+    IpcHandler {
+        target: "theme"
+
+        function mode(): string {
+            return String(root.themeMode);
+        }
+
+        // Switches modes exactly the way the Settings › Theme selector does:
+        // these are the same functions its onSelected calls.
+        function set(mode: string): string {
+            if (mode === "auto") {
+                root.setAutoMode();
+            } else if (mode === "omarchy") {
+                if (!root.omarchyAvailable)
+                    return "Omarchy is not available"; // i18n-ignore: an IPC answer, not UI text
+                root.setOmarchyMode();
+            } else {
+                root.setPresetMode(root.currentThemeName);
+            }
+            return "ok: " + mode;
+        }
+
+        // What the shell thinks it is showing, for a script to compare with
+        // what kitty actually has
+        function palette(): string {
+            return [root.themeMode, root.palette.background ?? "", root.palette.accent ?? "", root.currentThemeName ?? ""].join("\t");
+        }
+
+        function reapply(): string {
+            root.applyPaletteEverywhere(root.palette);
+            return "ok";
         }
     }
 }
