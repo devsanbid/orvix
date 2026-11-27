@@ -233,6 +233,46 @@ step_icons() {
     source "$DOTFILES_DIR/.data/orvix-cli/lib/install-icons.sh"
 }
 
+# The interface font, from .data/fonts: CaskaydiaCove Nerd Font (SIL OFL, so
+# it may travel with the project). Copied for every install, not only the
+# fonts category, because the whole interface is set in it: without it the
+# shell falls back to whatever monospace the system has. The Arch package
+# still comes with the fonts category for the other weights; the family name
+# is the same, and the user's copy wins.
+step_fonts() {
+    log_step "Installing the interface font..."
+    local src="$DOTFILES_DIR/.data/fonts/cascadia-nerd"
+    local dest="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/cascadia-nerd"
+    if [[ ! -d "$src" ]]; then
+        log_warn "No bundled fonts at $src, skipping"
+        return 0
+    fi
+    mkdir -p "$dest" || {
+        log_warn "Couldn't create $dest"
+        return 0
+    }
+    local count=0
+    local f
+    for f in "$src"/*.ttf; do
+        [[ -f "$f" ]] || continue
+        # Only when missing or changed: a re-run shouldn't rewrite them
+        if ! cmp -s "$f" "$dest/$(basename "$f")"; then
+            cp -f "$f" "$dest/" && ((count++))
+        fi
+    done
+    # The licence has to travel with the fonts (OFL, condition 2)
+    cp -f "$src/LICENSE-OFL.txt" "$dest/" 2>/dev/null || true
+    # Fontconfig caches per directory, so a stale cache hides a new file
+    if command -v fc-cache >/dev/null 2>&1; then
+        fc-cache -f "$dest" >/dev/null 2>&1 || true
+    fi
+    if ((count > 0)); then
+        log_info "Interface font installed ($count file(s)) in $dest"
+    else
+        log_info "Interface font already installed"
+    fi
+}
+
 step_hyprland() {
     source "$SETUP_DIR/hyprland.sh"
     run_hyprland_main
@@ -515,6 +555,9 @@ plan_steps() {
 
     step_add step_stow "Linking the dotfiles (stow)" 1
     step_add step_icons "orvix icon"
+    # Always: the whole interface is set in this font, whatever categories
+    # were picked
+    step_add step_fonts "Interface font"
     step_add step_hyprland "Hyprland local files"
     gpu_multi && step_add "step_gpus ${ANSWERS[gpu_order]:-auto}" "GPU links and order"
     step_add step_state_aur_helper "Quickshell settings"
