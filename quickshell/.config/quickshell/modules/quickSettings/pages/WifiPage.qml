@@ -300,6 +300,10 @@ Item {
 
                 ScrollBar.vertical: QsScrollBar {}
 
+                SmoothWheel {
+                    flickable: parent
+                }
+
                 Column {
                     id: rows
 

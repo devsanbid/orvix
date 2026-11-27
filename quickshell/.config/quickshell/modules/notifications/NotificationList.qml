@@ -44,6 +44,10 @@ Item {
 
         ScrollBar.vertical: QsScrollBar {}
 
+        SmoothWheel {
+            flickable: parent
+        }
+
         // Flickable + Column (not ListView): cards change height when they
         // expand, and a Column always relayouts for that
         Column {

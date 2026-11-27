@@ -63,6 +63,12 @@ ListView {
         id: scrollBar
     }
 
+    // A mouse wheel glides instead of stepping; a touchpad keeps Qt's own
+    // phased scrolling, which follows the fingers
+    SmoothWheel {
+        flickable: root
+    }
+
     // Empty state for the current mode
     readonly property var emptyState: {
         const mode = LauncherService.mode.id;
