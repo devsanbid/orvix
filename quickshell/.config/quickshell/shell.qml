@@ -17,6 +17,7 @@ import "./modules/wallpaper/"
 import "./modules/osd/"
 import "./modules/welcome/"
 import "./components/"
+import "./modules/plugin/"
 
 ShellRoot {
     id: root
@@ -29,6 +30,11 @@ ShellRoot {
 
     // Ensure IdleService singleton loads
     property bool _idleReady: IdleService.caffeineEnabled
+
+    // Loads the plugin store with the shell: it is otherwise only reached
+    // from Settings › Plugins, and an enabled plugin's service has to start
+    // at login, not the first time the page is opened
+    property int _pluginsReady: PluginService.count
 
     // Keeps hypr/local/settings.lua in sync with state.json
     property string _hyprlandSettings: HyprlandSettingsService.lua
@@ -110,6 +116,10 @@ ShellRoot {
 
     // Bar - always active (main component)
     Bar {}
+
+    // Enabled plugin services: they hold their own singletons, timers and
+    // processes, so they start with the shell and not when a page opens
+    PluginServices {}
 
     // Notifications (the window only maps while there are popups)
     NotificationOverlay {}

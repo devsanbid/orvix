@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "browser-speedup",
+  "name": "Browser startup speedup",
+  "version": "1.0.0",
+  "description": "Keeps your Chromium-based browser running windowless, so a new window opens in about a second or less instead of starting the browser again.",
+  "author": "devsanbid",
+  "license": "MIT",
+  "homepage": "https://github.com/devsanbid/orvix",
+  "repository": "https://github.com/devsanbid/orvix",
+  "kinds": ["service", "bar-widget", "settings"],
+  "entryPoints": {
+    "service": "service.qml",
+    "barWidget": "BarWidget.qml",
+    "settings": "config/Settings.qml"
+  },
+  "barWidget": {
+    "displayName": "Speedup",
+    "description": "Shown only while the background browser is running",
+    "category": "System",
+    "allowMultiple": false
+  },
+  "requires": {
+    "commands": ["bash", "jq", "systemctl"]
+  },
+  "permissions": ["commands:run"],
+  "enabled": false,
+  "settings": {
+    "showInBar": true
+  }
+}

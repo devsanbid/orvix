@@ -77,7 +77,7 @@ _list_rows() {
 # Install from a local folder or a git URL into the store. The manifest is
 # validated before anything is copied; a plugin that fails is not installed.
 _install() {
-    local source=$1 id="" temp="" problems
+    local source=$1 force=${2:-} id="" temp="" problems
     _plugin_jq || return 1
 
     case "$source" in
@@ -123,8 +123,8 @@ _install() {
         local old new
         old="$(_manifest "$dest" '.version')"
         new="$(_manifest "$source" '.version')"
-        if [[ "$old" == "$new" ]]; then
-            echo "orvix plugin: $id $old is already installed"
+        if [[ "$old" == "$new" ]] && [[ "$force" != "--force" ]]; then
+            echo "orvix plugin: $id $old is already installed (--force reinstalls it)"
             [[ -n "$temp" ]] && rm -rf "$temp"
             return 0
         fi
@@ -179,7 +179,9 @@ case "$subcmd" in
         echo "Commands:"
         echo "  list                    Installed plugins, with their state"
         echo "  info <id>               Everything the manifest declares"
-        echo "  install <path|url>      A folder, or github:owner/repo (or any git URL)"
+        echo "  install <path|url> [--force]"
+        echo "                          A folder, or github:owner/repo (or any git URL);"
+        echo "                          --force reinstalls the same version"
         echo "  enable <id>             Load it (checks what it needs first)"
         echo "  disable <id>            Unload it; nothing is deleted"
         echo "  update [<id> | --all]   Re-fetch from the plugin's repository"
@@ -233,12 +235,16 @@ case "$subcmd" in
         fi
         ;;
     install)
-        local source="${1:-}"
+        local source="${1:-}" force="${2:-}"
+        [[ "$source" == "--force" ]] && {
+            source="${2:-}"
+            force="--force"
+        }
         [[ -n "$source" ]] || {
-            echo "Usage: orvix plugin install <path|github:owner/repo>" >&2
+            echo "Usage: orvix plugin install <path|github:owner/repo> [--force]" >&2
             return 2
         }
-        _install "$source"
+        _install "$source" "$force"
         ;;
     validate)
         local path="${1:-}"

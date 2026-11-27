@@ -345,6 +345,8 @@ Warning: services/OmarchyService.qml: Type OmarchyService not declared as single
 Warning: services/OsdService.qml: Type OsdService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/OsdService.qml: Unqualified access [unqualified]
 Warning: services/Paths.qml: Type Paths not declared as singleton in qmldir but using pragma Singleton [import]
+Warning: services/PluginBridge.qml: Type PluginBridge not declared as singleton in qmldir but using pragma Singleton [import]
+Warning: services/PluginService.qml: Type PluginService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/PowerProfileService.qml: Type PowerProfileService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/PowerService.qml: Type PowerService not declared as singleton in qmldir but using pragma Singleton [import]
 Warning: services/ProfileService.qml: Type ProfileService not declared as singleton in qmldir but using pragma Singleton [import]
