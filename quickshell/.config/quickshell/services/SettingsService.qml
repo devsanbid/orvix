@@ -165,9 +165,9 @@ Singleton {
         },
         {
             id: "monitors",
-            label: I18n.noop("Monitors"),
+            label: I18n.noop("Displays"),
             icon: "\u{f0379}",
-            description: I18n.noop("Resolution, refresh rate, scale, rotation and layout of each monitor, tried before they're kept"),
+            description: I18n.noop("Monitors and displays: resolution, refresh rate, scale, rotation, arrangement and mirroring, tried before they're kept"),
             category: "Hyprland"
         },
         {

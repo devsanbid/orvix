@@ -131,6 +131,39 @@ show the repository the plugin actually came from.
 6. **Remove** — the folder is deleted. Its settings go too, after the user
    confirms.
 
+## What a plugin can import
+
+A plugin folder is outside the shell's own tree, so only some of its modules
+resolve. Verified by loading a plugin and reading the log:
+
+| Import | Works in a plugin? |
+| --- | --- |
+| `QtQuick`, `QtQuick.Layouts`, `QtQuick.Controls` | yes |
+| `Quickshell`, `Quickshell.Io` | yes — needed for `Process`, `FileView`, `Timer` in a service |
+| `qs.config` | yes — `Config.font`, colours, sizes, so a plugin follows the theme |
+| `qs.services` | yes — this is where `PluginBridge` and the shell services are |
+| the shell's own component types (`QueuedProcess`, the settings rows) | **no** — they live in folders, not a module |
+| `qs.rows`, `qs.components` | **no** — there is no such module |
+
+So a plugin's settings page is plain QtQuick built to look like Settings
+(`Card` / `Row` / `Button` components defined in the file), and a plugin that
+wants a queue writes one over `Process`. `plugins/orvix-browser-speedup` is a
+working example of both.
+
+`PluginBridge` is what a plugin uses instead of reaching into the shell:
+
+```qml
+// its own setting, with the manifest's default behind it
+PluginBridge.setting("showInBar", true)
+PluginBridge.set("showInBar", false)
+
+// a file inside the plugin's own folder
+PluginBridge.path("assets/icon.svg")
+```
+
+It is deliberately small: a plugin cannot read another plugin's settings, the
+shell's state, or the store.
+
 ## Bar widgets
 
 A `barWidget` entry point is instantiated in the bar. It may read

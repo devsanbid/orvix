@@ -355,8 +355,8 @@ ColumnLayout {
         // nwg-displays (or from before an update moved it)
         SettingRow {
             visible: MonitorsService.legacyText !== "" && MonitorsService.fileManaged
-            label: I18n.tr("Old monitors.lua found")
-            description: I18n.tr("~/.config/hypr/monitors.lua (nwg-displays writes there) isn't read anymore. Load its settings to try them, or remove it")
+            label: I18n.tr("Settings from another monitor tool")
+            description: I18n.tr("Monitor settings written by nwg-displays (or by an older Orvix) were found and aren't used. Load them here to try them, or discard them")
 
             ActionButton {
                 text: I18n.tr("Load")
