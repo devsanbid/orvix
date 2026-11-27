@@ -228,7 +228,94 @@ Singleton {
         const wallpaper = getState("wallpaper.current", "");
         if (wallpaper) {
             runMatugen(wallpaper);
+        } else {
+            // No wallpaper to sample: keep what we have, applied everywhere,
+            // rather than the previous mode's terminal and editor colours
+            applyPaletteEverywhere(palette);
         }
+    }
+
+    // Re-applies the given palette to every app that takes one. Used when
+    // matugen cannot run (a missing wallpaper, a broken image): the shell's
+    // own colours are already this palette, and the apps have to catch up
+    // with it instead of keeping another theme's.
+    function applyPaletteEverywhere(pal) {
+        if (!pal)
+            return;
+        console.log("[Theme] Applying the current palette without matugen");
+        _applyHyprland(_hyprlandFromPalette(pal));
+        _applyKitty(_terminalFromPalette(pal));
+        _applyNeovim(pal, _terminalFromPalette(pal));
+        ZenService.applyPalette(pal);
+        _applyGtkFromPalette(pal);
+        _applyGtkThemeSwitch();
+        _applyQtFromPalette(pal);
+    }
+
+    // A palette -> the terminal block _applyKitty expects. Matugen supplies
+    // its own; this is the fallback, so a terminal is never left on another
+    // theme's colours.
+    //
+    // Only the keys every palette has are used (accent, background, surface0-3,
+    // text, subtext, success, warning, error, muted): matugen's palette and the
+    // presets carry the same set, and inventing magenta/cyan/orange would put
+    // `undefined` in the file.
+    function _terminalFromPalette(pal) {
+        const bg = pal.background || "#1a1b26";
+        const fg = pal.text || "#c0caf5";
+        const dim = pal.subtext || fg;
+        const accent = pal.accent || "#7aa2f7";
+        const red = pal.error || "#f7768e";
+        const green = pal.success || "#9ece6a";
+        const yellow = pal.warning || "#e0af68";
+        const muted = pal.muted || pal.surface3 || dim;
+        const surface1 = pal.surface1 || pal.surface0 || bg;
+        const surface2 = pal.surface2 || surface1;
+        const surface3 = pal.surface3 || surface2;
+        return {
+            background: bg,
+            foreground: fg,
+            selectionBackground: surface2,
+            selectionForeground: fg,
+            urlColor: accent,
+            cursor: accent,
+            cursorTextColor: bg,
+            activeTabBackground: surface1,
+            activeTabForeground: fg,
+            inactiveTabBackground: bg,
+            inactiveTabForeground: dim,
+            activeBorderColor: accent,
+            inactiveBorderColor: surface2,
+            // Normal, then bright: the eight ANSI colours each. There are no
+            // distinct blue/magenta/cyan in this palette, so they step through
+            // it rather than being invented.
+            color0: surface1,
+            color1: red,
+            color2: green,
+            color3: yellow,
+            color4: accent,
+            color5: pal.muted || accent,
+            color6: pal.greyBlue || accent,
+            color7: dim,
+            color8: surface3,
+            color9: red,
+            color10: green,
+            color11: yellow,
+            color12: accent,
+            color13: pal.muted || accent,
+            color14: pal.greyBlue || accent,
+            color15: fg,
+            color16: pal.blueDark || yellow,
+            color17: muted
+        };
+    }
+
+    // A palette -> Hyprland border colours, for the same fallback
+    function _hyprlandFromPalette(pal) {
+        return {
+            activeBorder: pal.accent || "#7aa2f7",
+            inactiveBorder: pal.surface2 || pal.surface1 || "#292e42"
+        };
     }
 
     // Applies the current palette to GTK and Qt again (after the user turns
@@ -1018,6 +1105,16 @@ Singleton {
                 loadMatugenPaletteProc.run(["cat", root.matugenCachePath + "/quickshell-palette.json"]);
             } else {
                 console.error("[Theme] Matugen failed with exit code:", exitCode);
+                // Nothing was written for this wallpaper, so kitty, Neovim,
+                // GTK and Qt would keep the last mode's colours — switching
+                // from Omarchy back to Material You left the terminal on
+                // Omarchy's background forever.
+                //
+                // The palette in memory is no use here: while Omarchy's mode
+                // was on, it held Omarchy's colours. Material You's own last
+                // palette is still in matugen's cache, so read that and apply
+                // it; only if there is none does what is in memory stand.
+                loadMatugenPaletteProc.run(["cat", root.matugenCachePath + "/quickshell-palette.json"]);
             }
         }
     }
@@ -1056,6 +1153,9 @@ Singleton {
                     ZenService.applyPalette(pal);
                 } catch (e) {
                     console.error("[Theme] Failed to parse matugen palette:", e);
+                    // No cached palette either: apply the preset the user last
+                    // chose, so every app still agrees with the shell
+                    root.applyPaletteEverywhere(root.palette);
                 }
             }
         }
