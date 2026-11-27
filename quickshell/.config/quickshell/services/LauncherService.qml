@@ -71,7 +71,17 @@ Singleton {
             prefix: ">",
             label: I18n.tr("Actions"),
             icon: "\u{f140b}",
-            placeholder: OmarchyCommands.available ? I18n.tr("Run an action…  (:omarchy lists Omarchy's commands)") : I18n.tr("Run an action…")
+            // Orvix's own actions only: Omarchy's have their own prefix
+            placeholder: OmarchyCommands.available ? I18n.tr("Run an Orvix action…  (: for Omarchy)") : I18n.tr("Run an action…")
+        },
+        {
+            id: "omarchy",
+            // Only where Omarchy is: a prefix that leads to an empty list is
+            // worse than no prefix. The mode list is filtered below.
+            prefix: ":",
+            label: I18n.tr("Omarchy"),
+            icon: "\u{f0e09}",
+            placeholder: I18n.tr("Run an Omarchy command…  (:theme, :install, :hw)")
         },
         {
             id: "calc",
@@ -88,7 +98,10 @@ Singleton {
             placeholder: I18n.tr("Search the clipboard…")
         }
     ]
-    readonly property var mode: modes.find(m => m.prefix !== "" && query.startsWith(m.prefix)) ?? modes[0]
+    // What the launcher actually offers: the Omarchy mode is dropped entirely
+    // on a machine without Omarchy, so ":" stays an ordinary character there
+    readonly property var modesAvailable: OmarchyCommands.available ? modes : modes.filter(m => m.id !== "omarchy")
+    readonly property var mode: modesAvailable.find(m => m.prefix !== "" && query.startsWith(m.prefix)) ?? modesAvailable[0]
     // Changes only when the mode does (`mode` re-evaluates on every key)
     readonly property string modeId: mode.id
     // The query without the mode prefix
@@ -205,28 +218,11 @@ Singleton {
     // ACTIONS
     // ========================================================================
 
-    // ":theme" narrows the list to one group before searching: Orvix's own
-    // actions, all of Omarchy's, or one of Omarchy's groups (":theme",
-    // ":install"). The name after ":" may be partial. An exact id wins, so
-    // ":theme" is Omarchy's theme group and not ":omarchy:theme" matched
-    // loosely.
-    readonly property string groupFilter: {
-        if (mode.id !== "actions" || !term.startsWith(":"))
-            return "";
-        return term.slice(1).trim().toLowerCase();
-    }
-    readonly property var activeGroup: {
-        if (groupFilter === "")
-            return null;
-        const groups = LauncherActions.groups;
-        return groups.find(g => g.id === "omarchy:" + groupFilter) ?? groups.find(g => g.id === groupFilter) ?? groups.find(g => g.id.startsWith(groupFilter) || I18n.translate(g.name).toLowerCase().startsWith(groupFilter)) ?? null;
-    }
-    // "" while no group is picked, "none" when the name matched nothing
-    readonly property string groupState: groupFilter === "" ? "" : activeGroup ? "picked" : "none"
-    // What the list searches: the picked group, or everything
-    readonly property var actionPool: activeGroup ? activeGroup.items : LauncherActions.items
-    // The term without the group part
-    readonly property string actionTerm: groupFilter === "" ? term : ""
+    // The actions mode is Orvix's own actions. Omarchy's commands used to be
+    // merged into it with a ":group" filter; they now have their own ":" mode,
+    // which is what makes ">" and ":" mean one thing each.
+    readonly property var actionPool: LauncherActions.items
+    readonly property string actionTerm: term
 
     readonly property var actionIndex: actionPool.map(action => ({
                 item: action,
@@ -240,11 +236,19 @@ Singleton {
 
     readonly property var actionMatches: mode.id === "actions" ? _search(actionIndex, () => 0) : []
 
-    readonly property var filteredActions: {
-        if (groupState === "none")
-            return [];
-        return actionTerm !== "" ? actionMatches.map(m => m.item) : actionPool;
-    }
+    // Omarchy's commands, for the ":" mode: the same catalogue the actions mode
+    // used to show, searched by name, comment and group
+    readonly property var omarchyIndex: OmarchyCommands.actions.map(action => ({
+                item: action,
+                id: action.id,
+                fields: [_field(action.name, 1, true), _field(action.comment, 0.35, false), ...action.keywords.map(k => _field(k, 0.6, false))]
+            }))
+
+    readonly property var omarchyMatches: mode.id === "omarchy" ? _search(omarchyIndex, () => 0) : []
+
+    readonly property var filteredOmarchy: term !== "" ? omarchyMatches.map(m => m.item) : OmarchyCommands.actions
+
+    readonly property var filteredActions: actionTerm !== "" ? actionMatches.map(m => m.item) : actionPool
 
     // The narrowest group a result belongs to, for the small label on its
     // row: for Omarchy's commands, Omarchy's own group ("theme",
@@ -354,6 +358,8 @@ Singleton {
         switch (mode.id) {
         case "actions":
             return filteredActions;
+        case "omarchy":
+            return filteredOmarchy;
         case "calc":
             return calcItems;
         case "clipboard":

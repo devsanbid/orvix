@@ -140,5 +140,9 @@ Singleton {
         return list.filter(g => g.items.length > 0);
     }
 
-    readonly property var items: [...toggles, ...tools, ...settings, ...power, ...omarchy]
+    // What the launcher's ">" mode shows: Orvix's own actions. Omarchy's
+    // commands have their own ":" mode (LauncherService.filteredOmarchy), so
+    // one prefix means one thing; `omarchy` stays a property here because the
+    // ":" mode reads it and the bar's group labels use it.
+    readonly property var items: [...toggles, ...tools, ...settings, ...power]
 }
