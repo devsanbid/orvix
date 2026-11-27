@@ -195,4 +195,12 @@ hl.define_submap("orvix_capture", function()
     hl.bind("CTRL + ALT + SHIFT + F24", hl.dsp.submap("reset"))
 end)
 
+-- Enter passthrough mode (host stops handling keybinds)
+hl.bind("SUPER + F12", hl.dsp.submap("passthru"))
+
+-- Inside this submap, the only bind is the one that leaves it
+hl.define_submap("passthru", function()
+    hl.bind("SUPER + F12", hl.dsp.submap("reset"))
+end)
+
 return M

@@ -11,6 +11,10 @@ ColumnLayout {
 
     spacing: Config.spacing * 3
 
+    // Omarchy's catalogue and live state, read when the page opens (only
+    // while Omarchy is there; the service ignores it otherwise)
+    Component.onCompleted: OmarchyBarWidgets.refresh()
+
     // What a right or middle click on the launcher button can do
     readonly property var launcherClickOptions: [
         {
@@ -507,6 +511,85 @@ ColumnLayout {
             label: I18n.tr("Battery")
             description: I18n.tr("Level and charging, on laptops")
             path: "bar.quickSettings.indicators.battery"
+        }
+    }
+
+    // ===================== OMARCHY'S BAR WIDGETS =====================
+    // Orvix draws its own bar, so these belong to Omarchy's bar and only make
+    // sense while its shell runs: they are its plugins, and Omarchy's own
+    // registry turns them on and off. Shown here because this is where you
+    // look when you want something on a bar.
+    SettingsGroup {
+        visible: OmarchyBarWidgets.available
+        title: I18n.tr("Omarchy's bar widgets")
+
+        InfoRow {
+            label: I18n.tr("Widgets")
+            value: OmarchyBarWidgets.shellRunning ? I18n.tr("%1 available, %2 on Omarchy's bar", OmarchyBarWidgets.widgets.length, OmarchyBarWidgets.addedCount) : I18n.tr("Omarchy's shell isn't running, so its bar widgets can't be switched")
+        }
+
+        InfoRow {
+            visible: OmarchyBarWidgets.available && !OmarchyBarWidgets.shellRunning
+            label: I18n.tr("Where they show")
+            value: I18n.tr("They draw on Omarchy's bar, not Orvix's. Start Omarchy's shell to use them, and hide its bar in Settings › System › Omarchy if you only want its plugins.")
+        }
+
+        SettingRow {
+            visible: OmarchyBarWidgets.available
+            label: I18n.tr("Refresh")
+            description: I18n.tr("Read Omarchy's catalogue and what is on its bar again")
+            enabled: !OmarchyBarWidgets.loading
+
+            ActionButton {
+                icon: "\u{f0450}"
+                text: OmarchyBarWidgets.loading ? I18n.tr("Reading…") : I18n.tr("Refresh")
+                enabled: !OmarchyBarWidgets.loading
+                onClicked: OmarchyBarWidgets.refresh()
+            }
+        }
+
+        InfoRow {
+            visible: OmarchyBarWidgets.error !== ""
+            label: I18n.tr("Problem")
+            value: OmarchyBarWidgets.error
+        }
+    }
+
+    // One group per category Omarchy uses (Compositor, Time, Network…)
+    Repeater {
+        model: OmarchyBarWidgets.categories
+
+        SettingsGroup {
+            id: categoryGroup
+
+            required property var modelData
+
+            visible: OmarchyBarWidgets.available && categoryGroup.modelData.items.length > 0
+            title: categoryGroup.modelData.category !== "" ? categoryGroup.modelData.category : I18n.tr("Other")
+
+            Repeater {
+                model: categoryGroup.modelData.items
+
+                SettingRow {
+                    id: widgetRow
+
+                    required property var modelData
+
+                    label: widgetRow.modelData.name
+                    description: widgetRow.modelData.description
+                    enabled: OmarchyBarWidgets.shellRunning && !OmarchyBarWidgets.actionRunning
+
+                    QsSwitch {
+                        checked: widgetRow.modelData.enabled
+                        onToggled: {
+                            OmarchyBarWidgets.toggle(widgetRow.modelData.id, checked);
+                            // Clicking breaks the binding; the catalogue is the
+                            // source of truth and comes back after the action
+                            checked = Qt.binding(() => widgetRow.modelData.enabled);
+                        }
+                    }
+                }
+            }
         }
     }
 
