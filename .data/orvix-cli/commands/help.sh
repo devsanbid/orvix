@@ -15,6 +15,7 @@ echo "  link        Link dotfiles packages the install left out (kitty, nvim...)
 echo "  unlink      Unlink dotfiles packages, bringing your files back"
 echo "  doctor      Check the desktop: dependencies, services, theme, apps"
 echo "  bar         Show or hide Orvix's own bar"
+echo "  plugin      Install, enable, update and remove Orvix plugins"
 echo "  omarchy     Omarchy's bar and dock: keep them out of Orvix's way"
 echo "  workspaces  Show each monitor's workspace blocks"
 echo "  monitors    Monitor rules from Settings; revert a trial, or reset them"
