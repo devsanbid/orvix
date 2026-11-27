@@ -153,7 +153,13 @@ EOF
 }
 
 @test "omarchy dock: without a running Omarchy shell there is nothing to change" {
-    run omarchy_cmd dock off
+    # An omarchy command that exists, so the check reaches the shell step
+    # (a machine without it answers "isn't installed" instead, which the
+    # last test covers)
+    mkdir -p "$BATS_TEST_TMPDIR/bin"
+    printf '#!/bin/bash\nexit 0\n' >"$BATS_TEST_TMPDIR/bin/omarchy"
+    chmod +x "$BATS_TEST_TMPDIR/bin/omarchy"
+    PATH="$BATS_TEST_TMPDIR/bin:$PATH" run omarchy_cmd dock off
     assert_failure
     assert_output --partial "shell isn't running"
 }
