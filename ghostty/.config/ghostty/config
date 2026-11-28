@@ -1,6 +1,6 @@
-# Dynamic theme colors. `theme` is the fallback; Omarchy's file is next, and
-# Orvix's generated file is last so it wins when it exists. In Omarchy mode
-# Orvix removes its file, which lets Omarchy's own theme show through.
+# Dynamic colors and the Orvix font. `theme` is the fallback; Omarchy's file
+# is next; Orvix's generated file is last. In Omarchy mode that file carries
+# only the font, so Omarchy's own colors show through.
 theme = noctalia
 config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
 config-file = ?"~/.config/ghostty/current-theme.conf"
@@ -8,7 +8,7 @@ config-file = ?"~/.config/ghostty/current-theme.conf"
 # Font
 font-family = "JetBrainsMono Nerd Font"
 font-style = Regular
-font-size = 9
+font-size = 24
 
 # Window
 window-theme = ghostty
