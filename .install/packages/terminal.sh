@@ -11,6 +11,10 @@
 TERMINAL_PACKAGES=(
     # Shell
     "zsh"                   # Z Shell
+    "fish"                  # Friendly interactive shell
+
+    # Terminal
+    "ghostty"               # Fast, native terminal emulator
 
     # Multiplexer
     "tmux"                  # Terminal multiplexer

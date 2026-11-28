@@ -40,7 +40,7 @@ Or delete the links by hand. They are symlinks into `~/.orvix`, so this finds
 them without touching your real files:
 
 ```bash
-find ~/.config ~/.local ~/.zshrc ~/.tmux.conf ~/.config/kitty ~/.config/nvim \
+find ~/.config ~/.local ~/.zshrc ~/.config/tmux ~/.config/kitty ~/.config/nvim \
   -maxdepth 3 -type l -lname "$HOME/.orvix/*" -print
 ```
 

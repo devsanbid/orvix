@@ -1,3 +1,6 @@
+-- Your own gestures replace Omarchy's defaults.
+omarchy_default_gestures = false
+
 -- ###############
 -- ### SOURCES ###
 -- ###############

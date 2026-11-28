@@ -8,7 +8,10 @@ WheelHandler {
     id: root
 
     required property Flickable flickable
-    property real step: Config.spacing * 15
+    // A notch used to glide 15 spacings; 24 makes the wheel cover the page
+    // faster, and the shorter animation below makes it feel immediate
+    property real step: Config.spacing * 24
+    property int duration: Config.animDurationShort
 
     // Lets the owner stop its own scroll animation first
     signal wheelStarted
@@ -41,7 +44,7 @@ WheelHandler {
 
         target: root.flickable
         property: "contentY"
-        duration: Config.animDuration
+        duration: root.duration
         easing.type: Easing.OutCubic
     }
 }

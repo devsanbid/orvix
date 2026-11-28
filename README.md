@@ -41,7 +41,7 @@ More than 30 pages: appearance, bar, launcher, dashboard, lock screen, monitors,
 <td width="33%" valign="top">
 
 **Themes that reach every app**<br>
-13 presets, Material You from the wallpaper, or the theme Omarchy is already using. Switching fades the shell and Hyprland's borders and recolors kitty, Neovim, GTK/Qt and Zen Browser.
+13 presets, Material You from the wallpaper, or the theme Omarchy is already using. Switching fades the shell and Hyprland's borders and recolors kitty, Ghostty, Neovim, GTK/Qt and Zen Browser.
 
 </td>
 <td width="33%" valign="top">
@@ -114,9 +114,10 @@ after the sudo password:
 
 1. **Packages:** pick categories (core, terminal, editor, apps, utils, fonts,
    quickshell, theming). The shell's own files (Hyprland, Quickshell,
-   `~/.local/`) are always linked; **terminal** also links the kitty, Zsh, tmux
-   and fastfetch configs, **editor** the Neovim one and **theming** the GTK, Qt
-   and KDE ones. Leave a category out and your configs for it stay as they are.
+   `~/.local/`) are always linked; **terminal** also links the kitty, Ghostty,
+   Zsh, Fish, tmux and fastfetch configs, **editor** the Neovim one and
+   **theming** the GTK, Qt and KDE ones. Leave a category out and your configs
+   for it stay as they are.
 2. **Graphics:** the GPUs it found; for NVIDIA, the driver (open or 580xx,
    optionally 32-bit) and its environment. Which GPU renders stays automatic
    (Settings › Graphics changes it).
@@ -220,7 +221,7 @@ subcommands.
 | `orvix reload` | Restart Quickshell |
 | `orvix state` | Edit `state.json`; `sync`, `rebuild` |
 | `orvix migrate` | `list`, `run`, `done` for migrations |
-| `orvix link` | Each dotfiles package, linked or not; `orvix link <package>` links one the install left out |
+| `orvix link` | Each dotfiles package, linked or not; `orvix link <package>` links one the install left out, `orvix link all` links every package (any top-level folder with dotfiles counts) |
 | `orvix unlink` | Removes a package's links and brings back your files from the backup |
 | `orvix doctor` | Checks Hyprland, Quickshell, the theme, your apps and the shortcut tools; `--json`, `--quiet` |
 | `orvix monitors` | Monitor rules from Settings; revert a trial or reset them |
@@ -351,7 +352,7 @@ shell follow where it really is.
 | --- | --- |
 | `quickshell/` | The shell: bar, launcher, dashboard, notifications, OSD, lock, power, screenshots, Settings |
 | `hyprland/` | Hyprland config in Lua (`conf/`), plus `local/` for per-machine files |
-| `kitty/`, `zsh/`, `tmux/`, `nvim/` | Terminal, shell (Oh My Zsh + Powerlevel10k), multiplexer, editor |
+| `kitty/`, `ghostty/`, `zsh/`, `fish/`, `tmux/`, `nvim/` | Terminals, shells (Oh My Zsh + Powerlevel10k, Fish), multiplexer, editor |
 | `theming/`, `kde/` | GTK 3/4, Qt 5/6 and KDE color settings |
 | `fastfetch/` | System info |
 | `local/` | Scripts, the `orvix` command, themes and wallpapers (`~/.local/`) |

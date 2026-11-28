@@ -13,7 +13,7 @@ Organized installation scripts for the dotfiles.
 │   └── run.sh          # Unattended steps: progress, log, sudo keepalive, dry run
 ├── packages/           # Package lists by category
 │   ├── core.sh         # Hyprland, UWSM, portal
-│   ├── terminal.sh     # Kitty, Zsh, Tmux
+│   ├── terminal.sh     # Kitty, Ghostty, Zsh, Fish, Tmux
 │   ├── editor.sh       # Neovim + dev tools
 │   ├── apps.sh         # Dolphin, Zen Browser, Spotify, Chromium (WhatsApp)
 │   ├── utils.sh        # Clipboard, audio, bluetooth
@@ -148,8 +148,10 @@ package were installed, `ORVIX_DRY_FAIL="git ping"` makes those commands fail.
 
 Links again the packages linked before (state.json `.system.stow`, or the
 ones found linked on older installs) plus `hyprland`, `quickshell` and
-`local`. `orvix link <package>` links one more, `orvix unlink <package>` takes
-one out (its old files come back from the backup).
+`local`. `orvix link <package>` links one more, `orvix link all` links every
+package in the repo, `orvix unlink <package>` takes one out (its old files come
+back from the backup). A new top-level folder with dotfiles is a package
+already: no list to edit.
 
 ### Configure Hyprland only
 
@@ -169,7 +171,7 @@ one out (its old files come back from the backup).
 | Category   | Description                                    |
 | ---------- | ---------------------------------------------- |
 | core       | Hyprland, UWSM, awww, portal, polkit agent, Kitty (ESSENTIAL) |
-| terminal   | Zsh, Tmux, Fastfetch (and the Kitty config)    |
+| terminal   | Zsh, Fish, Ghostty, Tmux, Fastfetch (and the Kitty config) |
 | editor     | Neovim + development tools                     |
 | apps       | Dolphin, Zen Browser, Spotify, Chromium, mpv   |
 | utils      | Clipboard, audio, bluetooth, brightnessctl     |
@@ -210,8 +212,10 @@ The `stow.sh` script links the packages of the categories chosen
 | quickshell | ~/.config/quickshell                     | always           |
 | local      | ~/.local/scripts, themes, wallpapers, bin/orvix | always     |
 | kitty      | ~/.config/kitty                          | terminal         |
+| ghostty    | ~/.config/ghostty                        | terminal         |
 | zsh        | ~/.zshrc, ~/.p10k.zsh                    | terminal         |
-| tmux       | ~/.tmux.conf                             | terminal         |
+| fish       | ~/.config/fish                           | terminal         |
+| tmux       | ~/.config/tmux                           | terminal         |
 | fastfetch  | ~/.config/fastfetch                      | terminal         |
 | nvim       | ~/.config/nvim, ~/.clang-format          | editor           |
 | theming    | ~/.config/gtk-3.0, gtk-4.0, qt5ct, qt6ct | theming          |

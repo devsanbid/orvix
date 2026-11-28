@@ -286,7 +286,7 @@ T kill-server 2>/dev/null
 kill "$CLIENT_PID" 2>/dev/null
 
 # Every tmux popup that runs Neovim sets ORVIX_NVIM_SOLO=1
-popups="$(grep -E '^bind .*display-popup.*nvim' "$REPO/tmux/.tmux.conf")"
+popups="$(grep -E '^bind .*display-popup.*nvim' "$REPO/tmux/.config/tmux/tmux.conf")"
 check "tmux's Neovim popups found" 1 "$([[ -n "$popups" ]] && echo 1)"
 check "every Neovim popup sets ORVIX_NVIM_SOLO=1" "" "$(grep -v -- '-e ORVIX_NVIM_SOLO=1' <<<"$popups")"
 

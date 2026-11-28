@@ -13,7 +13,7 @@
 # Usage: tests/nvim/nav.sh   (needs tmux, nvim, python3 and the plugins)
 #   NAV_DEBUG=1                print the checkhealth report
 #   ORVIX_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
-#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.config/tmux/tmux.conf
 #   ORVIX_TEST_KITTY_CONF=<file> another copy of kitty/.config/kitty/kitty.conf
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
@@ -22,7 +22,7 @@ set -uo pipefail
 
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.config/tmux/tmux.conf}"
 
 need_tools tmux nvim python3
 

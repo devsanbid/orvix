@@ -33,7 +33,7 @@ source "$DOTFILES_DIR/.data/orvix-cli/lib/state.sh"
 # their own, and `--packages nvidia` still installs the list
 CATEGORY_OPTIONS=(
     "core|core|Hyprland, UWSM, portals, Kitty (essential)|1"
-    "terminal|terminal|Zsh, Tmux, Fastfetch, the Kitty config|1"
+    "terminal|terminal|Zsh, Fish, Ghostty, Tmux, Fastfetch, the Kitty config|1"
     "editor|editor|Neovim + development tools|1"
     "apps|apps|Dolphin, Zen Browser, Spotify, Chromium, mpv|1"
     "utils|utils|Clipboard, audio, bluetooth, brightness|1"

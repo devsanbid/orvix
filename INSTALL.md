@@ -63,7 +63,7 @@ The questions, in order:
    | Category | Programs and configs |
    | --- | --- |
    | `core` | Hyprland, UWSM, portals, the base system pieces |
-   | `terminal` | kitty, Zsh, tmux, fastfetch and their configs |
+   | `terminal` | kitty, Ghostty, Zsh, Fish, tmux, fastfetch and their configs |
    | `editor` | Neovim and its tools |
    | `apps` | Dolphin, Zen Browser, Spotify, Chromium (WhatsApp) |
    | `utils` | Clipboard, audio, Bluetooth |

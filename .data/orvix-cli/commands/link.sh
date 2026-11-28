@@ -7,7 +7,7 @@ _link_hints() {
     local dir
     for dir in "$@"; do
         case "$dir" in
-        kitty | zsh | tmux | fastfetch)
+        kitty | ghostty | zsh | fish | tmux | fastfetch)
             command -v "$dir" &>/dev/null || echo "  $dir isn't installed: sudo pacman -S $dir"
             ;;
         nvim)
@@ -29,7 +29,7 @@ _link_hints() {
 
 case "${1:-status}" in
     -h|--help)
-        echo "Usage: orvix link [status|<package>...]"
+        echo "Usage: orvix link [status|all|<package>...]"
         echo ""
         echo "Links dotfiles packages into your HOME with GNU Stow, like the installer"
         echo "does for the categories chosen. Files already at their place go to the"
@@ -37,14 +37,18 @@ case "${1:-status}" in
         echo "them back."
         echo ""
         echo "  status        Each package, linked (●) or not (○), and its category (default)"
-        echo "  <package>...  Link these: kitty, zsh, tmux, fastfetch (terminal), nvim"
-        echo "                (editor), theming, kde (theming)"
+        echo "  all           Link every package in the repo"
+        echo "  <package>...  Link these: kitty, ghostty, zsh, fish, tmux, fastfetch"
+        echo "                (terminal), nvim (editor), theming, kde (theming). Any"
+        echo "                top-level folder with dotfiles is a package too, so a new"
+        echo "                one needs no setup."
         ;;
     status)
         local dir group targets
-        local -a recorded
+        local -a recorded packages
         mapfile -t recorded < <(stow_recorded_packages)
-        for dir in "${STOW_DIRS[@]}"; do
+        mapfile -t packages < <(stow_all_packages)
+        for dir in "${packages[@]}"; do
             group="$(stow_package_group "$dir")"
             targets="$(get_stow_targets "$dir")"
             targets="${targets//$HOME/\~}"
@@ -53,10 +57,18 @@ case "${1:-status}" in
                 "$dir" "$group" "${targets// /, }"
         done
         ;;
+    all|--all)
+        local -a packages
+        mapfile -t packages < <(stow_all_packages)
+        stow_link "${packages[@]}" || return 1
+        _link_hints "${packages[@]}"
+        ;;
     *)
         local dir
+        local -a packages
+        mapfile -t packages < <(stow_all_packages)
         for dir in "$@"; do
-            if [[ " ${STOW_DIRS[*]} " != *" $dir "* ]]; then
+            if [[ " ${packages[*]} " != *" $dir "* ]]; then
                 echo "orvix link: unknown package '$dir' (orvix link status lists them)"
                 return 1
             fi

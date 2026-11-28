@@ -11,7 +11,7 @@
 # uses that Neovim. Also --project vs the file's own project, a line below
 # 1, quotes in file names, orvix nvim list, and usage errors.
 #
-# Everything runs in the sandbox: its own HOME (no ~/.tmux.conf, a
+# Everything runs in the sandbox: its own HOME (no ~/.config/tmux, a
 # state.json naming the stand-in terminal), tmux's default server under
 # TMUX_TMPDIR in the sandbox, Neovim's XDG folders (lib.sh).
 #

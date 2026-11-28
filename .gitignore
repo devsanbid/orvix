@@ -41,9 +41,17 @@ theming/.config/gtk-4.0/colors.css
 # kitty ignores the missing include until then)
 kitty/.config/kitty/current-theme.conf
 
+# Ghostty colors (same, written by ThemeService; in Omarchy mode the file is
+# removed so Omarchy's own ghostty.conf shows)
+ghostty/.config/ghostty/current-theme.conf
+
 
 # Python bytecode (written when the scripts are imported)
 __pycache__/
 
 # Dolphin folder settings
 .directory
+
+# fish's own variable store (written by fish, machine-specific; it used to be
+# tracked and carried another account's paths)
+fish/.config/fish/fish_variables

@@ -12,7 +12,7 @@
 #
 # Usage: tests/nvim/shortcuts.sh   (needs tmux, nvim, python3 and the plugins)
 #   ORVIX_TEST_NVIM=<dir>       another copy of nvim/.config/nvim (lib.sh)
-#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.tmux.conf
+#   ORVIX_TEST_TMUX_CONF=<file> another copy of tmux/.config/tmux/tmux.conf
 #   ORVIX_TEST_TMUX_GUIDE=<file> another copy of tmux/README.md
 
 # shellcheck disable=SC2329  # cleanup runs from the trap, the others from wait_for
@@ -22,7 +22,7 @@ set -uo pipefail
 # shellcheck source=tests/nvim/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.tmux.conf}"
+TMUX_CONF="${ORVIX_TEST_TMUX_CONF:-$REPO/tmux/.config/tmux/tmux.conf}"
 TMUX_GUIDE="${ORVIX_TEST_TMUX_GUIDE:-$REPO/tmux/README.md}"
 
 need_tools tmux nvim python3

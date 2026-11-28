@@ -21,8 +21,10 @@ STOW_DIRS=(
     "hyprland"      # Hyprland config
     "quickshell"    # QuickShell bar
     "kitty"         # Terminal
+    "ghostty"       # Terminal
     "nvim"          # Editor
     "zsh"           # Shell
+    "fish"          # Shell
     "tmux"          # Multiplexer
     "local"         # Local scripts
     "fastfetch"     # System info
@@ -33,24 +35,48 @@ STOW_DIRS=(
 # Linked on every install: the shell itself and the orvix CLI
 STOW_ALWAYS=(hyprland quickshell local)
 
+# The packages that aren't listed above: a top-level folder that holds
+# dotfiles (an entry starting with a dot, as .config or .zshrc) is a stow
+# package. A new one can be linked with `orvix link <folder>` without editing
+# STOW_DIRS.
+stow_extra_packages() {
+    local dir entry
+    for dir in "$DOTFILES_DIR"/*/; do
+        dir="${dir%/}"
+        dir="${dir##*/}"
+        [[ " ${STOW_DIRS[*]} " == *" $dir "* ]] && continue
+        for entry in "$DOTFILES_DIR/$dir"/.[!.]*; do
+            [[ -e "$entry" || -L "$entry" ]] || continue
+            echo "$dir"
+            break
+        done
+    done
+}
+
+# Every stow package: STOW_DIRS in their order, then the ones found in the repo
+stow_all_packages() {
+    printf '%s\n' "${STOW_DIRS[@]}"
+    stow_extra_packages
+}
+
 # The packages that come with an installer category (none for the others)
 stow_category_packages() {
     case "$1" in
-    terminal) echo "kitty zsh tmux fastfetch" ;;
+    terminal) echo "kitty ghostty zsh fish tmux fastfetch" ;;
     editor) echo "nvim" ;;
     theming) echo "theming kde" ;;
     esac
 }
 
-# stow_ordered PACKAGE...: those packages once each, in STOW_DIRS order (one
+# stow_ordered PACKAGE...: those packages once each, in package order (one
 # per line); unknown names are left out
 stow_ordered() {
     local dir
-    for dir in "${STOW_DIRS[@]}"; do
+    while IFS= read -r dir; do
         if [[ " $* " == *" $dir "* ]]; then
             echo "$dir"
         fi
-    done
+    done < <(stow_all_packages)
 }
 
 # stow_packages CATEGORY...: the packages to link for those categories
@@ -74,7 +100,7 @@ stow_packages() {
 # their files is the repo's (one per line)
 stow_linked_packages() {
     local dir file
-    for dir in "${STOW_DIRS[@]}"; do
+    while IFS= read -r dir; do
         [[ -d "$DOTFILES_DIR/$dir" ]] || continue
         while IFS= read -r -d '' file; do
             if [[ "$(realpath -m "$HOME/${file#"$DOTFILES_DIR/$dir/"}")" == "$(realpath -m "$file")" ]]; then
@@ -82,7 +108,7 @@ stow_linked_packages() {
                 break
             fi
         done < <(find "$DOTFILES_DIR/$dir/" -type f -print0)
-    done
+    done < <(stow_all_packages)
 }
 
 # The packages recorded in state.json; an install from before the record
@@ -161,7 +187,7 @@ get_stow_targets() {
             targets+=("$HOME/.config/nvim" "$HOME/.clang-format")
             ;;
         "tmux")
-            targets+=("$HOME/.tmux.conf")
+            targets+=("$HOME/.config/tmux")
             ;;
         "local")
             targets+=("$HOME/.local/scripts" "$HOME/.local/wallpapers" "$HOME/.local/themes")
@@ -178,7 +204,27 @@ get_stow_targets() {
             targets+=("$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0" "$HOME/.config/qt5ct" "$HOME/.config/qt6ct")
             ;;
         *)
-            targets+=("$HOME/.config/${dir}")
+            # Any other package: each dot entry at its root (~/.foo), with
+            # ~/.config and ~/.local expanded to their children so the shared
+            # folders themselves are never moved to the backup
+            local entry name child
+            for entry in "$DOTFILES_DIR/$dir"/.[!.]*; do
+                [[ -e "$entry" || -L "$entry" ]] || continue
+                name="$(basename "$entry")"
+                [[ "$name" == ".stow-local-ignore" ]] && continue
+                case "$name" in
+                .config | .local)
+                    for child in "$entry"/* "$entry"/.[!.]*; do
+                        [[ -e "$child" || -L "$child" ]] || continue
+                        targets+=("$HOME/$name/$(basename "$child")")
+                    done
+                    ;;
+                *)
+                    targets+=("$HOME/$name")
+                    ;;
+                esac
+            done
+            ((${#targets[@]})) || targets+=("$HOME/.config/${dir}")
             ;;
     esac
 
@@ -308,6 +354,7 @@ stow_package_group() {
             return
         fi
     done
+    echo optional
 }
 
 # stow_link PACKAGE...: what's in the way goes to the backup, then they're

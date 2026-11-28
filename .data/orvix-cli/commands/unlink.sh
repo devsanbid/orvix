@@ -14,10 +14,11 @@ case "${1:-}" in
         ;;
     *)
         local dir
-        local -a linked
+        local -a linked packages
         mapfile -t linked < <(stow_recorded_packages)
+        mapfile -t packages < <(stow_all_packages)
         for dir in "$@"; do
-            if [[ " ${STOW_DIRS[*]} " != *" $dir "* ]]; then
+            if [[ " ${packages[*]} " != *" $dir "* ]]; then
                 echo "orvix unlink: unknown package '$dir' (orvix link status lists them)"
                 return 1
             fi
