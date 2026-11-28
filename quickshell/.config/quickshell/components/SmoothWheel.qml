@@ -18,10 +18,14 @@ WheelHandler {
     }
 
     target: null
-    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+    // A mouse only: a touchpad's phased scrolling is left entirely to Qt's
+    // Flickable, which follows the fingers and keeps its inertia. Taking those
+    // events here (even to decline them) kept them from reaching the
+    // Flickable, so two-finger scrolling did nothing at all.
+    acceptedDevices: PointerDevice.Mouse
     onWheel: event => {
-        // Touchpads scroll in phases (begin, update, end) and stay with the
-        // Flickable, which follows the finger and keeps the inertia
+        // A phased event still arrives for a touchscreen or a device Qt does
+        // not classify as a mouse: leave it to the Flickable
         if (event.phase !== Qt.NoScrollPhase || flickable.contentHeight <= flickable.height) {
             event.accepted = false;
             return;
